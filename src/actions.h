@@ -21,6 +21,7 @@ void turnToTargetHeadingDirect(int scan, int turnDir);
 int  sonarScan(int range);
 void sonarScanDown();
 void getMinimumTurnSpeed();
+void analyzeObject();
 
 
 
