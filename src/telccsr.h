@@ -21,6 +21,7 @@ enum telccsrcmd  {CMD_SET,
 		  CMD_CALIBRATE_COMPASS,
 		  CMD_RESET,
 		  CMD_DUMMY,
+		  CMD_ANALYZE_OBJ,
 		  NUM_CMD
 		  };
 
