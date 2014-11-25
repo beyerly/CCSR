@@ -76,7 +76,9 @@ char *cmd_lookup[] = {"set",             // followed by set_cmd_lookup[]
 		      "calcomp",         // calcomp - Calibrate Compass. Turn in-place for at least 360 degress, 
 		                         // measure magnitec fields and calibrate functions
 		      "reset",           // Unused st this time
-		      "dummy"            // dummy <int> <int> ... - Dummy command for debug.
+		      "dummy",           // dummy <int> <int> ... - Dummy command for debug.
+		      "analyzeobj"       // Extend arm, grab object offered, analyze and say color, and make object the 
+		                         // target object color that CCSR can track.
 		      };
 
 char *dump_cmd_lookup[] = {"all",        // dump all - Print selected ccsrState fields to return-fifo
@@ -646,6 +648,12 @@ void ccsrExecuteCmd(char **splitLine, int n, int wfd) {
 	 case CMD_DIAGNOSTICS:
  	    say("Running Diagnostics");
 	    diagnostics();
+	    sprintf(string, "Command succesful\n");
+ 	    write(wfd, string, strlen(string));
+ 	    write(wfd, eom, strlen(eom));
+	 break;
+	 case CMD_ANALYZE_OBJ:
+	    analyzeObject();
 	    sprintf(string, "Command succesful\n");
  	    write(wfd, string, strlen(string));
  	    write(wfd, eom, strlen(eom));
