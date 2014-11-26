@@ -57,6 +57,7 @@ typedef struct soundType {
 
 
 void initSounds();
+void initEspeak();
 int initAudio();
 void set_volume(long volume);
 int playWave(int freq, int length, int vol, int style);

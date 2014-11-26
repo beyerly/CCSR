@@ -1,3 +1,15 @@
+//############################################################################################
+// 
+// CCSR Robot project: http://letsmakerobots.com/robot/project/ccsr
+//
+// Main: Start up all brain functions as pthread processes and run main brain state-machine
+//
+// date: November 2014
+//
+//
+//############################################################################################
+
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -31,24 +43,24 @@ pthread_mutex_t semI2c;
 pthread_mutex_t semAudio;
 
 
-   pthread_t threadSonar, 
-             threadBlinkLed,
-             threadNavigation,
-	     threadPollGpio,
-	     threadProximitySensors,
-	     threadEnvironmentalSensors,
-	     threadSonarSensors,
-	     threadSoundGenerator,
-	     threadMood,
-	     threadVocal,
-	     threadVisual,
-	     threadCamTrack,
-	     threadLcdRefresh,
-	     threadLcdmanager,
-	     threadEars,
-	     threadTelemetry,
-	     threadNLP,
-	     threadPowerMonitor;
+pthread_t   threadSonar, 
+	    threadBlinkLed,
+	    threadNavigation,
+	    threadPollGpio,
+	    threadProximitySensors,
+	    threadEnvironmentalSensors,
+	    threadSonarSensors,
+	    threadSoundGenerator,
+	    threadMood,
+	    threadVocal,
+	    threadVisual,
+	    threadCamTrack,
+	    threadLcdRefresh,
+	    threadLcdmanager,
+	    threadEars,
+	    threadTelemetry,
+	    threadNLP,
+	    threadPowerMonitor;
 
 
 int  pipeSoundGen[2];
@@ -146,9 +158,6 @@ int main () {
    }
 
    write(pipeSoundGen[IN], &sound[linuxBooted], sizeof(sound[linuxBooted]));
-
-
-
 
    lcdEvent = EVENT_LINUX_BOOTED;
    write(pipeLCDMsg[IN], &lcdEvent, sizeof(lcdEvent));

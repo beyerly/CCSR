@@ -22,6 +22,8 @@ int  sonarScan(int range);
 void sonarScanDown();
 void getMinimumTurnSpeed();
 void analyzeObject();
+void initColors();
+
 
 
 
