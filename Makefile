@@ -19,7 +19,7 @@ telccsr_obj = telccsr.o
 headers = src/ccsr.h src/utils.h src/motor.h src/irSensors.h \
           src/sound.h src/mood.h src/vocal.h src/powerMonitor.h src/navigation.h \
 	  src/lcdDisp.h src/actions.h  src/telemetry.h src/telccsr.h src/servoCtrl.h \
-	  src/mjpg_streamer.h src/gpio.h src/visual.h
+	  src/gpio.h src/visual.h
 
 all: ccsr telccsr 
 
@@ -35,12 +35,8 @@ all: ccsr telccsr
 ccsr: $(ccsr_obj) $(headers) 
 	$(CPP) $(ccsr_obj) $(LDFLAGS) $(OPENCV_LINK_FLAGS) -O3 -lsndfile -lasound -lm -ldl -o ccsr -pthread -lportaudio -lespeak
 
-ocv: src/test.cpp
-	$(CPP) src/test.cpp $(OPENCV_LINK_FLAGS) -o opencvtest 
-
-telccsr: $(telccsr_obj) $(headers) src/client.c
+telccsr: $(telccsr_obj) $(headers) 
 	$(CC) $(telccsr_obj) $(LDFLAGS) -g -lreadline -o telccsr 
-	$(CC)  -g src/client.c -o client
 
 clean:
 	rm $(ccsr_obj); rm $(telccsr_obj); rm ccsr; rm telccsr; 

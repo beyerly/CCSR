@@ -546,6 +546,9 @@ void ccsrExecuteCmd(char **splitLine, int n, int wfd) {
 	            value0 = atoi(splitLine[2]);
     	            printf("pres %d\n", value0);
 	            setMotorPrescalerFrequency(value0);
+		    sprintf(string, "Command succesful\n");
+ 	            write(wfd, string, strlen(string));
+ 	            write(wfd, eom, strlen(eom));
 	         }
 	         else {
  	            sprintf(string, "Expecting: set mprescaler <value>\n", cmd);
