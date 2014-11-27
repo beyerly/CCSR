@@ -82,7 +82,7 @@ int main () {
    ccsrState.maxOperatingCurrent       = MAX_OPERATING_CURRENT;
    ccsrState.compassCalibrationOffsetX = 744;
    ccsrState.compassCalibrationOffsetY = -313;
-   setTargetColorRange(111, 120, 160, 208, 89, 223);  // Set object tracking color to blue
+   setTargetColorRange(111, 120, 160, 208, 89, 223);  // Set default object tracking color to blue
     
    logFile = fopen(LOG_FILE, "w");
    if (logFile!=NULL) {
@@ -244,8 +244,9 @@ int main () {
  		     	// Ran into object and are stopped. Evasive action, will most likely lose track of object
 			evasiveAction();
  		     }
-		     if(ccsrState.targetVisualObject_Vol > 2000000) {
- 		     	// Object is so big, it must be very close, consider target is reached: stop
+		     if(ccsrState.targetVisualObject_Vol > ccsrState.targetColorVolume) {
+ 		     	// Object is big enough, it must be very close, consider target is reached: stop
+			// We may need to fine-tune position later if we want to pick up tracked object with arm
 			while(!speedFiltered(0, 0)) {
  		     	   brainCycle();
  		     	}
@@ -385,6 +386,19 @@ int main () {
  	       stateChange(SM_REMOTE_CONTROLLED);
  	    }
    	 break;
+   	 case SM_POSITION_FOR_PICKUP:
+	    // We have tracked an object, camera is centered on it, CCSR is turned such that camera is dead-ahead,
+	    // and object volume as seen by camera is large enough to consider us close. Now we may need to fine-tune
+	    // position such that we can pick up object with arm 
+   	 break;
+   	 case SM_PICKUP_OBJECT:
+	    // We are positioned to pickup a tracked object: object is centered in camera's ROI. We can send arm to pre-defined location
+	    // close hand and retrieve object without further navigation
+   	 break;
+   	 case SM_RETURN_TO_START_LOCATION:
+	    // We have object in hand, now return to location where retrieve command was given.
+   	 break;
+	 
       }
       brainCycle();
 //    printf("t %d %d %d %d %d\n", ccsrState.timer, ccsrState.timerAlarm[0], ccsrState.motionDetected, ccsrState.noiseDetected, ccsrState.state_next);

@@ -29,26 +29,26 @@ char lcdEvent;
 
 
 //                    0               16
-char *sm_lookup[] = {"SM_RESET        ",
- 		     "SM_DIAGNOSTICS  ",
-		     "SM_ORIENTATION  ",
-		     "SM_DRIVE_TO_TGT ",
- 		     "SM_EVASIVE_ACTN ",
-		     "SM_EVASIVE_DETR ",
-		     "SM_EVASIVE_COMP ",
-		     "SM_EXPLORE      ",
-		     "SM_OBSERVE      ",
-		     "SM_RC           ",
-		     "SM_TRN_LCKD_OBJ ",
-		     "SM_TRK_AND_FLW  "
+char *sm_lookup[] = {"SM_RESET        ",    // 0
+ 		     "SM_DIAGNOSTICS  ",    // 1
+		     "SM_ORIENTATION  ",    // 2
+		     "SM_DRIVE_TO_TGT ",    // 3
+ 		     "SM_POSITION_PKUP",    // 4
+		     "SM_PICKUP_OBJ   ",    // 5
+		     "SM_RTRN_TO_STRT ",    // 6
+		     "SM_EXPLORE      ",    // 7
+		     "SM_OBSERVE      ",    // 8
+		     "SM_RC           ",    // 9
+		     "SM_TRN_LCKD_OBJ ",    // 10
+		     "SM_TRK_AND_FLW  "     // 11
 		      };
 char *sm_espeak_lookup[] = {"Reset",
  			    "Running diagnostics",
 			    "Orientation",
 			    "Heading for target",
- 			    "Evasive action",
-			    "SM_EVASIVE_DETR ",
-			    "SM_EVASIVE_COMP ",
+ 			    "Position for pickup",
+			    "Picking up object",
+			    "Returning to start",
 			    "Exploring       ",
 			    "Observing",
 			    "Remote Controlled",

@@ -129,34 +129,34 @@ char *onoff_cmd_lookup[] = {"0",
 			   };
 
 // List of selected fields in ccsrState. This is used by dump commands, to generate CSV file or pass on to telCCSR temeletry.
-char *CCSRStateTemplate[] = {"State,  		      %4d\n",   // 0
-			     "proximitySensorsOn,     %4d\n",   // 1
-			     "sonarSensorsOn,	      %4d\n",   // 2
-			     "environmantalSensorsOn, %4d\n",   // 3
-			     "navigationOn,	      %4d\n",   // 4
-			     "pidMotionDetectOn,      %4d\n",   // 5
-			     "gyroOn,		      %4d\n",	// 6
-			     "noiseDetectOn,	      %4d\n",	// 7
-			     "fear,		      %4d\n",	// 8
-			     "stress,		      %4d\n",	// 9
-			     "ambientLight,	      %4d\n",	// 10
-			     "irDistFrontLeft,	      %4d\n",	// 11
-			     "irDistFrontRight,       %4d\n",	// 12
-			     "irDistBelow,	      %4d\n",	// 13
-			     "Temperature,	      %4d\n",	// 14
-			     "proximity,	      %4d\n",	// 15
-			     "sonarDistFront,	      %4d\n",	// 16
-			     "sonarDistDownFront,     %4d\n",	// 17
-			     "heading,		      %4d\n",	// 18
-			     "target,		      %4d\n",	// 19
-			     "TrackObject,	      %4d\n",	// 20
-			     "Pan,		      %4d\n",	// 21
-			     "Tilt,		      %4d\n",	// 22
-			     "RC,		      %4d\n",	// 23
-			     "Battery Voltage,	      %4d\n",	// 24
-			     "Battery perc,	      %4d\n",	// 25
-			     "Max Operating Curr,     %4d\n",	// 26
-			     "Current Limited,	      %4d\n"	// 27
+char *CCSRStateTemplate[] = {"State,  		      %4d, \n",   // 0
+			     "proximitySensorsOn,     %4d, \n",   // 1
+			     "sonarSensorsOn,	      %4d, \n",   // 2
+			     "environmantalSensorsOn, %4d, \n",   // 3
+			     "navigationOn,	      %4d, \n",   // 4
+			     "pidMotionDetectOn,      %4d, \n",   // 5
+			     "gyroOn,		      %4d, \n",	// 6
+			     "noiseDetectOn,	      %4d, \n",	// 7
+			     "fear,		      %4d, \n",	// 8
+			     "stress,		      %4d, \n",	// 9
+			     "ambientLight,	      %4d, \n",	// 10
+			     "irDistFrontLeft,	      %4d, \n",	// 11
+			     "irDistFrontRight,       %4d, \n",	// 12
+			     "irDistBelow,	      %4d, \n",	// 13
+			     "Temperature,	      %4d, degrees\n",	// 14
+			     "proximity,	      %4d, \n",	// 15
+			     "sonarDistFront,	      %4d, \n",	// 16
+			     "sonarDistDownFront,     %4d, \n",	// 17
+			     "heading,		      %4d, degrees\n",	// 18
+			     "target,		      %4d, degrees\n",	// 19
+			     "TrackObject,	      %4d, \n",	// 20
+			     "Pan,		      %4d, \n",	// 21
+			     "Tilt,		      %4d, \n",	// 22
+			     "RC,		      %4d, \n",	// 23
+			     "Battery Voltage,	      %4d, volt\n",	// 24
+			     "Battery perc,	      %4d, percent\n",	// 25
+			     "Max Operating Curr,     %4d, ampere\n",	// 26
+			     "Current Limited,	      %4d, \n"	// 27
 			     };
 			     
 

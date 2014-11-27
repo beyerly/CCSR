@@ -652,5 +652,8 @@ void analyzeObject() {
    if (ccsrState.targetColor_iHighS > MAX_SATURATION) ccsrState.targetColor_iHighS = MAX_SATURATION;
    if (ccsrState.targetColor_iLowV < 0) ccsrState.targetColor_iLowV                = 0;  
    if (ccsrState.targetColor_iHighV > MAX_VALUE) ccsrState.targetColor_iHighV      = MAX_VALUE;
-     
+
+   // For now we only analyze test-object of knows size: 
+   ccsrState.targetColorVolume = TEST_OBJECT_1_VOLUME;
+
 }

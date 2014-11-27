@@ -38,6 +38,10 @@ void initColors();
 #define SATURATION_WINDOW 40
 #define VALUE_WINDOW      20
 
+// We test CCSR with colored balls of fixed size. This number is the volume of the tracked object as seen by *visual
+// when is it close enough to be picked up.
+#define TEST_OBJECT_1_VOLUME 2000000
+
 // Struct assigning a name to an HSV color defined by a range of HSV values. 
 // Used to lookup a color name based on HSV values
 typedef struct colorType {

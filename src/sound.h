@@ -6,6 +6,7 @@
 #define BUF_SIZE 32000
 #define WAV_BUF_SIZE 1024 
 #define PLAYBACK_SPEED 44100
+#define WAV_DOWNSAMPLE_FACTOR 4   // So we are downsampling to 11025
 
 #define NUM_SOUNDS 6
 #define MAX_NOTES 8
@@ -13,8 +14,8 @@
 
 #define SND_REPETITION_DELAY 10000
 
-#define  AUDIO_PEAK_HYSTRESIS 10
-#define  AUDIO_ENERGY_HYSTRESIS 10
+#define AUDIO_PEAK_HYSTRESIS 10
+#define AUDIO_ENERGY_HYSTRESIS 10
 #define EAR_PERIOD 500000          // 1s
 
 

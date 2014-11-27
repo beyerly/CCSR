@@ -60,7 +60,7 @@ int writeSndFile(int numFrames, short* buffer) {
    int fd;
    info.format = SF_FORMAT_WAV | SF_FORMAT_PCM_16;
    info.channels = 1;
-   info.samplerate = PLAYBACK_SPEED;
+   info.samplerate = PLAYBACK_SPEED/WAV_DOWNSAMPLE_FACTOR;
 
    // Open sound file for writing
    printf("x1\n");
@@ -677,11 +677,12 @@ void recordWave(int mode, int length) {
       case VOICE_RECOGNITION: 
          // Signal end of audio capture
          write(pipeSoundGen[IN], &sound[singleA], sizeof(sound[singleA]));
-         sleep(1);
-         // Extract mono signal from left channel 
-         capture_buffer_mono = (short*) malloc(frames *sizeof(short));
+         // usleep(500); // do we need any delay here?
+         // Extract mono signal from left channel, and downsample from 44.1kHz to limit the wav file-size and reduce
+	 // upload time to googleSpeech2textAPI
+         capture_buffer_mono = (short*) malloc((frames/WAV_DOWNSAMPLE_FACTOR) *sizeof(short));
          x=0;
-	 for(y=0;y<samples;y=y+2){
+	 for(y=0;y<samples;y=y+2*WAV_DOWNSAMPLE_FACTOR){
 	    capture_buffer_mono[x] = capture_buffer[y];
 	    x=x+1;
 	 }
@@ -691,7 +692,7 @@ void recordWave(int mode, int length) {
 	 // parsed by CCSR_NLP.py, which will call ccsr back through
 	 // a telemetry channel. GoogleVoiceToText.sh deamon will delete
 	 // voice file after use, and resum polling
-	 writeSndFile(samples/2, capture_buffer_mono);
+	 writeSndFile((frames/WAV_DOWNSAMPLE_FACTOR), capture_buffer_mono);
       break;
       }
    pthread_mutex_unlock(&semAudio);

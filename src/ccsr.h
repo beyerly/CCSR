@@ -69,18 +69,18 @@ enum turnDirType {RIGHT, LEFT};
 enum turnType {NOSCAN, SCAN};
 enum msgType {LOG, ERROR};
 enum pipeDir {OUT, IN};
-enum ccsrSMType {SM_RESET,
+enum ccsrSMType {SM_RESET,                
                  SM_DIAGNOSTICS,
 		 SM_ORIENTATION,
 		 SM_DRIVE_TO_TARGET,
-		 SM_EVASIVE_ACTION, 
-		 SM_EVASIVE_DETOUR,
-		 SM_EVASIVE_COMPENSATION,
+		 SM_POSITION_FOR_PICKUP,   
+		 SM_PICKUP_OBJECT,        
+		 SM_RETURN_TO_START_LOCATION,  
 		 SM_EXPLORE,
 		 SM_OBSERVE, 
 		 SM_REMOTE_CONTROLLED,
-		 SM_TURN_TO_LOCKED_OBJECT,
-		 SM_TRACK_AND_FOLLOW
+		 SM_TURN_TO_LOCKED_OBJECT, // unused
+		 SM_TRACK_AND_FOLLOW       // unused
 		 };
 
 #define NUM_BOTTONS 7 // one big red, 4 numpads, one PID
@@ -211,30 +211,31 @@ typedef struct ccsrStateType {
 
    // Opencv visual
    
-   
-  int targetColor_iLowH;  
-  int targetColor_iHighH; 
+   // Define target object CCSR is tracking in terms of HSV color range and volume (size)
+   int targetColor_iLowH;  
+   int targetColor_iHighH; 
+   int targetColor_iLowS;  
+   int targetColor_iHighS; 
+   int targetColor_iLowV;  
+   int targetColor_iHighV; 
+   int targetColorVolume;
 
-  int targetColor_iLowS;  
-  int targetColor_iHighS; 
-
-  int targetColor_iLowV;  
-  int targetColor_iHighV; 
-
-  char visualProcessingOn;
-  char trackTargetColorOn;
-  int  objectTracked;
-  int  trackedObjectCentered;
+   char visualProcessingOn;     // if 1, camera is used by visual.cpp, and capturing images
+   char trackTargetColorOn;     // if set to 1 by user, CCSR tracks target object. 
+   int  objectTracked;          // Set to 1 by *visual if target object is being tracked
+   int  trackedObjectCentered;  // Set to 1 by *camtrack if tracked object is in the center of the captured image
   
-  double targetVisualObject_X;  
-  double targetVisualObject_Y;  
-  double targetVisualObject_Vol;  
+   // Current coordinates and volume of tracked object, continuously updated by *visual
+   double targetVisualObject_X;  
+   double targetVisualObject_Y;  
+   double targetVisualObject_Vol;  
 
-  // Object analysis
-  char analyzeObject;  // *visual thread will analyse object once if set to '1', and populate following 3 color values
-  int analyzedObjectH;  
-  int analyzedObjectS;  
-  int analyzedObjectV;  
+   // Object analysis
+   char analyzeObject;  // *visual thread will analyse object once if set to '1', and populate following 3 color values
+   // Captured HSV values after analysis
+   int analyzedObjectH;  
+   int analyzedObjectS;  
+   int analyzedObjectV;  
 
 } ccsrStateType;
 
