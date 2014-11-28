@@ -1,7 +1,4 @@
 CCSR
 ====
 
-
-A
-
-Main code for CCSR robot project
+Main code base for CCSR robot platform, see http://www.letsmakerobots.com/robot/project/ccsr for details.
