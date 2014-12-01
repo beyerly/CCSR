@@ -39,9 +39,9 @@ colorType colors[NUM_COLORS];
 // from .NET only.
 void initColors(){
 
-   colors[0].iLowH  = 111;
+   colors[0].iLowH  = 100;
    colors[0].iHighH = 120;
-   colors[0].iLowS  = 160;
+   colors[0].iLowS  = 140;
    colors[0].iHighS = 208;
    colors[0].iLowV  = 89;
    colors[0].iHighV = 223;
@@ -537,11 +537,14 @@ void pickUpObject() {
 // From folded position, extend arm and open grabber. This is the first step in handing CCSR an object for him to 
 // analyze.
 void extendArm() {
-   setArm(45, 5, 0, 0, 20);  // Fold if not already folded
-   setArm(45, 5, 0, 0, 20);  // Extend elbow
-   setArm(45, 5, 0, 0, 20);  // Extend shoulder
-   setArm(45, 5, 0, 0, 20);  // Rotate wrist
-   
+   setArm(45, 100, 0, 0, 90);  // Fold if not already folded
+   setArm(15, 180, 180, 0, 90);  // Extend elbow
+}
+void dropAndFoldArm() {
+   setArm(25, 80, 180, 150, 90);
+   setArm(25, 80, 180, 0, 90);
+   setArm(45, 80, 90, 0, 90);
+   setArm(45, 5, 0, 0, 90);
 }
 
 void retractArm() {
@@ -571,9 +574,11 @@ void analyzeObject() {
    colorType color;
    
    objectDetected=0;
+   say("analyzing object");
 
    extendArm();           // Extend arm from folded position, and open grabber
-   setPanTilt(0,-20,20);  // Move camera to center grabber into image 'region of interest'
+   setPanTilt(0,-30,20);  // Move camera to center grabber into image 'region of interest'
+   say("please hand me the object");
    
    // Enable object analyzing: this will cause the *visual process in visual.cpp to calculate and
    // store the average color of a region of interest. This captured color will be representing
@@ -623,12 +628,13 @@ void analyzeObject() {
      	 (ccsrState.analyzedObjectV<color.iLowV)  ||
      	 (ccsrState.analyzedObjectV>color.iHighV)){
      	 objectDetected=1;
+         say("thank you!");
       }
       sleep(1);  // Wait a little before doing next color capture
    }
    // We detected a change, wait a little and then grab it:
    sleep(1);
-   setArm(45, 5, 0, 0, 20);  // close grabber
+   setArm(15, 180, 180, 150, 90);  // close grabber
    // The color captured may be transitionary: we captured a 'blur' when object moved in, or it may
    // be affected by human fingers holding the object. So
    // we wait a little, assuming user will 'steady' the object between grabber, and capture one more time.
@@ -671,5 +677,8 @@ void analyzeObject() {
 
    // For now we only analyze test-object of knows size: 
    ccsrState.targetColorVolume = TEST_OBJECT_1_VOLUME;
+
+   setPanTilt(0,0,20);  // Move camera to center grabber into image 'region of interest'
+   dropAndFoldArm();
 
 }
