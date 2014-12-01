@@ -69,8 +69,8 @@ void *camtrack();
 #define TILT_SERVO_MIN  312 // this is the 'minimum' pulse length count (out of 4096)
 #define TILT_SERVO_MAX  515 // this is the 'maximum' pulse length count (out of 4096)
 
-#define ARM_SERVO_MIN  379 // this is the 'minimum' pulse length count (out of 4096)
-#define ARM_SERVO_MAX  578 // this is the 'maximum' pulse length count (out of 4096)
+#define ARM_SERVO_MIN  200 // this is the 'minimum' pulse length count (out of 4096)
+#define ARM_SERVO_MAX  373 // this is the 'maximum' pulse length count (out of 4096)
 #define ELBOW_SERVO_MIN  132 // this is the 'minimum' pulse length count (out of 4096)
 #define ELBOW_SERVO_MAX  718 // this is the 'maximum' pulse length count (out of 4096)
 #define WRIST_SERVO_MIN  155 // this is the 'minimum' pulse length count (out of 4096)

@@ -13,6 +13,7 @@ voiceFile="/home/root/ccsr/data/voice.wav"
 logfile="./googleVoice2Text.log"
 # fifo to nlpxCCSR.py
 fifo="./text2nlpFifo"
+rate=44100
 
 if [ ! -f $fifo ] 
 then
@@ -31,7 +32,7 @@ while [ $? -eq 0 ]; do
    echo posting request to google specht2text > $logfile
    curl  -X POST \
    --data-binary @$voiceFile \
-   --header 'Content-Type: audio/l16; rate=44100;' \
+   --header 'Content-Type: audio/l16; rate=11025;' \
    'https://www.google.com/speech-api/v2/recognize?output=json&lang=en-us&key=AIzaSyCRl0iv1MMI-vMafGdFyGlH4A0b7aXUsgI' -k\
    -o text.json_pre
    # apparently google returns 2 json structures, the first one always empty. Delete this first structure:

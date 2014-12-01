@@ -249,7 +249,7 @@ void *proximitySensors() {
 
 
 //         ccsrState.proximity = getProximity();
-//          printf("irLeft %d irRight %d below %d\n", ccsrState.irDistFrontLeft, ccsrState.irDistFrontRight, ccsrState.irDistBelow);
+          printf("irLeft %d irRight %d below %d\n", ccsrState.irDistFrontLeft, ccsrState.irDistFrontRight, ccsrState.irDistBelow);
       }
       if(ccsrState.sonarSensorsOn) {
  	 configADC(MUX_AIN2);

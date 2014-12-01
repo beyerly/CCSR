@@ -45,6 +45,8 @@ void *visual () {
    int roiWidth = ROI_WIDTH;
    int roiX = IMAGE_WIDTH/2 - ROI_WIDTH/2;
    int roiY = IMAGE_HEIGHT/2 - ROI_HEIGHT/2;
+    roiX = roiX - 58 ;
+    roiY = roiY + 130;
    
 
    double fps = cap.get(CV_CAP_PROP_FPS);
@@ -99,6 +101,7 @@ void *visual () {
 	  // This is a one-shot operation. analyzeObject in actions.c sets ccsrState.analyzeObject to 1
 	  // visual handshakes by resetting:
           ccsrState.analyzeObject = 0; 
+         cout << "anal" << ccsrState.analyzedObjectH << " " << ccsrState.analyzedObjectS << " " << ccsrState.analyzedObjectV << endl;
        }
 
        inRange(imgHSV, Scalar(iLowH, iLowS, iLowV), Scalar(iHighH, iHighS, iHighV), imgThresholded); //Threshold the image

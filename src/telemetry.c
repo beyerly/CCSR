@@ -665,17 +665,11 @@ void ccsrExecuteCmd(char **splitLine, int n, int wfd) {
                write(pipeSoundGen[IN], &sound[singleA], sizeof(sound[singleA]));
  	       write(wfd, string, strlen(string));
  	       write(wfd, eom, strlen(eom));
-/*
-//               readMotor(SETPWMAB);
-//               readMotor(SETFREQ);
 
-	    if (n>2) {
+	    if (n>1) {
 	       value0 = atoi(splitLine[1]);
-	       value1 = atoi(splitLine[2]);
-//	       value2 = atoi(splitLine[3]);
- 	       printf("%d %d %d\n", value0, value1, value2);
-	       setMotorPrescalerFrequency(value0);
-//               setMotorPWM(value1, value2);
+ 	       printf("%d \n", value0);
+               set_playback_volume(value0);
 	       sprintf(string, "Command succesful\n");
  	       write(wfd, string, strlen(string));
  	       write(wfd, eom, strlen(eom));
@@ -685,7 +679,7 @@ void ccsrExecuteCmd(char **splitLine, int n, int wfd) {
  	       write(wfd, string, strlen(string));
  	       write(wfd, eom, strlen(eom));
 	    }
-*/
+
 	 break;
      }
    }
