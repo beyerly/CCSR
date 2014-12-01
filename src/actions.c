@@ -544,6 +544,22 @@ void extendArm() {
    
 }
 
+void retractArm() {
+   setArm(45, 5, 0, 0, 20);  // Fold if not already folded
+   setArm(45, 5, 0, 0, 20);  // Extend elbow
+   setArm(45, 5, 0, 0, 20);  // Extend shoulder
+   setArm(45, 5, 0, 0, 20);  // Rotate wrist
+   
+}
+
+
+void putdownObject() {
+   setArm(45, 5, 0, 0, 20);  // Fold if not already folded
+   setArm(45, 5, 0, 0, 20);  // Extend elbow
+   setArm(45, 5, 0, 0, 20);  // Extend shoulder
+   setArm(45, 5, 0, 0, 20);  // Rotate wrist
+}
+
 // From folded position, extend arm and open grabber. Move camera to center grabber in visual's 'ROI' box. 
 // Wait untill we detect an object being held between grabber fingers (color-based motion detection),
 // then close grabber. Bring hand in front of camera. 

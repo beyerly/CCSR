@@ -23,6 +23,8 @@ void sonarScanDown();
 void getMinimumTurnSpeed();
 void analyzeObject();
 void initColors();
+void retractArm();
+void putdownObject();
 
 
 

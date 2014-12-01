@@ -22,6 +22,7 @@ enum telccsrcmd  {CMD_SET,
 		  CMD_RESET,
 		  CMD_DUMMY,
 		  CMD_ANALYZE_OBJ,
+		  CMD_PUTDOWN_OBJ,
 		  NUM_CMD
 		  };
 

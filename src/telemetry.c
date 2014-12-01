@@ -77,8 +77,9 @@ char *cmd_lookup[] = {"set",             // followed by set_cmd_lookup[]
 		                         // measure magnitec fields and calibrate functions
 		      "reset",           // Unused st this time
 		      "dummy",           // dummy <int> <int> ... - Dummy command for debug.
-		      "analyzeobj"       // Extend arm, grab object offered, analyze and say color, and make object the 
+		      "analyzeobj",      // Extend arm, grab object offered, analyze and say color, and make object the 
 		                         // target object color that CCSR can track.
+		      "putdown"          // Put object held by arm back on the floor, retract arm. 
 		      };
 
 char *dump_cmd_lookup[] = {"all",        // dump all - Print selected ccsrState fields to return-fifo
@@ -635,7 +636,8 @@ void ccsrExecuteCmd(char **splitLine, int n, int wfd) {
 	    }
 	 break;
 	 case CMD_AUDIO_PLAYBACK:
-            if (n>1) {
+            // Not used for now
+	    if (n>1) {
 	       value0 = atoi(splitLine[1]);
                playAudioMemory(value0);
 	       sprintf(string, "Command succesful\n");
@@ -657,6 +659,13 @@ void ccsrExecuteCmd(char **splitLine, int n, int wfd) {
 	 break;
 	 case CMD_ANALYZE_OBJ:
 	    analyzeObject();
+	    sprintf(string, "Command succesful\n");
+ 	    write(wfd, string, strlen(string));
+ 	    write(wfd, eom, strlen(eom));
+	 break;
+	 case CMD_PUTDOWN_OBJ:
+	    putdownObject();
+	    retractArm();
 	    sprintf(string, "Command succesful\n");
  	    write(wfd, string, strlen(string));
  	    write(wfd, eom, strlen(eom));
