@@ -50,11 +50,6 @@ void brainCycle() {
 }
 
 
-
-
-
-
-
 /*
 void *blinkLed() {
    char string[MSG_STRING_SIZE];

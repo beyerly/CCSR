@@ -35,7 +35,7 @@ extern ccsrStateType ccsrState;
 
 // This gets called whenever CCSR process is started
 int initMotors() {
-   setMotorPrescalerFrequency(1);
+   setMotorPrescalerFrequency(0);
 }
 
 // Motor diagnostics

@@ -10,14 +10,9 @@
 #include "lcdDisp.h"
 #include "utils.h"
 
-
-
 #ifndef I2C_SLAVE
 #define I2C_SLAVE 0
 #endif
-
-
-
 
 extern FILE *logFile;
 extern ccsrStateType ccsrState;
@@ -25,8 +20,6 @@ extern int i2cbus;
 extern pthread_mutex_t semI2c;
 extern int pipeLCDMsg[2];
 char lcdEvent;
-
-
 
 //                    0               16
 char *sm_lookup[] = {"SM_RESET        ",    // 0
@@ -38,7 +31,7 @@ char *sm_lookup[] = {"SM_RESET        ",    // 0
 		     "SM_RTRN_TO_STRT ",    // 6
 		     "SM_EXPLORE      ",    // 7
 		     "SM_OBSERVE      ",    // 8
-		     "SM_RC           ",    // 9
+		     "Awaiting command",    // 9
 		     "SM_TRN_LCKD_OBJ ",    // 10
 		     "SM_TRK_AND_FLW  "     // 11
 		      };
@@ -51,17 +44,19 @@ char *sm_espeak_lookup[] = {"Reset",
 			    "Returning to start",
 			    "Exploring       ",
 			    "Observing",
-			    "Remote Controlled",
+			    "Awaiting command",
 		            "xx ",
 		            "xx  "
 			     };
+
 //                        0              16
-char *action_lookup[] = {"Evasive Action ",
- 			 "Orientation    ",
-			 "Paused         ",
-			 "Turn to Target ",
-			 "Capt & Playb   ",
-			 "No action      "
+char *action_lookup[] = {"Evasive Action ",  // 0
+ 			 "Orientation    ",  // 1
+			 "Paused         ",  // 2
+			 "Turn to Target ",  // 3
+			 "Capt & Playb   ",  // 4
+			 "Idle           ",  // 5
+			 "Analyzing Obj  "   // 6
 			 };
 
 char majorMsg[17];
@@ -74,9 +69,9 @@ int* minorMsgArgPtr;
 char eventMsg[17];
 char actionMsg[17];
 
-
-
-
+void lcdDisplayInit() {
+//   lcdDisplayConfig(value1, value2);
+}
 
 void lcdDisplayMajorMsg(char *s) {
 
@@ -129,6 +124,34 @@ void lcdDisplayMinorMsg(char *s) {
    pthread_mutex_unlock(&semI2c);
 } 
 
+
+// Set LCD display contrast and brightness
+void lcdDisplayConfig(char contrast , char brightness) {
+   unsigned char buffer[3];
+
+   buffer[0] = LCDPREFIX;
+   buffer[1] = LCD_CONTRAST;
+   buffer[2] = contrast;
+   pthread_mutex_lock(&semI2c);
+
+   if(ioctl(i2cbus, I2C_SLAVE, LCD_ADDR)) {
+      logMsg(logFile, "Can't set LCD_ADDR I2C address", ERROR);
+   }
+   usleep(I2C_DELAY);
+   if(write(i2cbus, buffer,3 ) !=3 ) {
+      logMsg(logFile, "Unsuccessful cmd write to LCD_ADDR", ERROR);	  
+   }
+   usleep(I2C_DELAY);
+   buffer[1] = LCD_BRIGHTNESS;
+   buffer[2] = brightness;
+   if(write(i2cbus, buffer,3 ) !=3 ) {
+      logMsg(logFile, "Unsuccessful cmd write to LCD_ADDR", ERROR);	  
+   }
+   usleep(I2C_DELAY);
+   pthread_mutex_unlock(&semI2c);
+} 
+
+// Clear LCD screen
 void lcdDisplayClear() {
 
    unsigned char buffer[2];
@@ -148,6 +171,32 @@ void lcdDisplayClear() {
    usleep(I2C_DELAY);
    pthread_mutex_unlock(&semI2c);
 } 
+
+// Turn on/off LCD display backlight. 
+void lcdDisplayPower(int on) {
+
+   unsigned char buffer[2];
+
+   buffer[0] = LCDPREFIX;
+   if (on) {
+      buffer[1] = LCD_DISPLAY_ON;
+   }
+   else {
+      buffer[1] = LCD_DISPLAY_OFF;
+   }
+   pthread_mutex_lock(&semI2c);
+
+   if(ioctl(i2cbus, I2C_SLAVE, LCD_ADDR)) {
+      logMsg(logFile, "Can't set LCD_ADDR I2C address", ERROR);
+   }
+   usleep(I2C_DELAY);
+   if(write(i2cbus, buffer, 2) !=2 ) {
+      logMsg(logFile, "Unsuccessful cmd write to LCD_ADDR", ERROR);	  
+   }
+   usleep(I2C_DELAY);
+   pthread_mutex_unlock(&semI2c);
+} 
+
 
 void *lcdManager() {
 

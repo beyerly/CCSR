@@ -79,10 +79,12 @@ int main () {
 // initCamera();  // mjpg_streamer, obsolete because Im running it separately
    ccsrState.remoteControlled	       = 1;
    ccsrState.minMotorTurnSpeed	       = SLOW_MOTOR_TURNSPEED;
+   ccsrState.minMotorSpeed	       = SLOW_MOTOR_SPEED;
    ccsrState.maxOperatingCurrent       = MAX_OPERATING_CURRENT;
    ccsrState.compassCalibrationOffsetX = 744;
    ccsrState.compassCalibrationOffsetY = -313;
-   setTargetColorRange(111, 120, 160, 208, 89, 223);  // Set default object tracking color to blue
+   setTargetColorRange (111, 120, 160, 208, 89, 223);  // Set default object tracking color to blue
+   setTargetColorVolume(TEST_OBJECT_2_VOLUME);         // Set default object volume: 
     
    logFile = fopen(LOG_FILE, "w");
    if (logFile!=NULL) {
@@ -110,6 +112,7 @@ int main () {
 
    configServoControl();
    initMotors();
+   lcdDisplayInit();
 
    if(pthread_create( &threadNavigation, NULL, navigation, NULL )) {
       logMsg(logFile, "Pthread can't be created", ERROR);
@@ -251,8 +254,8 @@ int main () {
  		     	   brainCycle();
  		     	}
  		     	usleep(3000000);
-		     	say("Arrived at target object!");
- 		     	stateChange(SM_OBSERVE);
+		     	say("Arrived at target, what can I do for you?");
+                        stateChange(SM_REMOTE_CONTROLLED);
 		     }
 		  }
 		  else {
@@ -260,7 +263,7 @@ int main () {
 		     while(!speedFiltered(0, 0)) {
  		  	brainCycle();
  		     }
-		     // Re-aliogn with camera direction
+		     // Re-align with camera direction
 		     ccsrState.targetHeading = addAngleToHeading(ccsrState.pan);
 		     turnToTargetHeading(NOSCAN);
 		     // Wait until cam senters again

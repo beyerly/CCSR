@@ -13,7 +13,8 @@
 #define MOTOR_NEG_THRESHOLD -30
 #define MAX_MOTOR_SPEED 230 
 #define MAX_MOTOR_TURNSPEED 250
-#define SLOW_MOTOR_TURNSPEED 150
+#define SLOW_MOTOR_TURNSPEED 150  // Least motor power that still makes CCSR turn
+#define SLOW_MOTOR_SPEED 150      // Least motor power that still moves CCSR fwd/back
 #define MOTOR_SPEEDUP_STEPS 32 
 
 #define SLOW_TURNSPEED_THRESHOLD 90  // deg

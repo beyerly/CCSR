@@ -22,7 +22,8 @@ enum telccsrcmd  {CMD_SET,
 		  CMD_RESET,
 		  CMD_DUMMY,
 		  CMD_ANALYZE_OBJ,
-		  CMD_PUTDOWN_OBJ,
+		  CMD_FIND_OBJ,
+		  CMD_GIVE_OBJ,
 		  NUM_CMD
 		  };
 
@@ -54,6 +55,9 @@ enum telccsrset          {REMOTE,
 			  MAX_OP_CURR,
 			  ARM,
 			  MOTORPRESCALER,
+			  VOLUME,
+			  LCDDISP,
+			  TARGET_COLOR_VOLUME,
 			  NUM_SENS_CMD
 		         };
 

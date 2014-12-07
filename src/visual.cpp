@@ -19,18 +19,23 @@ extern ccsrStateType ccsrState;
 
 extern "C" {
 
+   // Set CCSR's active target color range in HSV values. CCSR will track this color if enabled 
 void setTargetColorRange(int iLowH, int iHighH, int iLowS, int iHighS, int iLowV, int iHighV) {
-
    ccsrState.targetColor_iLowH  =  iLowH;
    ccsrState.targetColor_iHighH =  iHighH;
-
    ccsrState.targetColor_iLowS  =  iLowS;
    ccsrState.targetColor_iHighS =  iHighS;
-
    ccsrState.targetColor_iLowV  =  iLowV;
    ccsrState.targetColor_iHighV =  iHighV;
 }
 
+// Set CCSR's active target volume. CCSR will assume it arrived at the active target object if the 
+// volume (area) of the tracked color blob is more than this value
+void setTargetColorVolume(int vol) {
+   ccsrState.targetColorVolume = vol
+}
+
+// pthread process processing images from USB camera
 void *visual () {
 
    VideoCapture cap(0); //capture the video from webcam
@@ -45,8 +50,9 @@ void *visual () {
    int roiWidth = ROI_WIDTH;
    int roiX = IMAGE_WIDTH/2 - ROI_WIDTH/2;
    int roiY = IMAGE_HEIGHT/2 - ROI_HEIGHT/2;
-    roiX = roiX - 58 ;
-    roiY = roiY + 130;
+   // Adjust ROI from center to spot covering the grabber.
+   roiX = roiX - 58 ;
+   roiY = roiY + 130;
    
 
    double fps = cap.get(CV_CAP_PROP_FPS);
@@ -90,18 +96,18 @@ void *visual () {
        cvtColor(imgOriginal, imgHSV, COLOR_BGR2HSV); //Convert the captured frame from BGR to HSV
  
 
-       // If analyzing object held up by arm, calculate and capture avarage color values of object.
-       // Object is assumed to be held by arm exactly at square region of interrest (roi) in middle of image:
+       // If asked to analyze an object held up by arm, calculate and capture avarage color values of object.
+       // Object is assumed to be held by arm exactly at square region of interrest (roi) in middle of image
+       // This is a one-shot operation. analyzeObject in actions.c sets ccsrState.analyzeObject to 1
+       // visual handshakes by resetting:
        if(ccsrState.analyzeObject) {
           Mat roi(imgHSV, Rect(roiX,roiY,roiWidth,roiHeight)); // extract small roi of image
 	  Scalar meanRoi = mean(roi);                          // calculate mean HSV color value of roi
 	  ccsrState.analyzedObjectH = meanRoi.val[0];          
 	  ccsrState.analyzedObjectS = meanRoi.val[1];
 	  ccsrState.analyzedObjectV = meanRoi.val[2];
-	  // This is a one-shot operation. analyzeObject in actions.c sets ccsrState.analyzeObject to 1
-	  // visual handshakes by resetting:
           ccsrState.analyzeObject = 0; 
-         cout << "anal" << ccsrState.analyzedObjectH << " " << ccsrState.analyzedObjectS << " " << ccsrState.analyzedObjectV << endl;
+          cout << "analysed HSV:" << ccsrState.analyzedObjectH << " " << ccsrState.analyzedObjectS << " " << ccsrState.analyzedObjectV << endl;
        }
 
        inRange(imgHSV, Scalar(iLowH, iLowS, iLowV), Scalar(iHighH, iHighS, iHighV), imgThresholded); //Threshold the image
@@ -121,9 +127,9 @@ void *visual () {
        double dM10 = oMoments.m10;
        double dArea = oMoments.m00;
 
-       // if the area <= 10000, I consider that the there are no object in the image and it's 
+       // if the area < MIN_TRACKED_OBJECT_VOLUME, I consider that the there are no object in the image and it's 
        // because of the noise, the area is not zero 
-       if (dArea > 100000)
+       if (dArea > MIN_TRACKED_OBJECT_VOLUME)
        {
           ccsrState.objectTracked = 1;
  	  //calculate the position of the ball
@@ -145,4 +151,4 @@ void *visual () {
 
 }
 
-}
+}  // extern 'C'

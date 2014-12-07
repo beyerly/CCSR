@@ -13,6 +13,7 @@
 #include "lcdDisp.h"
 #include "powerMonitor.h"
 #include "servoCtrl.h"
+#include "visual.h"
 #include <linux/i2c-dev.h>
 
 
@@ -38,7 +39,6 @@ colorType colors[NUM_COLORS];
 // Note: Is there a HSV2string function? string s = Color.FromArgb(255, 143, 143, 143).Name seems to be
 // from .NET only.
 void initColors(){
-
    colors[0].iLowH  = 100;
    colors[0].iHighH = 120;
    colors[0].iLowS  = 140;
@@ -527,41 +527,137 @@ void getMinimumTurnSpeed() {
    
 }
 
-// From folded position, extend arm and pick up object from floor, lift it up for the camera to see
-// We assume the object is in a prefixed location, and is of a pre-fixed size such that the gripper can grap it
-// This will be the result of CCSR manouvering such that the object is in prefixed location, using object tracking
-void pickUpObject() {
 
+// Find and pick up the current active target visual object, as encoded as HSV color in ccsrState.
+// We assume the object is already tracked with the pan at 0 deg (dead-ahead) abd tilt at -30deg (looking at floor), so the
+// object is positioned in camera view. If this is not the case, we swith to orientation to first find the object and
+// center the camera.
+// If tracked, we first turn to center the object on the X-axis, then move fwd/back to center on Y-axis. When centered
+// simply move arm to fixed position, close grabber and raise it up to camera.
+// Note that image coordinates are:
+// 0,0..................IMAGE_WIDTH,0
+// .
+// O,IMAGE_HEIGHT ..... IMAGE_WIDTH,IMAGE_HEIGHT
+void findAndPickupObject() {
+   int sign;
+   char string[100];
+
+   setPanTilt(0,-30,20);  // Move camera down to look at floor in front
+   sleep(2); // Wait for tracking lock if possible 
+   if (ccsrState.objectTracked) {
+      // We are tracking, now center CCSR chassis on X-axis
+      if((ccsrState.targetVisualObject_X > ((IMAGE_WIDTH/2) + OBJECT_PICKUP_WINDOW_X)) ||
+	 (ccsrState.targetVisualObject_X < ((IMAGE_WIDTH/2) - OBJECT_PICKUP_WINDOW_X))){
+         // X-axis is not aligned with target object, turn to align 
+	 // Determine if if need to turn LEFT or RIGHT to center in front of object
+         if (ccsrState.targetVisualObject_X < IMAGE_WIDTH/2) {
+	    // LEFT
+	    sign = 1;
+	 }
+	 else {
+	    // RIGHT
+	    sign = -1;
+	 }
+	 while (1) {
+            speedFiltered(0, sign*ccsrState.minMotorTurnSpeed);
+            brainCycle();
+	    if((ccsrState.targetVisualObject_X < ((IMAGE_WIDTH/2) + OBJECT_PICKUP_WINDOW_X)) &&
+	       (ccsrState.targetVisualObject_X > ((IMAGE_WIDTH/2) - OBJECT_PICKUP_WINDOW_X))){
+	       // X-axis is alogned with object. 
+	       // Stop turn
+	       while(!speedFiltered(0, 0)) {
+		  brainCycle();
+	       }
+	       // Move on to Y axis
+	       break;
+	    }
+	    // Re-calculate turn direction in case we overshot. Make sure we don't get oscillations here 
+	    if (ccsrState.targetVisualObject_X < IMAGE_WIDTH/2) {
+	       sign = 1;
+	    }
+	    else {
+	       sign = -1;
+	    }
+	 }
+      }
+      // Align on image Y-axis
+      if((ccsrState.targetVisualObject_Y > ((IMAGE_HEIGHT/2) + OBJECT_PICKUP_WINDOW_Y)) ||
+	 (ccsrState.targetVisualObject_Y < ((IMAGE_HEIGHT/2) - OBJECT_PICKUP_WINDOW_Y))){
+         // Y-axis is not aligned with target object, move fwd/back to align 
+	 // Determine if if need to go fwd or back to center in front of object
+         if (ccsrState.targetVisualObject_Y < IMAGE_HEIGHT/2) {
+	    // Fwd
+	    sign = 1;
+	 }
+	 else {
+	    // Back
+	    sign = -1;
+	 }
+	 while (1) {
+            speedFiltered(sign*ccsrState.minMotorSpeed, 0);
+            brainCycle();
+	    if((ccsrState.targetVisualObject_Y < ((IMAGE_HEIGHT/2) + OBJECT_PICKUP_WINDOW_Y)) &&
+	       (ccsrState.targetVisualObject_Y > ((IMAGE_HEIGHT/2) - OBJECT_PICKUP_WINDOW_Y))){
+	       // X-axis is alogned with object. Move on to Y axis
+	       // Stop turn
+	       while(!speedFiltered(0, 0)) {
+		  brainCycle();
+	       }
+	       break;
+	    }
+	    // Re-adjust direction, only required if we overshoot
+	    if (ccsrState.targetVisualObject_Y < IMAGE_HEIGHT/2) {
+	       sign = 1;
+	    }
+	    else {
+	       sign = -1;
+	    }
+	 }
+     }
+     // We are centered! Go grab object from prefixed location.      
+     setArm(45, 100, 0, 0, 90);      // Extend elbow halfway
+     setArm(25, 80, 180, 0, 90);     // raise shoulder, bring elbow in untill object touches ground
+     setArm(25, 80, 180, 150, 90);   // ober grabber, drop object
+     setArm(15, 180, 180, 150, 90);  // Lower shoulder, extend elbow fully, rotate wrist, grabber remains oben
+
+     strcat(string,"there you go, the ");
+     strcat(string,ccsrState.targetColorName);
+     strcat(string," object");
+
+   }
+   else {
+      // Target color is not in view, go find it first
+      say("I can't see it yet, let me go and look for it")
+//      stateChange(SM_ORIENTATION);
+   }
 }
 
 // From folded position, extend arm and open grabber. This is the first step in handing CCSR an object for him to 
 // analyze.
 void extendArm() {
-   setArm(45, 100, 0, 0, 90);  // Fold if not already folded
-   setArm(15, 180, 180, 0, 90);  // Extend elbow
+   setArm(45, 100, 0, 0, 90);    // Extend elbow halfway
+   setArm(15, 180, 180, 0, 90);  // Lower shoulder, extend elbow fully, rotate wrist, grabber remains oben
 }
+
+// Assuming arm is grabbing object, put it doen on the floor and fold arm back in
+// Note this movement is such to prevent colision: must rotate wrist fully back before retracting elbow
 void dropAndFoldArm() {
-   setArm(25, 80, 180, 150, 90);
-   setArm(25, 80, 180, 0, 90);
-   setArm(45, 80, 90, 0, 90);
-   setArm(45, 5, 0, 0, 90);
+   setArm(25, 80, 180, 150, 90); // raise shoulder, bring elbow in untill object touches ground
+   setArm(25, 80, 180, 0, 90);   // oper grabber, drop object
+   setArm(45, 80, 90, 0, 90);    // raise shoulder fully up, rotate wrist halfway
+   setArm(45, 5, 0, 0, 90);      // pull in elbow fully, rotate wrist fully in
 }
 
-void retractArm() {
-   setArm(45, 5, 0, 0, 20);  // Fold if not already folded
-   setArm(45, 5, 0, 0, 20);  // Extend elbow
-   setArm(45, 5, 0, 0, 20);  // Extend shoulder
-   setArm(45, 5, 0, 0, 20);  // Rotate wrist
-   
+// Assuming arm is grabbing object, put it doen on the floor and fold arm back in
+// Note this movement is such to prevent colision: must rotate wrist fully back before retracting elbow
+void giveObjectAndFoldArm() {
+   setArm(20, 170, 180, 150, 90); // Stretch arm out, keep grabber closed
+   say("here you are!");
+   setArm(20, 170, 180, 0, 90);   // oper grabber, drop object, assuming in hands or user
+   setArm(45, 80, 90, 0, 90);    // raise shoulder fully up, rotate wrist halfway
+   setArm(45, 5, 0, 0, 90);      // pull in elbow fully, rotate wrist fully in
 }
 
-
-void putdownObject() {
-   setArm(45, 5, 0, 0, 20);  // Fold if not already folded
-   setArm(45, 5, 0, 0, 20);  // Extend elbow
-   setArm(45, 5, 0, 0, 20);  // Extend shoulder
-   setArm(45, 5, 0, 0, 20);  // Rotate wrist
-}
 
 // From folded position, extend arm and open grabber. Move camera to center grabber in visual's 'ROI' box. 
 // Wait untill we detect an object being held between grabber fingers (color-based motion detection),
@@ -574,6 +670,10 @@ void analyzeObject() {
    colorType color;
    
    objectDetected=0;
+   ccsrState.action = ANALYZING_OBJ;
+   lcdEvent = EVENT_ACTION;
+   write(pipeLCDMsg[IN], &lcdEvent, sizeof(lcdEvent));
+   write(pipeSoundGen[IN], &sound[evasiveActionSnd], sizeof(sound[evasiveActionSnd]));
    say("analyzing object");
 
    extendArm();           // Extend arm from folded position, and open grabber
@@ -666,6 +766,7 @@ void analyzeObject() {
    ccsrState.targetColor_iHighS =  ccsrState.analyzedObjectS + SATURATION_WINDOW;
    ccsrState.targetColor_iLowV  =  ccsrState.analyzedObjectV - VALUE_WINDOW;
    ccsrState.targetColor_iHighV =  ccsrState.analyzedObjectV + VALUE_WINDOW;
+   strcpy(ccsrState.targetColorName, colorName);
 
    // clip
    if (ccsrState.targetColor_iLowH < 0) ccsrState.targetColor_iLowH		   = 0;
@@ -678,7 +779,11 @@ void analyzeObject() {
    // For now we only analyze test-object of knows size: 
    ccsrState.targetColorVolume = TEST_OBJECT_1_VOLUME;
 
-   setPanTilt(0,0,20);  // Move camera to center grabber into image 'region of interest'
+   setPanTilt(0,0,20);  // Move camera back to reset position
    dropAndFoldArm();
+
+   ccsrState.action = NO_ACTION;
+   lcdEvent = EVENT_ACTION;
+   write(pipeLCDMsg[IN], &lcdEvent, sizeof(lcdEvent));
 
 }

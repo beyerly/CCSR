@@ -60,6 +60,7 @@ int stateCSVfd;          // CSV file with CCSR state dump for NLP python scripts
 
 const char delimiters[] = " ";
 
+// Telemetry commands
 // Strings cannot exceed MAX_STRING_LEN
 char *cmd_lookup[] = {"set",             // followed by set_cmd_lookup[]
  		      "dump",            // followed by dump_cmd_lookup[]
@@ -79,9 +80,10 @@ char *cmd_lookup[] = {"set",             // followed by set_cmd_lookup[]
 		      "dummy",           // dummy <int> <int> ... - Dummy command for debug.
 		      "analyzeobj",      // Extend arm, grab object offered, analyze and say color, and make object the 
 		                         // target object color that CCSR can track.
-		      "putdown"          // Put object held by arm back on the floor, retract arm. 
+		      "findobj",         // Find and pick up object of target color 
+		      "giveobj"          // Assuming CCSR is holding object, give it to user and fold arm 
 		      };
-
+// sub-commands of 'dump'
 char *dump_cmd_lookup[] = {"all",        // dump all - Print selected ccsrState fields to return-fifo
 			   "profile",    // dump profile - Dump the current captured values for sonar depth and ambien  
 			                 // light in a CSV file PROFILE_DUMP. These values must be populated first by
@@ -89,14 +91,14 @@ char *dump_cmd_lookup[] = {"all",        // dump all - Print selected ccsrState 
 			   "csv"         // dump csv - Dump selected ccsrState fields to CSV file for use by NLP python scripts  
 			  };
 
-
+// sub-commands of 'orient'
 char *orient_mode_lookup[] = {"full",    // orient full - Run a full orientation: turn 360 degrees in place in 3 120 
                                          // degress steps, sweep 180 degree with pantilt in each phase, measuring sonar
 					 // depth and ambient light. Values stored in ccsrState.*profile*
 			      "fwd"      // orient fwd - run a single phase orientation only: 180 degree sweep of pantilt
 			                 // measuring sonar-depth and ambient light, in-place, no turning.
 			     };
-
+// sub-commands of 'set'
 char *set_cmd_lookup[] = {"rc",          // set rc <0,1> - turn off/on Remote control
 			  "prox",        // set prox <0,1> - turn off/on proximity sensors
 			  "sonar",       // set sonar <0,1> - turn off/on sonar
@@ -119,46 +121,54 @@ char *set_cmd_lookup[] = {"rc",          // set rc <0,1> - turn off/on Remote co
 			  "maxopcurr",   // set maxopcurr <int> - Set maximum operating current in <int> mA. If CCSR
 			                 // draws more than this value, the 'exceeding current limit' alarm will be 
 					 // triggered  
-			  "arm",          // set arm <arm []> <elbow []> <wrist []> <hand []> <speed [1..100]> - 
+			  "arm",         // set arm <arm []> <elbow []> <wrist []> <hand []> <speed [1..100]> - 
 			                 // set arm in specific position, each joint indicated in degrees. Speed
 					 // indicates how fast arm moves into position. 
-			  "mprescaler"   // set mprescaler <int> - Set DC motor driver prescaler 
+			  "mprescaler",  // set mprescaler <int> - Set DC motor driver prescaler 
+			  "volume",      // set volume <int> - Increase speaker volume by <int> 
+			  "lcddisp",     // set lcddisp <0=off,1=on> <contrast> <brightness> - Set LCD Display  
+			  "tcolorvol"    // set tcolorvol <int> - Set Target Color volume, used as a threshhold to determine if CCSR
+			                 // is close to target object. The larger the number, the bigger the portion of the camara image
+					 // the target color must occupy before CCSR considers itself right in front of object.
 			   };
+
+
 
 char *onoff_cmd_lookup[] = {"0",
 			   "1"
 			   };
 
 // List of selected fields in ccsrState. This is used by dump commands, to generate CSV file or pass on to telCCSR temeletry.
-char *CCSRStateTemplate[] = {"State,  		      %4d, \n",   // 0
-			     "proximitySensorsOn,     %4d, \n",   // 1
-			     "sonarSensorsOn,	      %4d, \n",   // 2
-			     "environmantalSensorsOn, %4d, \n",   // 3
-			     "navigationOn,	      %4d, \n",   // 4
-			     "pidMotionDetectOn,      %4d, \n",   // 5
-			     "gyroOn,		      %4d, \n",	// 6
-			     "noiseDetectOn,	      %4d, \n",	// 7
-			     "fear,		      %4d, \n",	// 8
-			     "stress,		      %4d, \n",	// 9
-			     "ambientLight,	      %4d, \n",	// 10
-			     "irDistFrontLeft,	      %4d, \n",	// 11
-			     "irDistFrontRight,       %4d, \n",	// 12
-			     "irDistBelow,	      %4d, \n",	// 13
-			     "Temperature,	      %4d, degrees\n",	// 14
-			     "proximity,	      %4d, \n",	// 15
-			     "sonarDistFront,	      %4d, \n",	// 16
-			     "sonarDistDownFront,     %4d, \n",	// 17
-			     "heading,		      %4d, degrees\n",	// 18
-			     "target,		      %4d, degrees\n",	// 19
-			     "TrackObject,	      %4d, \n",	// 20
-			     "Pan,		      %4d, \n",	// 21
-			     "Tilt,		      %4d, \n",	// 22
-			     "RC,		      %4d, \n",	// 23
-			     "Battery Voltage,	      %4d, volt\n",	// 24
-			     "Battery perc,	      %4d, percent\n",	// 25
-			     "Max Operating Curr,     %4d, ampere\n",	// 26
-			     "Current Limited,	      %4d, \n"	// 27
-			     };
+char *CCSRStateTemplate[] = {"state,  		      %4d, \n",   // 0
+                             "proximitySensorsOn,     %4d, \n",   // 1
+                             "sonarSensorsOn,	      %4d, \n",   // 2
+                             "environmantalSensorsOn, %4d, \n",   // 3
+                             "navigationOn,	      %4d, \n",   // 4
+                             "pidMotionDetectOn,      %4d, \n",   // 5
+                             "gyroOn,		      %4d, \n",	// 6
+                             "noiseDetectOn,	      %4d, \n",	// 7
+                             "fear,		      %4d, \n",	// 8
+                             "stress,		      %4d, \n",	// 9
+                             "light,                  %4d, lumen \n",	// 10
+                             "irDistFrontLeft,	      %4d, \n",	// 11
+                             "irDistFrontRight,       %4d, \n",	// 12
+                             "irDistBelow,	      %4d, \n",	// 13
+                             "temperature,            %4d, degrees\n",	// 14
+                             "proximity,              %4d, \n",	// 15
+                             "sonarDistFront,	      %4d, \n",	// 16
+                             "sonarDistDownFront,     %4d, \n",	// 17
+                             "compass,	              %4d, degrees\n",	// 18
+                             "target,                 %4d, degrees\n",	// 19
+                             "TrackObject,            %4d, \n",	// 20
+                             "Pan,                    %4d, \n",	// 21
+                             "Tilt,                   %4d, \n",	// 22
+                             "RC,                     %4d, \n",	// 23
+                             "batteryVoltage,         %4d, volt\n",	// 24
+                             "battery,                %4d, percent\n",	// 25
+                             "MaxOperatingCurr,       %4d, ampere\n",	// 26
+                             "power,                  %4d, watt\n",	// 27
+                             "CurrentLimited,         %4d, \n"	// 27
+                             };
 			     
 
 // look up string in LUT of 'size' commands, if valid, and return cmd token
@@ -315,7 +325,20 @@ void dumpCCSRState(int wfd, char** template) {
    sprintf(string, template[25],ccsrState.batteryPercent);write(wfd, string, strlen(string));
    sprintf(string, template[26],ccsrState.maxOperatingCurrent);write(wfd, string, strlen(string));
    sprintf(string, template[27],ccsrState.currentLimit);write(wfd, string, strlen(string));
+   sprintf(string, template[28],ccsrState.operatingCurrent*ccsrState.batteryVoltage); write(wfd, string, strlen(string));
 }
+
+void dumpCCSRStateShort(int wfd, char** template) {
+   char string[100];
+   sprintf(string, template[9],ccsrState.stress);write(wfd, string, strlen(string));
+   sprintf(string, template[10],ccsrState.ambient);write(wfd, string, strlen(string));
+   sprintf(string, template[14],ccsrState.temp    );write(wfd, string, strlen(string));
+   sprintf(string, template[18],ccsrState.heading); write(wfd, string, strlen(string));
+   sprintf(string, template[25],ccsrState.batteryPercent);write(wfd, string, strlen(string));
+   sprintf(string, template[28],ccsrState.operatingCurrent*ccsrState.batteryVoltage); write(wfd, string, strlen(string));
+}
+
+
 
 // Execute cmd from any input pipe (telemetry or NLP).
 // cmd is array of strings
@@ -345,7 +368,7 @@ void ccsrExecuteCmd(char **splitLine, int n, int wfd) {
 		 if(stateCSVfd<0) {
 		    perror("can't open CCSR state csv file\n");
 		 }
-		 dumpCCSRState(stateCSVfd, CCSRStateTemplate);
+		 dumpCCSRStateShort(stateCSVfd, CCSRStateTemplate);
  		 close(stateCSVfd);
  		 sprintf(string, "CCSR state written in %s\n", statecsvfile);
 		 write(wfd, string, strlen(string));
@@ -545,7 +568,6 @@ void ccsrExecuteCmd(char **splitLine, int n, int wfd) {
 	      case MOTORPRESCALER:
 		 if (n>2) {
 	            value0 = atoi(splitLine[2]);
-    	            printf("pres %d\n", value0);
 	            setMotorPrescalerFrequency(value0);
 		    sprintf(string, "Command succesful\n");
  	            write(wfd, string, strlen(string));
@@ -555,8 +577,54 @@ void ccsrExecuteCmd(char **splitLine, int n, int wfd) {
  	            sprintf(string, "Expecting: set mprescaler <value>\n", cmd);
  	            write(wfd, eom, strlen(eom));
 	         }
+	      case VOLUME:
+		 if (n>2) {
+	            value0 = atoi(splitLine[2]);
+	            value1 = ccsrState.speakerVolume + value0;
+		    if (value1 > 100) {
+		       // Clip at 100%
+		       value1 = 100;
+		    }
+		    set_playback_volume(value1);
+		    sprintf(string, "Command succesful\n");
+ 	            write(wfd, string, strlen(string));
+ 	            write(wfd, eom, strlen(eom));
+	         }
+	         else {
+ 	            sprintf(string, "Expecting: set volume <value>\n", cmd);
+ 	            write(wfd, eom, strlen(eom));
+	         }
 	      break;
-	    }
+	      case LCDDISP:
+		 if (n>4) {
+	            value0 = atoi(splitLine[2]);
+	            value1 = atoi(splitLine[3]);
+	            value2 = atoi(splitLine[4]);
+		    lcdDisplayPower(value0);
+		    lcdDisplayConfig(value1, value2);
+		    sprintf(string, "Command succesful\n");
+ 	            write(wfd, string, strlen(string));
+ 	            write(wfd, eom, strlen(eom));
+	         }
+	         else {
+ 	            sprintf(string, "Expecting: set lcddisp <0,1> <contrast> <brightness> \n", cmd);
+ 	            write(wfd, eom, strlen(eom));
+	         }
+	      break;
+	      case TARGET_COLOR_VOLUME:
+		 if (n>2) {
+	            value0 = atoi(splitLine[2]);
+	            setTargetColorVolume(value0);
+		    sprintf(string, "Command succesful\n");
+ 	            write(wfd, string, strlen(string));
+ 	            write(wfd, eom, strlen(eom));
+	         }
+	         else {
+ 	            sprintf(string, "Expecting: set tcolorvol <value>\n", cmd);
+ 	            write(wfd, eom, strlen(eom));
+	         }
+	      break;
+            }
 	 break;
 	 case CMD_TURN_TO:
             if (n>1) {
@@ -663,9 +731,14 @@ void ccsrExecuteCmd(char **splitLine, int n, int wfd) {
  	    write(wfd, string, strlen(string));
  	    write(wfd, eom, strlen(eom));
 	 break;
-	 case CMD_PUTDOWN_OBJ:
-	    putdownObject();
-	    retractArm();
+	 case CMD_FIND_OBJ:
+	    findAndPickupObject();
+	    sprintf(string, "Command succesful\n");
+ 	    write(wfd, string, strlen(string));
+ 	    write(wfd, eom, strlen(eom));
+	 break;
+	 case CMD_GIVE_OBJ:
+	    giveObjectAndFoldArm();
 	    sprintf(string, "Command succesful\n");
  	    write(wfd, string, strlen(string));
  	    write(wfd, eom, strlen(eom));

@@ -194,6 +194,7 @@ void set_playback_volume(long volume)
                 }
                 snd_mixer_close(handle);
         }
+        ccsrState.speakerVolume = volume;
 }
 
 void set_capture_volume(long volume)

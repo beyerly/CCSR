@@ -5,8 +5,8 @@ void ccsrExecuteCmd(char **splitLine, int n, int wfd);
 
 #define RFCOMM0 "/dev/rfcomm0"
 #define NUM_CMD_ARG 5
-#define PROFILE_DUMP "profile_dump.csv"
-#define STATE_CSV_DUMP "ccsrState_dump.csv"
+#define PROFILE_DUMP "./data/profile_dump.csv"
+#define STATE_CSV_DUMP "./data/ccsrState_dump.csv"
 #define NLP_FIFO_IN   "nlp_fifo_in"
 #define NLP_FIFO_OUT  "nlp_fifo_out"
 #define MAX_STRING_LEN 100		  

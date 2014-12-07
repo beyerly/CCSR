@@ -3,6 +3,9 @@ void lcdDisplayInit();
 void lcdDisplayMsg(char *s1, char *s2);
 void lcdDisplayStatus();
 void lcdDisplayRefresh();
+void lcdDisplayConfig(char contrast , char brightness);
+void lcdDisplayPower(int on);
+
 void *lcdRefresh();
 void *lcdManager();
 
@@ -12,6 +15,11 @@ void *lcdManager();
 #define LCD_SETCURSOR 0x45
 #define LCD_NEXTLINE 0x40
 #define LCD_CURSORHOME 0x46
+#define LCD_DISPLAY_ON 0x41
+#define LCD_DISPLAY_OFF 0x42
+#define LCD_CONTRAST 0x52
+#define LCD_BRIGHTNESS 0x53
+
 
 #define LCD_REFRESH_PERIOD 100000 // 1 sec
 

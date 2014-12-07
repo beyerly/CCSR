@@ -97,6 +97,7 @@ typedef struct ccsrStateType {
    int	 speedMotor1;
    int	 speedMotor2;
    int   minMotorTurnSpeed;
+   int   minMotorSpeed;
 
    // Power management
    int	 batteryVoltage;
@@ -147,6 +148,7 @@ typedef struct ccsrStateType {
    char  noiseDetected; 
    int   audioPeakThreshold;
    long  audioEnergyThreshold;
+   int   speakerVolume;
 
    // Proximity sensors
    int	 irDistFrontLeft;
@@ -219,6 +221,7 @@ typedef struct ccsrStateType {
    int targetColor_iLowV;  
    int targetColor_iHighV; 
    int targetColorVolume;
+   char targetColorName[60];
 
    char visualProcessingOn;     // if 1, camera is used by visual.cpp, and capturing images
    char trackTargetColorOn;     // if set to 1 by user, CCSR tracks target object. 
