@@ -163,11 +163,11 @@ char *CCSRStateTemplate[] = {"state,  		      %4d, \n",   // 0
                              "Pan,                    %4d, \n",	// 21
                              "Tilt,                   %4d, \n",	// 22
                              "RC,                     %4d, \n",	// 23
-                             "batteryVoltage,         %4d, volt\n",	// 24
+                             "batteryVoltage,         %4d, millivolt\n",	// 24
                              "battery,                %4d, percent\n",	// 25
                              "MaxOperatingCurr,       %4d, ampere\n",	// 26
-                             "power,                  %4d, watt\n",	// 27
                              "CurrentLimited,         %4d, \n"	// 27
+                             "power,                  %4d, milliwatt\n",	// 28
                              };
 			     
 
@@ -325,7 +325,7 @@ void dumpCCSRState(int wfd, char** template) {
    sprintf(string, template[25],ccsrState.batteryPercent);write(wfd, string, strlen(string));
    sprintf(string, template[26],ccsrState.maxOperatingCurrent);write(wfd, string, strlen(string));
    sprintf(string, template[27],ccsrState.currentLimit);write(wfd, string, strlen(string));
-   sprintf(string, template[28],ccsrState.operatingCurrent*ccsrState.batteryVoltage); write(wfd, string, strlen(string));
+   sprintf(string, template[28],ccsrState.operatingCurrent*ccsrState.batteryVoltage/1000); write(wfd, string, strlen(string));
 }
 
 void dumpCCSRStateShort(int wfd, char** template) {
@@ -335,7 +335,7 @@ void dumpCCSRStateShort(int wfd, char** template) {
    sprintf(string, template[14],ccsrState.temp    );write(wfd, string, strlen(string));
    sprintf(string, template[18],ccsrState.heading); write(wfd, string, strlen(string));
    sprintf(string, template[25],ccsrState.batteryPercent);write(wfd, string, strlen(string));
-   sprintf(string, template[28],ccsrState.operatingCurrent*ccsrState.batteryVoltage); write(wfd, string, strlen(string));
+   sprintf(string, template[28],ccsrState.operatingCurrent*ccsrState.batteryVoltage/1000); write(wfd, string, strlen(string));
 }
 
 

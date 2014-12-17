@@ -755,9 +755,11 @@ void analyzeObject() {
    if(colorName!=0){
       say("this object is");
       say(colorName);
+      strcpy(ccsrState.targetColorName, colorName);
    }
    else{
       say("i don't know the color of this object");
+      strcpy(ccsrState.targetColorName, "unknown");
    }
    // Set target color range to analysed object plus
    ccsrState.targetColor_iLowH  =  ccsrState.analyzedObjectH - HUE_WINDOW;
@@ -766,7 +768,6 @@ void analyzeObject() {
    ccsrState.targetColor_iHighS =  ccsrState.analyzedObjectS + SATURATION_WINDOW;
    ccsrState.targetColor_iLowV  =  ccsrState.analyzedObjectV - VALUE_WINDOW;
    ccsrState.targetColor_iHighV =  ccsrState.analyzedObjectV + VALUE_WINDOW;
-   strcpy(ccsrState.targetColorName, colorName);
 
    // clip
    if (ccsrState.targetColor_iLowH < 0) ccsrState.targetColor_iLowH		   = 0;
