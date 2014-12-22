@@ -440,9 +440,13 @@ void stateChange(char state) {
 	 ccsrState.noiseDetectOn	  = 0;
 	 ccsrState.trackTargetColorOn     = 0;
       break;
+
        case SM_EXPLORE:
 	 ccsrState.proximitySensorsOn	  = 1;
-      break;
+       break;
+       case SM_REMOTE_CONTROLLED:
+          ccsrState.remoteControlled      = 1;
+       break;
   }
    lcdEvent = EVENT_SM_STATE_CHANGE;
    write(pipeLCDMsg[IN], &lcdEvent, sizeof(lcdEvent));

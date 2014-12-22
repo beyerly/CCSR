@@ -32,7 +32,7 @@ void setTargetColorRange(int iLowH, int iHighH, int iLowS, int iHighS, int iLowV
 // Set CCSR's active target volume. CCSR will assume it arrived at the active target object if the 
 // volume (area) of the tracked color blob is more than this value
 void setTargetColorVolume(int vol) {
-   ccsrState.targetColorVolume = vol
+   ccsrState.targetColorVolume = vol;
 }
 
 // pthread process processing images from USB camera
@@ -83,6 +83,16 @@ void *visual () {
 
    while (true)
    {
+
+  iLowH  = ccsrState.targetColor_iLowH;
+  iHighH = ccsrState.targetColor_iHighH;
+
+  iLowS  = ccsrState.targetColor_iLowS;
+  iHighS = ccsrState.targetColor_iHighS;
+
+  iLowV  = ccsrState.targetColor_iLowV;
+  iHighV = ccsrState.targetColor_iHighV;
+
  
        bool bSuccess = cap.read(imgOriginal); // read a new frame from video
 
@@ -126,6 +136,8 @@ void *visual () {
        double dM01 = oMoments.m01;
        double dM10 = oMoments.m10;
        double dArea = oMoments.m00;
+
+//       cout << " area " << dArea << endl;
 
        // if the area < MIN_TRACKED_OBJECT_VOLUME, I consider that the there are no object in the image and it's 
        // because of the noise, the area is not zero 

@@ -166,7 +166,7 @@ char *CCSRStateTemplate[] = {"state,  		      %4d, \n",   // 0
                              "batteryVoltage,         %4d, millivolt\n",	// 24
                              "battery,                %4d, percent\n",	// 25
                              "MaxOperatingCurr,       %4d, ampere\n",	// 26
-                             "CurrentLimited,         %4d, \n"	// 27
+                             "CurrentLimited,         %4d, \n",	// 27
                              "power,                  %4d, milliwatt\n",	// 28
                              };
 			     
@@ -330,12 +330,15 @@ void dumpCCSRState(int wfd, char** template) {
 
 void dumpCCSRStateShort(int wfd, char** template) {
    char string[100];
+   int power;
+   power = ccsrState.operatingCurrent*ccsrState.batteryVoltage;
+   power = power/10000;
    sprintf(string, template[9],ccsrState.stress);write(wfd, string, strlen(string));
-   sprintf(string, template[10],ccsrState.ambient);write(wfd, string, strlen(string));
+   sprintf(string, template[10],ccsrState.ambientLight);write(wfd, string, strlen(string));
    sprintf(string, template[14],ccsrState.temp    );write(wfd, string, strlen(string));
    sprintf(string, template[18],ccsrState.heading); write(wfd, string, strlen(string));
    sprintf(string, template[25],ccsrState.batteryPercent);write(wfd, string, strlen(string));
-   sprintf(string, template[28],ccsrState.operatingCurrent*ccsrState.batteryVoltage/1000); write(wfd, string, strlen(string));
+   sprintf(string, template[28], power); write(wfd, string, strlen(string));
 }
 
 

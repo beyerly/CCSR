@@ -9,7 +9,7 @@ extern "C" {
 #define ROI_WIDTH  50
 #define IMAGE_WIDTH 640
 #define IMAGE_HEIGHT 480
-#define MIN_TRACKED_OBJECT_VOLUME 100000    // Objects smaller (or further away) than this will not be tracked
+#define MIN_TRACKED_OBJECT_VOLUME 50000    // Objects smaller (or further away) than this will not be tracked
 
 #define MAX_HUE         179
 #define MAX_SATURATION  255

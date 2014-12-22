@@ -30,7 +30,6 @@ extern soundType sound[standardSoundsCount];
 extern int pipeSoundGen[2];
 
 char lcdEvent;
-
 // Static list of known colors by HSV value range
 colorType colors[NUM_COLORS];
 
@@ -41,11 +40,20 @@ colorType colors[NUM_COLORS];
 void initColors(){
    colors[0].iLowH  = 100;
    colors[0].iHighH = 120;
-   colors[0].iLowS  = 140;
+   colors[0].iLowS  = 130;
    colors[0].iHighS = 208;
    colors[0].iLowV  = 89;
-   colors[0].iHighV = 223;
+   colors[0].iHighV = 255;
    strcpy(colors[0].name, "blue");
+
+   colors[1].iLowH  = 75;
+   colors[1].iHighH = 177;
+   colors[1].iLowS  = 100;
+   colors[1].iHighS = 200;
+   colors[1].iLowV  = 89;
+   colors[1].iHighV = 255;
+   strcpy(colors[1].name, "green");
+
 }
 
 // Return pointer string representing approximate color name of HSV value. Return 0 if no match found
@@ -542,7 +550,7 @@ void findAndPickupObject() {
    int sign;
    char string[100];
 
-   setPanTilt(0,-30,20);  // Move camera down to look at floor in front
+   setPanTilt(0,-48,20);  // Move camera down to look at floor in front
    sleep(2); // Wait for tracking lock if possible 
    if (ccsrState.objectTracked) {
       // We are tracking, now center CCSR chassis on X-axis
@@ -552,13 +560,15 @@ void findAndPickupObject() {
 	 // Determine if if need to turn LEFT or RIGHT to center in front of object
          if (ccsrState.targetVisualObject_X < IMAGE_WIDTH/2) {
 	    // LEFT
-	    sign = 1;
+	    sign = -1;
 	 }
 	 else {
 	    // RIGHT
-	    sign = -1;
+	    sign = 1;
 	 }
 	 while (1) {
+	 if(ccsrState.objectTracked) {
+            printf("aX %f aY %f atr %d\n", ccsrState.targetVisualObject_X, ccsrState.targetVisualObject_Y, sign);
             speedFiltered(0, sign*ccsrState.minMotorTurnSpeed);
             brainCycle();
 	    if((ccsrState.targetVisualObject_X < ((IMAGE_WIDTH/2) + OBJECT_PICKUP_WINDOW_X)) &&
@@ -573,11 +583,15 @@ void findAndPickupObject() {
 	    }
 	    // Re-calculate turn direction in case we overshot. Make sure we don't get oscillations here 
 	    if (ccsrState.targetVisualObject_X < IMAGE_WIDTH/2) {
-	       sign = 1;
-	    }
-	    else {
 	       sign = -1;
 	    }
+	    else {
+	       sign = 1;
+	    }
+	 }
+	 else {
+	 printf("looking\n");
+	 }
 	 }
       }
       // Align on image Y-axis
@@ -594,6 +608,8 @@ void findAndPickupObject() {
 	    sign = -1;
 	 }
 	 while (1) {
+	 if(ccsrState.objectTracked) {
+            printf("aX %f aY %f atr %d\n", ccsrState.targetVisualObject_X, ccsrState.targetVisualObject_Y, sign);
             speedFiltered(sign*ccsrState.minMotorSpeed, 0);
             brainCycle();
 	    if((ccsrState.targetVisualObject_Y < ((IMAGE_HEIGHT/2) + OBJECT_PICKUP_WINDOW_Y)) &&
@@ -613,21 +629,25 @@ void findAndPickupObject() {
 	       sign = -1;
 	    }
 	 }
+	 else {
+	 printf("looking\n");
+	 }
+	 }
      }
      // We are centered! Go grab object from prefixed location.      
-     setArm(45, 100, 0, 0, 90);      // Extend elbow halfway
-     setArm(25, 80, 180, 0, 90);     // raise shoulder, bring elbow in untill object touches ground
-     setArm(25, 80, 180, 150, 90);   // ober grabber, drop object
-     setArm(15, 180, 180, 150, 90);  // Lower shoulder, extend elbow fully, rotate wrist, grabber remains oben
+//     setArm(45, 100, 0, 0, 90);      // Extend elbow halfway
+//     setArm(25, 80, 180, 0, 90);     // raise shoulder, bring elbow in untill object touches ground
+//     setArm(25, 80, 180, 150, 90);   // ober grabber, drop object
+//     setArm(15, 180, 180, 150, 90);  // Lower shoulder, extend elbow fully, rotate wrist, grabber remains oben
 
      strcat(string,"there you go, the ");
      strcat(string,ccsrState.targetColorName);
      strcat(string," object");
-
+     say(string);
    }
    else {
       // Target color is not in view, go find it first
-      say("I can't see it yet, let me go and look for it")
+      say("I can't see it yet, let me go and look for it");
 //      stateChange(SM_ORIENTATION);
    }
 }
@@ -776,6 +796,15 @@ void analyzeObject() {
    if (ccsrState.targetColor_iHighS > MAX_SATURATION) ccsrState.targetColor_iHighS = MAX_SATURATION;
    if (ccsrState.targetColor_iLowV < 0) ccsrState.targetColor_iLowV                = 0;  
    if (ccsrState.targetColor_iHighV > MAX_VALUE) ccsrState.targetColor_iHighV      = MAX_VALUE;
+
+
+   printf(" new tgtclr HSV: %d %d %d %d %d %d \n", 
+ccsrState.targetColor_iLowH, 
+ccsrState.targetColor_iHighH, 
+ccsrState.targetColor_iLowS ,
+ccsrState.targetColor_iHighS ,
+ccsrState.targetColor_iLowV ,
+ccsrState.targetColor_iHighV);
 
    // For now we only analyze test-object of knows size: 
    ccsrState.targetColorVolume = TEST_OBJECT_1_VOLUME;
