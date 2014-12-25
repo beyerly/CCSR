@@ -81,7 +81,9 @@ char *cmd_lookup[] = {"set",             // followed by set_cmd_lookup[]
 		      "analyzeobj",      // Extend arm, grab object offered, analyze and say color, and make object the 
 		                         // target object color that CCSR can track.
 		      "findobj",         // Find and pick up object of target color 
-		      "giveobj"          // Assuming CCSR is holding object, give it to user and fold arm 
+		      "giveobj",         // Assuming CCSR is holding object, give it to user and fold arm 
+		      "move",            // move <1=fwd, 2=reverse> <time> move fwd/reverse for specified amount of time 
+		      "turn"             // turn <0=RIGHT, 1=LEFT> <time> turn left/right for specified amount of time 
 		      };
 // sub-commands of 'dump'
 char *dump_cmd_lookup[] = {"all",        // dump all - Print selected ccsrState fields to return-fifo
@@ -118,6 +120,8 @@ char *set_cmd_lookup[] = {"rc",          // set rc <0,1> - turn off/on Remote co
 			  "minturnspeed",// set minturnspeed - Determine minimal DC motor power needed to make CCSR
 			                 // turn in place. CCSR increases engine power until gyro detects Z-axis 
 					 // movement, and stores this power as the slowest speed it can use to turn 
+			  "minspeed",    // set minturnspeed <int> - Set minimum motor power to move fwd/back. Currently setting fixed value
+			                 // todo: determine automatically baed on linear accelerometer.
 			  "maxopcurr",   // set maxopcurr <int> - Set maximum operating current in <int> mA. If CCSR
 			                 // draws more than this value, the 'exceeding current limit' alarm will be 
 					 // triggered  
@@ -457,6 +461,20 @@ void ccsrExecuteCmd(char **splitLine, int n, int wfd) {
  	         write(wfd, string, strlen(string));
  	         write(wfd, eom, strlen(eom));
 	      break;
+	      case MIN_SPEED:
+                 if (n>2) {
+	            value0 = atoi(splitLine[2]);
+	            ccsrState.minMotorSpeed = value0; 
+		    sprintf(string, "Command succesful\n");
+ 		    write(wfd, string, strlen(string));
+ 		    write(wfd, eom, strlen(eom));
+	         }
+	         else {
+ 	            sprintf(string, "Expecting: set minspeed <int>\n", cmd);
+ 		    write(wfd, string, strlen(string));
+ 	            write(wfd, eom, strlen(eom));
+	         }	        
+	      break;
 	      case SENS_NOISE:
 	         subSubCmd = tokenLookup(splitLine[2], onoff_cmd_lookup, NUM_ONOFFSUBCMD, (n>2), wfd);
 	         ccsrState.noiseDetectOn = subSubCmd;
@@ -745,6 +763,34 @@ void ccsrExecuteCmd(char **splitLine, int n, int wfd) {
 	    sprintf(string, "Command succesful\n");
  	    write(wfd, string, strlen(string));
  	    write(wfd, eom, strlen(eom));
+	 break;
+	 case CMD_MOVE:
+ 	    if (n>3) {
+	       value0 = atoi(splitLine[2]);
+	       value1 = atoi(splitLine[3]);
+ 	       driveAtMinPower(value0, value1) 
+	       sprintf(string, "Command succesful\n");
+ 	       write(wfd, string, strlen(string));
+ 	       write(wfd, eom, strlen(eom));
+	    }
+	    else {
+ 	       sprintf(string, "Expecting: move <1=fwd, 2=reverse> <time> \n", cmd);
+ 	       write(wfd, eom, strlen(eom));
+	    }
+	 break;
+	 case CMD_TURN:
+ 	    if (n>3) {
+	       value0 = atoi(splitLine[2]);
+	       value1 = atoi(splitLine[3]);
+ 	       turnAtMinPowerInPlace(value0, value1) 
+	       sprintf(string, "Command succesful\n");
+ 	       write(wfd, string, strlen(string));
+ 	       write(wfd, eom, strlen(eom));
+	    }
+	    else {
+ 	       sprintf(string, "Expecting: turn <0=RIGHT, 1=LEFT> <time> \n", cmd);
+ 	       write(wfd, eom, strlen(eom));
+	    }
 	 break;
 	 case CMD_DUMMY:
                write(pipeSoundGen[IN], &sound[singleA], sizeof(sound[singleA]));

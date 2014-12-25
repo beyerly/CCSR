@@ -24,6 +24,8 @@ enum telccsrcmd  {CMD_SET,
 		  CMD_ANALYZE_OBJ,
 		  CMD_FIND_OBJ,
 		  CMD_GIVE_OBJ,
+		  CMD_MOVE,
+		  CMD_TURN,
 		  NUM_CMD
 		  };
 
@@ -52,6 +54,7 @@ enum telccsrset          {REMOTE,
 			  STATE,
 			  SENS_GYRO,
 			  MIN_TURN_SPEED,
+			  MIN_SPEED,
 			  MAX_OP_CURR,
 			  ARM,
 			  MOTORPRESCALER,

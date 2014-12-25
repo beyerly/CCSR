@@ -500,14 +500,14 @@ void actionPause() {
 
 
 
-// Detect the minimum turn speed for the terrain we're on. Start right turn with increasing motor power,
-// stop when gyro detects movement.
+// Detect the minimum turn speed for the terrain we're on. Speed up into left turn, and capture minimum motor power required to create movement
 void getMinimumTurnSpeed() {
 
    int turnSpeed;
    int gyroOn_prev;
    
    turnSpeed = 50;
+   // Turn on Gyro is
    gyroOn_prev = ccsrState.gyroOn;
    ccsrState.gyroOn = 1;
 
@@ -519,7 +519,7 @@ void getMinimumTurnSpeed() {
       usleep(100000);
       turnSpeed = turnSpeed + 10;
       if (turnSpeed > MAX_MOTOR_TURNSPEED) {
-         printf("Can't turn, we're stuck...\n");
+         printf("Can't turn, I'm stuck!\n");
          break;
       }
    }
@@ -536,111 +536,167 @@ void getMinimumTurnSpeed() {
 }
 
 
+// Turn left/right at minimum motor power for specified amount of time. This is used for precision manouvering.
+// Minimum motor power to move varies with terrain, and should be determined with gyro 
+void turnAtMinPowerInPlace(turnDirType dir, int time) {
+   int sign;
+
+   if (dir == LEFT) {
+      sign = -1;
+   }
+   else {
+      // RIGHT
+      sign = 1;
+   }
+
+   // Speed up to minimal turn speed
+   while(!speedFiltered(0, sign*ccsrState.minMotorTurnSpeed)){
+      brainCycle();
+   }
+   // Continue turn until specified time
+   sleep(time); 
+   // Stop turn
+   while(!speedFiltered(0, 0)) {
+      brainCycle();
+   }
+}
+
+// Drive fwd/back at minimum motor power for specified amount of time. This is used for precision manouvering.
+// Minimum motor power to move varies with terrain, and should be determined with linear accelerometer 
+void driveAtMinPower(motorDir dir, int time) {
+   int sign;
+
+   if (dir == FORWARD) {
+      sign = 1;
+   }
+   else {
+      // REVERSE
+      sign = -1;
+   }
+   // speed up to minimal speed
+   while(!speedFiltered(sign*ccsrState.minMotorSpeed, 0)){
+      brainCycle();
+   }
+   // Continue driving for specified time
+   sleep(time); 
+   // Stop
+   while(!speedFiltered(0, 0)) {
+      brainCycle();
+   }
+}
+
+
+
 // Find and pick up the current active target visual object, as encoded as HSV color in ccsrState.
-// We assume the object is already tracked with the pan at 0 deg (dead-ahead) abd tilt at -30deg (looking at floor), so the
-// object is positioned in camera view. If this is not the case, we swith to orientation to first find the object and
-// center the camera.
+// We tilt the camera down 48 degrees, and assume the object is in camera view and will be tracked. If not, we switch
+// back to orientation to find it. This function can be called after orientation found the object, we drove towards it and 
+// switched back to remote controlled state once we arrived at it. Note we need to make sure we approached to object such that
+// when tilting down 48 deg, the object is still in view.
 // If tracked, we first turn to center the object on the X-axis, then move fwd/back to center on Y-axis. When centered
-// simply move arm to fixed position, close grabber and raise it up to camera.
+// simply move arm to fixed position, close grabber and raise it up to camera. We move in steps: we move and do a full stop,
+// and only then re-assess object location. This is because camera tracking is very slow (>1frame/s?), so continuous movement will certainly overshoot.
 // Note that image coordinates are:
 // 0,0..................IMAGE_WIDTH,0
 // .
 // O,IMAGE_HEIGHT ..... IMAGE_WIDTH,IMAGE_HEIGHT
 void findAndPickupObject() {
-   int sign;
+   turnDirType dir;
    char string[100];
 
-   setPanTilt(0,-48,20);  // Move camera down to look at floor in front
-   sleep(2); // Wait for tracking lock if possible 
+   setPanTilt(0,-48,20);  // Move camera down to look at floor in front. Bottom of cam view is just above top of arm.
+   sleep(2); // Wait a little for tracking lock 
    if (ccsrState.objectTracked) {
       // We are tracking, now center CCSR chassis on X-axis
       if((ccsrState.targetVisualObject_X > ((IMAGE_WIDTH/2) + OBJECT_PICKUP_WINDOW_X)) ||
 	 (ccsrState.targetVisualObject_X < ((IMAGE_WIDTH/2) - OBJECT_PICKUP_WINDOW_X))){
          // X-axis is not aligned with target object, turn to align 
-	 // Determine if if need to turn LEFT or RIGHT to center in front of object
+	 // Determine if we need to turn LEFT or RIGHT to center in front of object
          if (ccsrState.targetVisualObject_X < IMAGE_WIDTH/2) {
-	    // LEFT
-	    sign = -1;
+	    dir = LEFT;
 	 }
 	 else {
-	    // RIGHT
-	    sign = 1;
+	    dir = RIGHT;
 	 }
 	 while (1) {
-	 if(ccsrState.objectTracked) {
-            printf("aX %f aY %f atr %d\n", ccsrState.targetVisualObject_X, ccsrState.targetVisualObject_Y, sign);
-            speedFiltered(0, sign*ccsrState.minMotorTurnSpeed);
-            brainCycle();
-	    if((ccsrState.targetVisualObject_X < ((IMAGE_WIDTH/2) + OBJECT_PICKUP_WINDOW_X)) &&
-	       (ccsrState.targetVisualObject_X > ((IMAGE_WIDTH/2) - OBJECT_PICKUP_WINDOW_X))){
-	       // X-axis is alogned with object. 
-	       // Stop turn
-	       while(!speedFiltered(0, 0)) {
-		  brainCycle();
+	    if(ccsrState.objectTracked) {
+	       // We are still tracking (as expected)
+	       printf("tracking: X %f Y %f dir %d\n", ccsrState.targetVisualObject_X, ccsrState.targetVisualObject_Y, dir);
+	       // Turn tiny bit and stop. Todo: We may increase the turn duration (i.e. turn angle) if object is further away from center.
+	       turnAtMinPowerInPlace(dir, 0);
+	       brainCycle();
+	       if((ccsrState.targetVisualObject_X < ((IMAGE_WIDTH/2) + OBJECT_PICKUP_WINDOW_X)) &&
+		  (ccsrState.targetVisualObject_X > ((IMAGE_WIDTH/2) - OBJECT_PICKUP_WINDOW_X))){
+		  // X-axis is aligned with object, we are done,  move on to Y axis
+		  break;
 	       }
-	       // Move on to Y axis
-	       break;
-	    }
-	    // Re-calculate turn direction in case we overshot. Make sure we don't get oscillations here 
-	    if (ccsrState.targetVisualObject_X < IMAGE_WIDTH/2) {
-	       sign = -1;
+	       // Not yet aligned, re-calculate turn direction in case we overshot. Since we are turning in minimal steps, overshooting should not happen!. 
+	       // Make sure we don't get oscillations here 
+	       if (ccsrState.targetVisualObject_X < IMAGE_WIDTH/2) {
+		  dir = LEFT;
+	       }
+	       else {
+   		  dir = RIGHT;
+	       }
 	    }
 	    else {
-	       sign = 1;
+	       // We lost track of object. This should never happen if object is not moved!
+	       say("I lost track of the object, let me go and look for it");
+	       // todo: set state back to orientation. Right now we just stop.
+               // stateChange(SM_ORIENTATION);
+	       break;
 	    }
 	 }
-	 else {
-	 printf("looking\n");
-	 }
-	 }
       }
-      // Align on image Y-axis
+      // X-axis is agligned, now align on image Y-axis
       if((ccsrState.targetVisualObject_Y > ((IMAGE_HEIGHT/2) + OBJECT_PICKUP_WINDOW_Y)) ||
 	 (ccsrState.targetVisualObject_Y < ((IMAGE_HEIGHT/2) - OBJECT_PICKUP_WINDOW_Y))){
          // Y-axis is not aligned with target object, move fwd/back to align 
 	 // Determine if if need to go fwd or back to center in front of object
          if (ccsrState.targetVisualObject_Y < IMAGE_HEIGHT/2) {
 	    // Fwd
-	    sign = 1;
+	    dir = FORWARD;
 	 }
 	 else {
 	    // Back
-	    sign = -1;
+	    dir = REVERSE;
 	 }
 	 while (1) {
-	 if(ccsrState.objectTracked) {
-            printf("aX %f aY %f atr %d\n", ccsrState.targetVisualObject_X, ccsrState.targetVisualObject_Y, sign);
-            speedFiltered(sign*ccsrState.minMotorSpeed, 0);
-            brainCycle();
-	    if((ccsrState.targetVisualObject_Y < ((IMAGE_HEIGHT/2) + OBJECT_PICKUP_WINDOW_Y)) &&
-	       (ccsrState.targetVisualObject_Y > ((IMAGE_HEIGHT/2) - OBJECT_PICKUP_WINDOW_Y))){
-	       // X-axis is alogned with object. Move on to Y axis
-	       // Stop turn
-	       while(!speedFiltered(0, 0)) {
-		  brainCycle();
+	    if(ccsrState.objectTracked) {
+	       // Object is still tracked, as expected
+	       printf("X %f Y %f dir %d\n", ccsrState.targetVisualObject_X, ccsrState.targetVisualObject_Y, dir);
+	       // Move tiny bit and stop. Todo: We may increase the drive duration if object is further away from center.
+	       driveAtMinPower(dir, 0)
+	       brainCycle();
+	       if((ccsrState.targetVisualObject_Y < ((IMAGE_HEIGHT/2) + OBJECT_PICKUP_WINDOW_Y)) &&
+		  (ccsrState.targetVisualObject_Y > ((IMAGE_HEIGHT/2) - OBJECT_PICKUP_WINDOW_Y))){
+		  // Y-axis is aligned with object. Move on to Y axis
+		  break;
 	       }
-	       break;
-	    }
-	    // Re-adjust direction, only required if we overshoot
-	    if (ccsrState.targetVisualObject_Y < IMAGE_HEIGHT/2) {
-	       sign = 1;
+	       // Not yet aligned, re-adjust direction, only required if we overshoot
+	       if (ccsrState.targetVisualObject_Y < IMAGE_HEIGHT/2) {
+		  dir = FORWARD;
+	       }
+	       else {
+ 		  dir = REVERSE;
+	       }
 	    }
 	    else {
-	       sign = -1;
+	       // We lost track of object. This should never happen if object is not moved!
+	       say("I lost track of the object, let me go and look for it");
+	       // todo: set state back to orientation. Right now we just stop.
+               // stateChange(SM_ORIENTATION);
+	       break;
 	    }
-	 }
-	 else {
-	 printf("looking\n");
-	 }
 	 }
      }
      // We are centered! Go grab object from prefixed location.      
+
 //     setArm(45, 100, 0, 0, 90);      // Extend elbow halfway
 //     setArm(25, 80, 180, 0, 90);     // raise shoulder, bring elbow in untill object touches ground
 //     setArm(25, 80, 180, 150, 90);   // ober grabber, drop object
 //     setArm(15, 180, 180, 150, 90);  // Lower shoulder, extend elbow fully, rotate wrist, grabber remains oben
 
-     strcat(string,"there you go, the ");
+     strcpy(string,"there you go, the ");
      strcat(string,ccsrState.targetColorName);
      strcat(string," object");
      say(string);
