@@ -97,20 +97,20 @@ void initEspeak() {
     output = AUDIO_OUTPUT_PLAYBACK;
     int I, Run = 1, L;    
     espeak_Initialize(output, Buflength, path, Options ); 
-    espeak_SetParameter(espeakVOLUME, 120, 0); 
+//    espeak_SetParameter(espeakVOLUME, 120, 0); 
     espeak_SetParameter(espeakPITCH, 95, 0); 
-    espeak_SetParameter(espeakRANGE, 80, 0); 
+//    espeak_SetParameter(espeakRANGE, 80, 0); 
     //espeak_SetVoiceByName(Voice);
     const char *langNativeString = "german"; //Default to US English
-    espeak_VOICE voice;
+/*    espeak_VOICE voice;
 	memset(&voice, 0, sizeof(espeak_VOICE)); // Zero out the voice first
 	voice.languages = langNativeString;
-	voice.name = "german";
+	voice.name = "english";
 	voice.variant = 2;
-	voice.gender = 2;
+	voice.gender = 1;
 	voice.age = 10;
 	espeak_SetVoiceByProperties(&voice);
-}
+*/}
 
 void say(char *text) {
     Size = strlen(text)+1;    

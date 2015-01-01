@@ -22,8 +22,8 @@ void turnToTargetHeadingDirect(int scan, int turnDir);
 int  sonarScan(int range);
 void sonarScanDown();
 void getMinimumTurnSpeed();
-void turnAtMinPowerInPlace(turnDirType dir, int time);
-void driveAtMinPower(motorDir dir, int time);
+void turnAtMinPowerInPlace(int dir, int time);
+void driveAtMinPower(int dir, int time);
 
 void analyzeObject();
 void findAndPickupObject();

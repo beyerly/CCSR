@@ -538,7 +538,7 @@ void getMinimumTurnSpeed() {
 
 // Turn left/right at minimum motor power for specified amount of time. This is used for precision manouvering.
 // Minimum motor power to move varies with terrain, and should be determined with gyro 
-void turnAtMinPowerInPlace(turnDirType dir, int time) {
+void turnAtMinPowerInPlace(int dir, int time) {
    int sign;
 
    if (dir == LEFT) {
@@ -554,7 +554,7 @@ void turnAtMinPowerInPlace(turnDirType dir, int time) {
       brainCycle();
    }
    // Continue turn until specified time
-   sleep(time); 
+   usleep(time); 
    // Stop turn
    while(!speedFiltered(0, 0)) {
       brainCycle();
@@ -563,9 +563,10 @@ void turnAtMinPowerInPlace(turnDirType dir, int time) {
 
 // Drive fwd/back at minimum motor power for specified amount of time. This is used for precision manouvering.
 // Minimum motor power to move varies with terrain, and should be determined with linear accelerometer 
-void driveAtMinPower(motorDir dir, int time) {
+void driveAtMinPower(int dir, int time) {
    int sign;
-
+   printf("dm %d %d\n", dir, time);
+   
    if (dir == FORWARD) {
       sign = 1;
    }
@@ -578,7 +579,7 @@ void driveAtMinPower(motorDir dir, int time) {
       brainCycle();
    }
    // Continue driving for specified time
-   sleep(time); 
+   usleep(time); 
    // Stop
    while(!speedFiltered(0, 0)) {
       brainCycle();
@@ -600,7 +601,7 @@ void driveAtMinPower(motorDir dir, int time) {
 // .
 // O,IMAGE_HEIGHT ..... IMAGE_WIDTH,IMAGE_HEIGHT
 void findAndPickupObject() {
-   turnDirType dir;
+   int dir;
    char string[100];
 
    setPanTilt(0,-48,20);  // Move camera down to look at floor in front. Bottom of cam view is just above top of arm.
@@ -648,8 +649,8 @@ void findAndPickupObject() {
 	 }
       }
       // X-axis is agligned, now align on image Y-axis
-      if((ccsrState.targetVisualObject_Y > ((IMAGE_HEIGHT/2) + OBJECT_PICKUP_WINDOW_Y)) ||
-	 (ccsrState.targetVisualObject_Y < ((IMAGE_HEIGHT/2) - OBJECT_PICKUP_WINDOW_Y))){
+      if((ccsrState.targetVisualObject_Y > ((IMAGE_HEIGHT/2) + OBJECT_PICKUP_WINDOW_Y + 130)) ||
+	 (ccsrState.targetVisualObject_Y < ((IMAGE_HEIGHT/2) - OBJECT_PICKUP_WINDOW_Y + 130))){
          // Y-axis is not aligned with target object, move fwd/back to align 
 	 // Determine if if need to go fwd or back to center in front of object
          if (ccsrState.targetVisualObject_Y < IMAGE_HEIGHT/2) {
@@ -665,10 +666,10 @@ void findAndPickupObject() {
 	       // Object is still tracked, as expected
 	       printf("X %f Y %f dir %d\n", ccsrState.targetVisualObject_X, ccsrState.targetVisualObject_Y, dir);
 	       // Move tiny bit and stop. Todo: We may increase the drive duration if object is further away from center.
-	       driveAtMinPower(dir, 0)
+	       driveAtMinPower(dir, 0);
 	       brainCycle();
-	       if((ccsrState.targetVisualObject_Y < ((IMAGE_HEIGHT/2) + OBJECT_PICKUP_WINDOW_Y)) &&
-		  (ccsrState.targetVisualObject_Y > ((IMAGE_HEIGHT/2) - OBJECT_PICKUP_WINDOW_Y))){
+	       if((ccsrState.targetVisualObject_Y < ((IMAGE_HEIGHT/2) + OBJECT_PICKUP_WINDOW_Y +130)) &&
+		  (ccsrState.targetVisualObject_Y > ((IMAGE_HEIGHT/2) - OBJECT_PICKUP_WINDOW_Y +130 ))){
 		  // Y-axis is aligned with object. Move on to Y axis
 		  break;
 	       }
@@ -691,10 +692,10 @@ void findAndPickupObject() {
      }
      // We are centered! Go grab object from prefixed location.      
 
-//     setArm(45, 100, 0, 0, 90);      // Extend elbow halfway
-//     setArm(25, 80, 180, 0, 90);     // raise shoulder, bring elbow in untill object touches ground
-//     setArm(25, 80, 180, 150, 90);   // ober grabber, drop object
-//     setArm(15, 180, 180, 150, 90);  // Lower shoulder, extend elbow fully, rotate wrist, grabber remains oben
+     setArm(45, 100, 0, 0, 90);      // Extend elbow halfway
+     setArm(0, 140, 0, 0, 90);     // raise shoulder, bring elbow in untill object touches ground
+     setArm(0, 140, 0, 150, 90);   // ober grabber, drop object
+     setArm(15, 180, 180, 150, 90);  // Lower shoulder, extend elbow fully, rotate wrist, grabber remains oben
 
      strcpy(string,"there you go, the ");
      strcat(string,ccsrState.targetColorName);
@@ -727,9 +728,9 @@ void dropAndFoldArm() {
 // Assuming arm is grabbing object, put it doen on the floor and fold arm back in
 // Note this movement is such to prevent colision: must rotate wrist fully back before retracting elbow
 void giveObjectAndFoldArm() {
-   setArm(20, 170, 180, 150, 90); // Stretch arm out, keep grabber closed
-   say("here you are!");
-   setArm(20, 170, 180, 0, 90);   // oper grabber, drop object, assuming in hands or user
+   setArm(15, 120, 180, 150, 90); // Stretch arm out, keep grabber closed
+   say("there you go");
+   setArm(20, 120, 180, 0, 90);   // oper grabber, drop object, assuming in hands or user
    setArm(45, 80, 90, 0, 90);    // raise shoulder fully up, rotate wrist halfway
    setArm(45, 5, 0, 0, 90);      // pull in elbow fully, rotate wrist fully in
 }

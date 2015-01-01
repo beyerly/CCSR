@@ -455,11 +455,25 @@ void ccsrExecuteCmd(char **splitLine, int n, int wfd) {
  	         write(wfd, string, strlen(string));
  	         write(wfd, eom, strlen(eom));
 	      break;
+//	      case MIN_TURN_SPEED:
+//	         getMinimumTurnSpeed();
+//		 sprintf(string, "Command succesful\n");
+// 	         write(wfd, string, strlen(string));
+// 	         write(wfd, eom, strlen(eom));
+//	      break;
 	      case MIN_TURN_SPEED:
-	         getMinimumTurnSpeed();
-		 sprintf(string, "Command succesful\n");
- 	         write(wfd, string, strlen(string));
- 	         write(wfd, eom, strlen(eom));
+                 if (n>2) {
+	            value0 = atoi(splitLine[2]);
+	            ccsrState.minMotorTurnSpeed = value0; 
+		    sprintf(string, "Command succesful\n");
+ 		    write(wfd, string, strlen(string));
+ 		    write(wfd, eom, strlen(eom));
+	         }
+	         else {
+ 	            sprintf(string, "Expecting: set minspeed <int>\n", cmd);
+ 		    write(wfd, string, strlen(string));
+ 	            write(wfd, eom, strlen(eom));
+	         }	        
 	      break;
 	      case MIN_SPEED:
                  if (n>2) {
@@ -765,10 +779,10 @@ void ccsrExecuteCmd(char **splitLine, int n, int wfd) {
  	    write(wfd, eom, strlen(eom));
 	 break;
 	 case CMD_MOVE:
- 	    if (n>3) {
-	       value0 = atoi(splitLine[2]);
-	       value1 = atoi(splitLine[3]);
- 	       driveAtMinPower(value0, value1) 
+	    if (n>2) {
+	       value0 = atoi(splitLine[1]);
+	       value1 = atoi(splitLine[2]);
+ 	       driveAtMinPower(value0, value1); 
 	       sprintf(string, "Command succesful\n");
  	       write(wfd, string, strlen(string));
  	       write(wfd, eom, strlen(eom));
@@ -779,10 +793,10 @@ void ccsrExecuteCmd(char **splitLine, int n, int wfd) {
 	    }
 	 break;
 	 case CMD_TURN:
- 	    if (n>3) {
-	       value0 = atoi(splitLine[2]);
-	       value1 = atoi(splitLine[3]);
- 	       turnAtMinPowerInPlace(value0, value1) 
+ 	    if (n>2) {
+	       value0 = atoi(splitLine[1]);
+	       value1 = atoi(splitLine[2]);
+ 	       turnAtMinPowerInPlace(value0, value1); 
 	       sprintf(string, "Command succesful\n");
  	       write(wfd, string, strlen(string));
  	       write(wfd, eom, strlen(eom));
