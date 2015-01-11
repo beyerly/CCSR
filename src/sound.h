@@ -10,7 +10,9 @@
 
 #define NUM_SOUNDS 6
 #define MAX_NOTES 8
-
+#define AVG_WINDOW_SIZE 16
+#define NOISE_LEVEL 10000
+#define AUDIOCAPTURE_TIMEOUT 10 // sec
 
 #define SND_REPETITION_DELAY 10000
 

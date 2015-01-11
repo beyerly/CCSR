@@ -28,12 +28,14 @@
 #include "servoCtrl.h"
 #include "actions.h"
 #include "motor.h"
+#include "facial.h"
 
 extern FILE *logFile;
 extern ccsrStateType ccsrState;
        ccsrStateType ccsrStateLocal;
 extern int pipeLCDMsg[2];
-extern int  pipeSoundGen[2];
+extern int pipeSoundGen[2];
+extern int pipeFacialMsg[2];
 soundType sound[standardSoundsCount];
 
 
@@ -83,7 +85,8 @@ char *cmd_lookup[] = {"set",             // followed by set_cmd_lookup[]
 		      "findobj",         // Find and pick up object of target color 
 		      "giveobj",         // Assuming CCSR is holding object, give it to user and fold arm 
 		      "move",            // move <1=fwd, 2=reverse> <time> move fwd/reverse for specified amount of time 
-		      "turn"             // turn <0=RIGHT, 1=LEFT> <time> turn left/right for specified amount of time 
+		      "turn",             // turn <0=RIGHT, 1=LEFT> <time> turn left/right for specified amount of time 
+		      "facial"
 		      };
 // sub-commands of 'dump'
 char *dump_cmd_lookup[] = {"all",        // dump all - Print selected ccsrState fields to return-fifo
@@ -355,6 +358,7 @@ void ccsrExecuteCmd(char **splitLine, int n, int wfd) {
       char string[100];
       char cmd, subCmd, subSubCmd;
       int value0, value1, value2, value3, value4;
+      expressionType expr;
 
       // Parse command
       cmd = tokenLookup(splitLine[0], cmd_lookup, NUM_CMD, (n>0), wfd);
@@ -573,13 +577,21 @@ void ccsrExecuteCmd(char **splitLine, int n, int wfd) {
 	            value0 = atoi(splitLine[2]);
 	            value1 = atoi(splitLine[3]);
 	            value2 = atoi(splitLine[4]);
- 	            setPanTilt(value0, value1, value2);
+		    setPanTilt(value0, value1, value2);
+		    sprintf(string, "Command succesful\n");
+ 	            write(wfd, string, strlen(string));
+ 	            write(wfd, eom, strlen(eom));
+	         }
+ 	         else if (n>2) {
+	            // Turning on/off pantilt servo's
+		    value0 = atoi(splitLine[2]);
+		    enablePanTilt(value0);
 		    sprintf(string, "Command succesful\n");
  	            write(wfd, string, strlen(string));
  	            write(wfd, eom, strlen(eom));
 	         }
 	         else {
- 	            sprintf(string, "Expecting: set pantilt <pan pos> <tilt pos>\n", cmd);
+ 	            sprintf(string, "Expecting: set pantilt <on/off [0,1]> | <pan pos> <tilt pos> <speed [1..100]>\n", cmd);
  	            write(wfd, eom, strlen(eom));
 	         }
 	      break;
@@ -806,15 +818,25 @@ void ccsrExecuteCmd(char **splitLine, int n, int wfd) {
  	       write(wfd, eom, strlen(eom));
 	    }
 	 break;
-	 case CMD_DUMMY:
-               write(pipeSoundGen[IN], &sound[singleA], sizeof(sound[singleA]));
+	 case CMD_FACIAL:
+ 	    if (n>1) {
+	       value0 = atoi(splitLine[1]);
+               expr.type = EXPR_BLINK;
+	       write(pipeFacialMsg[IN], &expr,sizeof(expr));
+               sprintf(string, "Command succesful\n");
  	       write(wfd, string, strlen(string));
  	       write(wfd, eom, strlen(eom));
-
+	    }
+	    else {
+ 	       sprintf(string, "Expecting: facial <int> \n", cmd);
+ 	       write(wfd, eom, strlen(eom));
+	    }
+	 break;
+	 case CMD_DUMMY:
 	    if (n>1) {
 	       value0 = atoi(splitLine[1]);
  	       printf("%d \n", value0);
-               set_playback_volume(value0);
+               ccsrState.continuousVoiceRecognitionOn = value0;
 	       sprintf(string, "Command succesful\n");
  	       write(wfd, string, strlen(string));
  	       write(wfd, eom, strlen(eom));

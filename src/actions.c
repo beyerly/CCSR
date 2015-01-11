@@ -501,6 +501,8 @@ void actionPause() {
 
 
 // Detect the minimum turn speed for the terrain we're on. Speed up into left turn, and capture minimum motor power required to create movement
+// Currently not used: I simply manually test it per floortype:
+// 60 for hardwood
 void getMinimumTurnSpeed() {
 
    int turnSpeed;
@@ -538,6 +540,7 @@ void getMinimumTurnSpeed() {
 
 // Turn left/right at minimum motor power for specified amount of time. This is used for precision manouvering.
 // Minimum motor power to move varies with terrain, and should be determined with gyro 
+// Note: minMotorSpeed on hardwood floor is 120. Any more will cause overshoot when centering!
 void turnAtMinPowerInPlace(int dir, int time) {
    int sign;
 
@@ -562,7 +565,8 @@ void turnAtMinPowerInPlace(int dir, int time) {
 }
 
 // Drive fwd/back at minimum motor power for specified amount of time. This is used for precision manouvering.
-// Minimum motor power to move varies with terrain, and should be determined with linear accelerometer 
+// Minimum motor power to move varies with terrain, and should be determined with linear accelerometer
+// Note: minMotorSpeed on hardwood floor is 60. Any more will cause overshoot when centering!
 void driveAtMinPower(int dir, int time) {
    int sign;
    printf("dm %d %d\n", dir, time);
@@ -649,8 +653,8 @@ void findAndPickupObject() {
 	 }
       }
       // X-axis is agligned, now align on image Y-axis
-      if((ccsrState.targetVisualObject_Y > ((IMAGE_HEIGHT/2) + OBJECT_PICKUP_WINDOW_Y + 130)) ||
-	 (ccsrState.targetVisualObject_Y < ((IMAGE_HEIGHT/2) - OBJECT_PICKUP_WINDOW_Y + 130))){
+      if((ccsrState.targetVisualObject_Y > ((IMAGE_HEIGHT/2) + OBJECT_PICKUP_WINDOW_Y + OBJECT_PICKUP_OFFSET_Y)) ||
+	 (ccsrState.targetVisualObject_Y < ((IMAGE_HEIGHT/2) - OBJECT_PICKUP_WINDOW_Y + OBJECT_PICKUP_OFFSET_Y))){
          // Y-axis is not aligned with target object, move fwd/back to align 
 	 // Determine if if need to go fwd or back to center in front of object
          if (ccsrState.targetVisualObject_Y < IMAGE_HEIGHT/2) {
@@ -668,8 +672,8 @@ void findAndPickupObject() {
 	       // Move tiny bit and stop. Todo: We may increase the drive duration if object is further away from center.
 	       driveAtMinPower(dir, 0);
 	       brainCycle();
-	       if((ccsrState.targetVisualObject_Y < ((IMAGE_HEIGHT/2) + OBJECT_PICKUP_WINDOW_Y +130)) &&
-		  (ccsrState.targetVisualObject_Y > ((IMAGE_HEIGHT/2) - OBJECT_PICKUP_WINDOW_Y +130 ))){
+	       if((ccsrState.targetVisualObject_Y < ((IMAGE_HEIGHT/2) + OBJECT_PICKUP_WINDOW_Y + OBJECT_PICKUP_OFFSET_Y)) &&
+		  (ccsrState.targetVisualObject_Y > ((IMAGE_HEIGHT/2) - OBJECT_PICKUP_WINDOW_Y + OBJECT_PICKUP_OFFSET_Y))){
 		  // Y-axis is aligned with object. Move on to Y axis
 		  break;
 	       }
@@ -693,8 +697,8 @@ void findAndPickupObject() {
      // We are centered! Go grab object from prefixed location.      
 
      setArm(45, 100, 0, 0, 90);      // Extend elbow halfway
-     setArm(0, 140, 0, 0, 90);     // raise shoulder, bring elbow in untill object touches ground
-     setArm(0, 140, 0, 150, 90);   // ober grabber, drop object
+     setArm(0, 140, 0, 0, 90);       // raise shoulder, bring elbow in untill object touches ground
+     setArm(0, 140, 0, 150, 90);     // ober grabber, drop object
      setArm(15, 180, 180, 150, 90);  // Lower shoulder, extend elbow fully, rotate wrist, grabber remains oben
 
      strcpy(string,"there you go, the ");
@@ -731,8 +735,8 @@ void giveObjectAndFoldArm() {
    setArm(15, 120, 180, 150, 90); // Stretch arm out, keep grabber closed
    say("there you go");
    setArm(20, 120, 180, 0, 90);   // oper grabber, drop object, assuming in hands or user
-   setArm(45, 80, 90, 0, 90);    // raise shoulder fully up, rotate wrist halfway
-   setArm(45, 5, 0, 0, 90);      // pull in elbow fully, rotate wrist fully in
+   setArm(45, 80, 90, 0, 90);     // raise shoulder fully up, rotate wrist halfway
+   setArm(45, 5, 0, 0, 90);       // pull in elbow fully, rotate wrist fully in
 }
 
 
@@ -856,12 +860,12 @@ void analyzeObject() {
 
 
    printf(" new tgtclr HSV: %d %d %d %d %d %d \n", 
-ccsrState.targetColor_iLowH, 
-ccsrState.targetColor_iHighH, 
-ccsrState.targetColor_iLowS ,
-ccsrState.targetColor_iHighS ,
-ccsrState.targetColor_iLowV ,
-ccsrState.targetColor_iHighV);
+	    ccsrState.targetColor_iLowH, 
+	    ccsrState.targetColor_iHighH, 
+	    ccsrState.targetColor_iLowS ,
+	    ccsrState.targetColor_iHighS ,
+	    ccsrState.targetColor_iLowV ,
+	    ccsrState.targetColor_iHighV);
 
    // For now we only analyze test-object of knows size: 
    ccsrState.targetColorVolume = TEST_OBJECT_1_VOLUME;

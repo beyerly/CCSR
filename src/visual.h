@@ -27,7 +27,8 @@ extern "C" {
 
 // If object is +- 10 pixels from X,Y center, we can pick it up with grabber
 #define OBJECT_PICKUP_WINDOW_X 10 
-#define OBJECT_PICKUP_WINDOW_Y 10 
+#define OBJECT_PICKUP_WINDOW_Y 10
+#define OBJECT_PICKUP_OFFSET_Y 130  // Use this offset to position CCSR on Y-axis such that arm can grab target object
 
 
 void *visual ();

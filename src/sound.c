@@ -77,7 +77,7 @@ int writeSndFile(int numFrames, short* buffer) {
 
    // Write frames
    long writtenFrames = sf_writef_short(sndFile, buffer, numFrames);
-   printf("frames %d\n", writtenFrames);
+   printf("writing wave file %s, %d frames\n", VOICE_FILE, writtenFrames);
 
    // Check correct number of frames saved
    if (writtenFrames != numFrames) {
@@ -421,7 +421,7 @@ int initAudio(snd_pcm_t **pcm_handle, int mode) {
    int speed = PLAYBACK_SPEED;
    int audioAvailable;
    
-#ifdef CCSR_PLATFORM
+
    snd_pcm_hw_params_t *hw_params;
    audioAvailable = 0;
 /*   while(!audioAvailable) {
@@ -499,7 +499,7 @@ int initAudio(snd_pcm_t **pcm_handle, int mode) {
   		   snd_strerror (err));
   	  exit (1);
    }
-#endif
+
 
 }
 
@@ -694,6 +694,7 @@ void recordWave(int mode, int length) {
 	 // a telemetry channel. GoogleVoiceToText.sh deamon will delete
 	 // voice file after use, and resum polling
 	 writeSndFile((frames/WAV_DOWNSAMPLE_FACTOR), capture_buffer_mono);
+	 free(capture_buffer_mono);
       break;
       }
    pthread_mutex_unlock(&semAudio);
@@ -739,13 +740,130 @@ void drainAudioPlayback() {
 
 void *ears() {
 
-   logMsg(logFile, "Starting ears", LOG); 
+   int x, y, p, q;
+   int phraseStart, phraseEnd, phaseSize;
+   int wrPtr, rdPtr; 
+   int timeout;
+   int samples;
+   int frames;
+   short* capture_buffer;
+   short* capture_buffer_mono;
+
+   int length, cap_length;
+   int soundDetected;
+   int silenceCount;
+   int acc, avg;
+
+   soundDetected = 0;
+   silenceCount  = 0;
+   lenght     = 8000;  //4 sec
+   cap_lenght = 1000;  //1 sec
+
+   frames     = length*PLAYBACK_SPEED/1000;
+   cap_frames = cap_length*PLAYBACK_SPEED/1000;
+   samples = 2*frames;
+
+   wrPtr = 2*cap_frames;
+   rdPtr = 0;
+   timeout = 0;
+
+   // CCSR mic amplifier runs on separate 3v battery to prevent noise
+   // WE use a GPIO pin to turn on power supply to mic amp through
+   // a solid state relay.
+
+   capture_buffer = (short*) calloc(samples *sizeof(short));
 
    while(1) {
       usleep(EAR_PERIOD);
       if(ccsrState.noiseDetectOn) {
          recordWave(LISTEN, 500);
 	 printf("ear %d\n", ccsrState.noiseDetected);
+      }
+      else if(ccsrState.continuousVoiceRecognitionOn) {
+         printf("continous VR\n");	
+         avg=0;
+	 acc=0;
+	 powerMicAmp(ON);
+         pthread_mutex_lock(&semAudio);
+         initAudio(&capture_handle, SND_PCM_STREAM_CAPTURE);
+         printf("block %d\n", snd_pcm_nonblock(capture_handle,1));	
+         while(1) {
+	    if(snd_pcm_readi(capture_handle, capture_buffer + wrPtr, cap_frames) != cap_frames) {
+	       fprintf (stderr, "Unsuccessful aurio capture \n");
+	    }
+            // Analyse Left channel only
+	    for (x=rdPtr;x<2*cap_frames;x=x+2) {
+	       xAvgWindow = x - 2*AVG_WINDOW_SIZE;
+	       if(xAgWindow < 0) {
+		  xAvgWindow = xAvgWindow + samples;
+	       }
+	       acc = acc + abs(capture_buffer[x]);
+	       acc = acc - abs(capture_buffer[xAvgWindow]);
+	       avg = acc/AVG_WINDOW_SIZE;
+//               printf("avg %d\n", avg);
+	       if (avg>NOISE_LEVEL) {
+		  silenceCount  = 0;
+                  if(!soundDetected){
+		     phraseStart = x;
+   		     soundDetected = 1;
+		  }
+	       }
+	       else if (soundDetected) {
+		  silenceCount = silenceCount + 1;
+		  phraseEnd = x;
+	       }
+	    }   
+            printf("doing analysis sd %d sc %d wp %d\n", soundDetected, silenceCount, wrPtr);
+            printf("wait %d\n", snd_pcm_wait(capture_handle, 10000));	
+	    timeout = timeout + 1;
+	    wrPtr = wrPtr + 2*cap_frames;
+	    if (wrPtr>=samples) {
+	       wrPtr = 0;
+	    }
+	    rdPtr = rdPtr + 2*cap_frames;
+	    if (rdPtr>=samples) {
+	       rdPtr = 0;
+	    }
+	    if (silenceCount > MIN_SILENCE*PLAYBACK_SPEED/1000) {
+		  printf("Captured phrase\n");
+		  if (phraseEnd>phraseStart){
+		     phraseSize = (phraseEnd - PhraseStart)/2;
+		  }
+		  else{
+		     phraseSize = ((samples - PhraseStart) + phraseEnd)/2;
+		  }
+		  capture_buffer_mono = (short*) malloc((phraseSize/WAV_DOWNSAMPLE_FACTOR) *sizeof(short));
+                  p=0;
+		  for(q=0;q<2*phraseSize;q=q+2*WAV_DOWNSAMPLE_FACTOR){
+		     capture_buffer_mono[p] = capture_buffer[q];
+		     p=p+1;
+		  }
+		  // Write audio file to disk: GoogleVoiceToText.sh deamon is 
+		  // waiting for this file to appear, and will post it to
+		  // Google voice to text API. The returned json file will be 
+		  // parsed by CCSR_NLP.py, which will call ccsr back through
+		  // a telemetry channel. GoogleVoiceToText.sh deamon will delete
+		  // voice file after use, and resum polling
+		  writeSndFile((phraseSize/WAV_DOWNSAMPLE_FACTOR), capture_buffer_mono);
+		  free(capture_buffer_mono);
+	          break;
+
+	       }
+	       if (timeout > AUDIOCAPTURE_TIMEOUT) {
+		  printf("Timeout\n");
+	          break;
+	       }
+	    }
+	 }
+         soundDetected = 0;
+	 silenceCount  = 0;
+	 timeout = 0;
+         snd_pcm_close (capture_handle);
+	 pthread_mutex_unlock(&semAudio);
+	 powerMicAmp(OFF);
+	 free(capture_buffer);
+	 ccsrState.continuousVoiceRecognitionOn = 0;
+         printf("stopping continous VR\n");	
       }
    }
 }

@@ -12,14 +12,14 @@ OPENCV_LINK_FLAGS = -lopencv_core -lopencv_imgproc -lopencv_highgui -lopencv_ml 
                     -lopencv_calib3d -lopencv_objdetect -lopencv_contrib -lopencv_legacy -lopencv_flann
 
 ccsr_obj = ccsr.o utils.o motor.o irSensors.o sound.o mood.o vocal.o powerMonitor.o navigation.o lcdDisp.o \
-          actions.o  telemetry.o servoCtrl.o  gpio.o visual.o
+          actions.o  telemetry.o servoCtrl.o  gpio.o visual.o visual.o
 	  
 	  
 telccsr_obj = telccsr.o
 headers = src/ccsr.h src/utils.h src/motor.h src/irSensors.h \
           src/sound.h src/mood.h src/vocal.h src/powerMonitor.h src/navigation.h \
 	  src/lcdDisp.h src/actions.h  src/telemetry.h src/telccsr.h src/servoCtrl.h \
-	  src/gpio.h src/visual.h
+	  src/gpio.h src/visual.h src/facial.h
 
 all: ccsr telccsr 
 

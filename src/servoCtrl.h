@@ -15,6 +15,7 @@ void setPanTilt(int pan, int tilt, int speed);
 void setArm(int arm, int elbow, int wrist, int hand, int speed);
 int pantiltDiagnostics();
 void *camtrack();
+void enablePanTilt(int on);
 
 #ifdef __cplusplus
 }
@@ -22,10 +23,12 @@ void *camtrack();
 
 #define MODE0_SLEEP_offset 4
 #define MODE1_AI_offset 5
+#define LED_FULL_OFF_offset 4
 
 #define MODE0_SLEEP 1
 #define MODE0_NORMAL 0
 #define MODE1_AI 1
+#define LED_FULL_OFF 1
 
 #define PCA9685_REG_MODE0 0x0
 #define PCA9685_REG_MODE1 0x1

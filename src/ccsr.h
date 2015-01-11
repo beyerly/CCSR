@@ -192,6 +192,7 @@ typedef struct ccsrStateType {
    char pidMotionDetectOn;
    char noiseDetectOn;
    char cameraCaptureOn;
+   char continuousVoiceRecognitionOn;
 
    // Telemetry
    char telemetryConnected;

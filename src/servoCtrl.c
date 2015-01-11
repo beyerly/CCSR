@@ -191,6 +191,53 @@ void setPanTilt(int pan, int tilt, int speed) {
    
 } 
 
+
+// Set pan and tilt of (camera/sonar) head to specific values. Head moves at <speed>
+void enablePanTilt(int on) {
+   
+   if(on){
+      printf("Resuming current pantilt servo positions\n");
+      conv[0] = PCA9685_REG_LED0_ON_L;
+      conv[1] = 0x00;  // On
+      conv[2] = 0x00;
+      conv[3] = (unsigned char) ccsrState.panPulseWidth & 0xFF;  
+      conv[4] = (unsigned char) (ccsrState.panPulseWidth >> 8 ) & 0x0F;
+      conv[5] = 0x00;  // On
+      conv[6] = 0x00;
+      conv[7] = (unsigned char) ccsrState.tiltPulseWidth & 0xFF;  
+      conv[8] = (unsigned char) (ccsrState.tiltPulseWidth >> 8 ) & 0x0F;
+   }
+   else {
+      printf("Turning off pantilt servo's\n");
+      conv[0] = PCA9685_REG_LED0_ON_L;
+      conv[1] = 0x00;  // On
+      conv[2] = 0x00;
+      conv[3] = 0x00;  
+      conv[4] = (unsigned char) (LED_FULL_OFF << LED_FULL_OFF_offset) & 0xFF;
+      conv[5] = 0x00;  // On
+      conv[6] = 0x00;
+      conv[7] = 0x00;  
+      conv[8] = (unsigned char) (LED_FULL_OFF << LED_FULL_OFF_offset) & 0xFF;
+   }
+   
+   pthread_mutex_lock(&semI2c);
+ 
+   if(ioctl(i2cbus, I2C_SLAVE, PCA9685_ADDR)) {
+      logMsg(logFile, "Can't set PCA9685_ADDR I2C address", ERROR);
+   }
+   usleep(I2C_DELAY);
+ 
+   if(write(i2cbus, conv, 9) != 9) {
+      logMsg(logFile, "Unsuccessful cmd write to PCA9685", ERROR);
+   }
+   usleep(I2C_DELAY);
+   pthread_mutex_unlock(&semI2c);
+   usleep(delay);
+   }
+} 
+
+
+
 // Set arm to specific position by specifying position of arm (shoulder), elbow, wrist and hand. 
 // Arms moves at <speed> expressed as percentage of max: speed[0..100]
 // Joint values expressed in degrees:

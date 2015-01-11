@@ -34,6 +34,7 @@
 #include "servoCtrl.h"
 #include "gpio.h"
 #include "visual.h"
+#include "facial.h"
 
 FILE *logFile;
 int i2cbus, devRandom;
@@ -60,11 +61,13 @@ pthread_t   threadSonar,
 	    threadEars,
 	    threadTelemetry,
 	    threadNLP,
-	    threadPowerMonitor;
+	    threadPowerMonitor,
+	    threadFacialExpressions;
 
 
 int  pipeSoundGen[2];
 int  pipeLCDMsg[2];
+int  pipeFacialMsg[2];
 char lcdEvent;
 soundType sound[standardSoundsCount];
 
@@ -100,6 +103,9 @@ int main () {
    if(pipe(pipeLCDMsg) == -1) {
       logMsg(logFile, "Could not open pipeLCDMsg", ERROR);
    }
+   if(pipe(pipeFacialMsg) == -1) {
+      logMsg(logFile, "Could not open pipeFacialMsg", ERROR);
+   }
    devRandom = open("/dev/random", O_RDWR);
 
    pthread_mutex_init(&semI2c, NULL);
@@ -113,6 +119,7 @@ int main () {
    configServoControl();
    initMotors();
    lcdDisplayInit();
+   facialInit();
 
    if(pthread_create( &threadNavigation, NULL, navigation, NULL )) {
       logMsg(logFile, "Pthread can't be created", ERROR);
@@ -157,6 +164,9 @@ int main () {
      logMsg(logFile, "Pthread can't be created", ERROR);
    }
    if(pthread_create( &threadPowerMonitor, NULL, powerMonitor, NULL )) {
+     logMsg(logFile, "Pthread can't be created", ERROR);
+   }
+   if(pthread_create( &threadFacialExpressions, NULL, facialExpressions, NULL )) {
      logMsg(logFile, "Pthread can't be created", ERROR);
    }
 
