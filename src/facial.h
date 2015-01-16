@@ -1,3 +1,6 @@
+void *facialExpressions();
+void eyesSetBrightness(char b);
+void eyesSetBlinkRate(int b);
 
 
 typedef struct expressionType {
@@ -6,6 +9,7 @@ typedef struct expressionType {
 } expressionType;
 
 enum expressionset       {EXPR_BLINK,
+                          EXPR_TALK,
                           NUM_EXPR
 		         };
 

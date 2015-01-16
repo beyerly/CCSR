@@ -16,6 +16,8 @@ void setArm(int arm, int elbow, int wrist, int hand, int speed);
 int pantiltDiagnostics();
 void *camtrack();
 void enablePanTilt(int on);
+void enableArm(int on);
+void setRGBLED(int R, int G, int B, int speed);
 
 #ifdef __cplusplus
 }
@@ -58,10 +60,25 @@ void enablePanTilt(int on);
 #define PCA9685_REG_LED4_OFF_L 0x18
 #define PCA9685_REG_LED4_OFF_H 0x19
 // Hand servo
-#define PCA9685_REG_LED5_ON_L 0xA
-#define PCA9685_REG_LED5_ON_H 0xB
-#define PCA9685_REG_LED5_OFF_L 0xC
-#define PCA9685_REG_LED5_OFF_H 0xD
+#define PCA9685_REG_LED5_ON_L 0x1A
+#define PCA9685_REG_LED5_ON_H 0x1B
+#define PCA9685_REG_LED5_OFF_L 0x1C
+#define PCA9685_REG_LED5_OFF_H 0x1D
+// Red LED
+#define PCA9685_REG_LED6_ON_L 0x1E
+#define PCA9685_REG_LED6_ON_H 0x1F
+#define PCA9685_REG_LED6_OFF_L 0x20
+#define PCA9685_REG_LED6_OFF_H 0x21
+// Green LED
+#define PCA9685_REG_LED7_ON_L 0x22
+#define PCA9685_REG_LED7_ON_H 023
+#define PCA9685_REG_LED7_OFF_L 024
+#define PCA9685_REG_LED7_OFF_H 0x25
+// Blue LED
+#define PCA9685_REG_LED8_ON_L 0x26
+#define PCA9685_REG_LED8_ON_H 0x27
+#define PCA9685_REG_LED8_OFF_L 0x28
+#define PCA9685_REG_LED8_OFF_H 0x29
 
 
 
@@ -93,6 +110,16 @@ void enablePanTilt(int on);
 #define ELBOW_ANGLE_RANGE 180 // degrees
 #define WRIST_ANGLE_RANGE 180 // degrees
 #define HAND_ANGLE_RANGE 180 // degrees
+
+#define R_MIN  0    // this is the 'minimum' pulse length count (out of 4096)
+#define R_MAX  4095 // this is the 'maximum' pulse length count (out of 4096)
+#define R_RANGE 255 // 
+#define G_MIN  0    // this is the 'minimum' pulse length count (out of 4096)
+#define G_MAX  4095 // this is the 'maximum' pulse length count (out of 4096)
+#define G_RANGE 255 // 
+#define B_MIN  0    // this is the 'minimum' pulse length count (out of 4096)
+#define B_MAX  4095 // this is the 'maximum' pulse length count (out of 4096)
+#define B_RANGE 255 // 
 
 
 // The CAMERA_TRACK_INTERVAL is the interval the camera tracking process uses to move the camera

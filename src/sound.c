@@ -29,9 +29,17 @@ char lcdEvent;
 
 int x;
 
+pthread_t   threadSoundCapture; 
+int cont_cap_length;
+int cont_cap_block_length;
+
+short* cont_capture_buffer;
+
 snd_pcm_t *playback_handle;
 snd_pcm_t *parrot_handle;
 snd_pcm_t *capture_handle;
+
+char* captureBufferFlags;
 
 char string[MSG_STRING_SIZE];
 
@@ -64,7 +72,7 @@ int writeSndFile(int numFrames, short* buffer) {
 
    // Open sound file for writing
    printf("x1\n");
-      if ((fd = open(VOICE_FILE, O_CREAT | O_WRONLY)) < 0) {
+      if ((fd = open(VOICE_FILE, O_CREAT | O_WRONLY | O_TRUNC)) < 0) {
          perror("open() error for sndfile");
       }
    
@@ -408,7 +416,7 @@ void initSounds(){
 
    set_playback_volume(50);
    set_capture_volume(75);
-   recordWave(DETECT_NOISE_LEVEL, 500);
+   recordWave(DETECT_NOISE_LEVEL, 1000);
 
 }
 
@@ -426,7 +434,7 @@ int initAudio(snd_pcm_t **pcm_handle, int mode) {
    audioAvailable = 0;
 /*   while(!audioAvailable) {
       // Wait untill espeak is done
-      err = snd_pcm_open (pcm_handle, "hw:0,0", mode, 0);
+      err = snd_pcm_open (pcm_handle, "hw:0,0", mode,  SND_PCM_NONBLOCK);
       if(err > 0) {
          audioAvailable = 1;
       }
@@ -439,6 +447,7 @@ int initAudio(snd_pcm_t **pcm_handle, int mode) {
       }
    }
 */
+//   while(snd_pcm_open (pcm_handle, "hw:0,0", mode, SND_PCM_NONBLOCK) < 0) {
    while(snd_pcm_open (pcm_handle, "hw:0,0", mode, 0) < 0) {
 	   usleep(300);
    }
@@ -597,12 +606,13 @@ void captureAudio(int* peak, long* energy, short* buffer, int frames) {
    // Analyse Left channel only
 
    buf_left = buffer ;
-   for (x=0;x<samples;x=x+2) {
+   for (x=0;x<samples;x=x+2*ENERGY_DOWNSAMPLE_FACTOR) {
 	   if(abs(buf_left[x]) > *peak) {
          *peak = buf_left[x];
       }
       *energy = *energy + abs(buf_left[x]); 
-   }   
+   }
+    *energy = *energy*ENERGY_DOWNSAMPLE_FACTOR/frames;
 }
 
 // record an audio wave, do with it as mode specifies
@@ -735,44 +745,102 @@ void drainAudioPlayback() {
 
 }
 
+// Pthread that continuously captures audio in a circular buffer. Total bufferspase is divided into blocks, and
+// after each block we set a flag 
+void *soundCapture() {
+
+   int x;
+   int blocks;
+   int wrPtr; 
+   int samples;
+   int frames, block_frames;
+   short* index;
+
+   int flagIdx;
+   int result;
+   
+   frames       = cont_cap_length*PLAYBACK_SPEED/1000;
+   block_frames = cont_cap_block_length*PLAYBACK_SPEED/1000;
+   samples      = 2*frames;
+   wrPtr        = 0;
+   flagIdx      = 0;
+   blocks       = cont_cap_length/cont_cap_block_length;
 
 
+     index = (short*) cont_capture_buffer + wrPtr;
+     result = snd_pcm_readi(capture_handle, index, block_frames);
+      if( result != block_frames) {
+         printf("err %s\n",  snd_strerror(result));
+         fprintf (stderr, "Unsuccessful aurio capture \n");
+      }
+
+   printf("Starting continuous capture using %d blocks \n", blocks);
+   while(ccsrState.continuousVoiceRecognitionOn){
+      index = (short*) cont_capture_buffer + wrPtr;
+//       printf("wrPtr %d block %d index %d\n", wrPtr, flagIdx, index);
+     result = snd_pcm_readi(capture_handle, index, block_frames);
+      if( result != block_frames) {
+         printf("err %s\n",  snd_strerror(result));
+         fprintf (stderr, "Unsuccessful aurio capture \n");
+      }
+      if(captureBufferFlags[flagIdx] == 0) {
+         captureBufferFlags[flagIdx] = 1;
+      }
+      else {
+         captureBufferFlags[flagIdx] = 0;
+      }
+      flagIdx = flagIdx + 1;
+      if(flagIdx >= blocks) {
+         flagIdx = 0;
+      }
+      wrPtr = wrPtr + 2*block_frames;
+      if (wrPtr>=samples) {
+         wrPtr = 0;
+      }
+/*      for(x=0;x<blocks;x++){ 
+         printf("%d %d", captureBufferFlags[x], index);
+      }
+*/
+   }
+}
 
 void *ears() {
 
    int x, y, p, q;
-   int phraseStart, phraseEnd, phaseSize;
-   int wrPtr, rdPtr; 
-   int timeout;
+   int phraseStart, phraseEnd, phraseSize;
+   int rdPtr; 
    int samples;
-   int frames;
-   short* capture_buffer;
+   int frames, block_frames;
+   int xAvgWindow;
    short* capture_buffer_mono;
+   int flagIdx;
+   int flagPolarity;
+      
+   short* index;
 
-   int length, cap_length;
+
    int soundDetected;
    int silenceCount;
    int acc, avg;
+   int blocks;
 
-   soundDetected = 0;
-   silenceCount  = 0;
-   lenght     = 8000;  //4 sec
-   cap_lenght = 1000;  //1 sec
 
-   frames     = length*PLAYBACK_SPEED/1000;
-   cap_frames = cap_length*PLAYBACK_SPEED/1000;
+
+   cont_cap_length     = 10000;  //10 sec total circular audio buffer
+   cont_cap_block_length = 500;  //0.5 sec blocks
+   blocks = cont_cap_length/cont_cap_block_length;
+
+   frames     = cont_cap_length*PLAYBACK_SPEED/1000;
+   block_frames = cont_cap_block_length*PLAYBACK_SPEED/1000;
    samples = 2*frames;
 
-   wrPtr = 2*cap_frames;
-   rdPtr = 0;
-   timeout = 0;
+
 
    // CCSR mic amplifier runs on separate 3v battery to prevent noise
    // WE use a GPIO pin to turn on power supply to mic amp through
    // a solid state relay.
 
-   capture_buffer = (short*) calloc(samples *sizeof(short));
-
+   
    while(1) {
       usleep(EAR_PERIOD);
       if(ccsrState.noiseDetectOn) {
@@ -780,90 +848,118 @@ void *ears() {
 	 printf("ear %d\n", ccsrState.noiseDetected);
       }
       else if(ccsrState.continuousVoiceRecognitionOn) {
-         printf("continous VR\n");	
-         avg=0;
-	 acc=0;
+         printf("continous VR blocks: %d\n", blocks);	
+         rdPtr = 0;
+   flagIdx = 0;
+   flagPolarity = 0;
+   soundDetected = 0;
+   silenceCount  = 0;
+  	 cont_capture_buffer = (short*) calloc(samples, sizeof(short));
+ 	 captureBufferFlags = (char*) calloc(blocks, sizeof(char));
 	 powerMicAmp(ON);
          pthread_mutex_lock(&semAudio);
          initAudio(&capture_handle, SND_PCM_STREAM_CAPTURE);
-         printf("block %d\n", snd_pcm_nonblock(capture_handle,1));	
-         while(1) {
-	    if(snd_pcm_readi(capture_handle, capture_buffer + wrPtr, cap_frames) != cap_frames) {
-	       fprintf (stderr, "Unsuccessful aurio capture \n");
+ 	 if(pthread_create(&threadSoundCapture, NULL, soundCapture, NULL )) {
+ 	   logMsg(logFile, "Pthread can't be created", ERROR);
+ 	 }
+         while(ccsrState.continuousVoiceRecognitionOn) {
+	    acc=0;
+            index = &cont_capture_buffer[rdPtr];
+//	    printf("consumer waiting for block at %d\n", rdPtr);
+ 	    while(captureBufferFlags[flagIdx] == flagPolarity) {
+ 	       usleep(200);
+ 	    }
+	    // Analyse Left channel only
+	    for (x=rdPtr;x< rdPtr + 2*block_frames;x=x+2*ENERGY_DOWNSAMPLE_FACTOR) {
+//               printf("%d\n", abs(cont_capture_buffer[x]));
+	       acc = acc + abs(cont_capture_buffer[x]);
 	    }
-            // Analyse Left channel only
-	    for (x=rdPtr;x<2*cap_frames;x=x+2) {
-	       xAvgWindow = x - 2*AVG_WINDOW_SIZE;
-	       if(xAgWindow < 0) {
-		  xAvgWindow = xAvgWindow + samples;
+	    avg = acc*ENERGY_DOWNSAMPLE_FACTOR/block_frames;
+//	    if (avg>ccsrState.audioEnergyThreshold + NOISE_LEVEL) {
+	    if (avg>NOISE_LEVEL) {
+ 	       silenceCount  = 0;
+               if(!soundDetected){
+	     	  phraseStart = rdPtr;
+   	     	  soundDetected = 1;
 	       }
-	       acc = acc + abs(capture_buffer[x]);
-	       acc = acc - abs(capture_buffer[xAvgWindow]);
-	       avg = acc/AVG_WINDOW_SIZE;
-//               printf("avg %d\n", avg);
-	       if (avg>NOISE_LEVEL) {
-		  silenceCount  = 0;
-                  if(!soundDetected){
-		     phraseStart = x;
-   		     soundDetected = 1;
-		  }
-	       }
-	       else if (soundDetected) {
-		  silenceCount = silenceCount + 1;
-		  phraseEnd = x;
-	       }
-	    }   
-            printf("doing analysis sd %d sc %d wp %d\n", soundDetected, silenceCount, wrPtr);
-            printf("wait %d\n", snd_pcm_wait(capture_handle, 10000));	
-	    timeout = timeout + 1;
-	    wrPtr = wrPtr + 2*cap_frames;
-	    if (wrPtr>=samples) {
-	       wrPtr = 0;
 	    }
-	    rdPtr = rdPtr + 2*cap_frames;
+	    else if (soundDetected) {
+	       if(silenceCount == 0) {
+	          phraseEnd = rdPtr + 2*block_frames;
+		  if(phraseEnd>=samples) {
+	             phraseEnd = 0;
+	          }
+ 		  }
+	       silenceCount = silenceCount + 1;
+	    }
+            printf("doing analysis sd %d sc %d avg %d acc %d rptr %d\n", soundDetected, silenceCount, avg, acc, rdPtr);
+	    rdPtr = rdPtr + 2*block_frames;
 	    if (rdPtr>=samples) {
 	       rdPtr = 0;
 	    }
-	    if (silenceCount > MIN_SILENCE*PLAYBACK_SPEED/1000) {
-		  printf("Captured phrase\n");
+ 	    flagIdx = flagIdx + 1;
+ 	    if(flagIdx >= blocks) {
+ 	       flagIdx = 0;
+	       if(flagPolarity == 0) {
+	          flagPolarity = 1;
+	       }
+	       else {
+	          flagPolarity = 0;
+	       }
+ 	    }
+	    if (silenceCount >= MIN_SILENCE/cont_cap_block_length) {
 		  if (phraseEnd>phraseStart){
-		     phraseSize = (phraseEnd - PhraseStart)/2;
+		     phraseSize = (phraseEnd - phraseStart)/2;
 		  }
 		  else{
-		     phraseSize = ((samples - PhraseStart) + phraseEnd)/2;
+		     phraseSize = ((samples - phraseStart) + phraseEnd)/2;
 		  }
-		  capture_buffer_mono = (short*) malloc((phraseSize/WAV_DOWNSAMPLE_FACTOR) *sizeof(short));
-                  p=0;
-		  for(q=0;q<2*phraseSize;q=q+2*WAV_DOWNSAMPLE_FACTOR){
-		     capture_buffer_mono[p] = capture_buffer[q];
-		     p=p+1;
-		  }
-		  // Write audio file to disk: GoogleVoiceToText.sh deamon is 
-		  // waiting for this file to appear, and will post it to
-		  // Google voice to text API. The returned json file will be 
-		  // parsed by CCSR_NLP.py, which will call ccsr back through
-		  // a telemetry channel. GoogleVoiceToText.sh deamon will delete
-		  // voice file after use, and resum polling
-		  writeSndFile((phraseSize/WAV_DOWNSAMPLE_FACTOR), capture_buffer_mono);
-		  free(capture_buffer_mono);
+		  printf("Captured phrase b %d e %d sz %d\n", phraseStart, phraseEnd, phraseSize);
+		  
 	          break;
 
 	       }
-	       if (timeout > AUDIOCAPTURE_TIMEOUT) {
-		  printf("Timeout\n");
-	          break;
-	       }
-	    }
 	 }
+         printf("stopping continous VR\n");	
+	 ccsrState.continuousVoiceRecognitionOn = 0;
          soundDetected = 0;
 	 silenceCount  = 0;
-	 timeout = 0;
+         printf("pthread join %d\n", pthread_join(threadSoundCapture, NULL));
          snd_pcm_close (capture_handle);
 	 pthread_mutex_unlock(&semAudio);
 	 powerMicAmp(OFF);
-	 free(capture_buffer);
-	 ccsrState.continuousVoiceRecognitionOn = 0;
-         printf("stopping continous VR\n");	
+
+	 capture_buffer_mono = (short*) malloc((phraseSize/WAV_DOWNSAMPLE_FACTOR) *sizeof(short));
+ 	 p=0;
+
+
+	 if (phraseEnd>phraseStart){
+	 for(q=phraseStart;q<phraseEnd;q=q+2*WAV_DOWNSAMPLE_FACTOR){
+	    capture_buffer_mono[p] = cont_capture_buffer[q];
+	    p=p+1;
+	 }
+	 }
+	 else {
+	 for(q=phraseStart;q<samples;q=q+2*WAV_DOWNSAMPLE_FACTOR){
+	    capture_buffer_mono[p] = cont_capture_buffer[q];
+	    p=p+1;
+	 }
+	 for(q=0;q<phraseEnd;q=q+2*WAV_DOWNSAMPLE_FACTOR){
+	    capture_buffer_mono[p] = cont_capture_buffer[q];
+	    p=p+1;
+	 }
+	 }
+	 // Write audio file to disk: GoogleVoiceToText.sh deamon is
+	 // waiting for this file to appear, and will post it to
+	 // Google voice to text API. The returned json file will be
+	 // parsed by CCSR_NLP.py, which will call ccsr back through
+	 // a telemetry channel. GoogleVoiceToText.sh deamon will delete
+	 // voice file after use, and resum polling
+	 writeSndFile((phraseSize/WAV_DOWNSAMPLE_FACTOR), capture_buffer_mono);
+	 free(capture_buffer_mono);
+
+	 free(cont_capture_buffer);
+	 free(captureBufferFlags);
       }
    }
 }

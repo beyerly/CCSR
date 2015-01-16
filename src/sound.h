@@ -7,12 +7,13 @@
 #define WAV_BUF_SIZE 1024 
 #define PLAYBACK_SPEED 44100
 #define WAV_DOWNSAMPLE_FACTOR 4   // So we are downsampling to 11025
+#define ENERGY_DOWNSAMPLE_FACTOR 16   // So we are downsampling to 11025
 
 #define NUM_SOUNDS 6
 #define MAX_NOTES 8
 #define AVG_WINDOW_SIZE 16
-#define NOISE_LEVEL 10000
-#define AUDIOCAPTURE_TIMEOUT 10 // sec
+#define NOISE_LEVEL 1000
+#define AUDIOCAPTURE_TIMEOUT 3 // sec
 
 #define SND_REPETITION_DELAY 10000
 
@@ -20,6 +21,7 @@
 #define AUDIO_ENERGY_HYSTRESIS 10
 #define EAR_PERIOD 500000          // 1s
 
+#define MIN_SILENCE 2000 //2s
 
 #define MAX_FADE_VOL 1000
 #define FADE_TIME 1000

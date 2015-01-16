@@ -21,7 +21,7 @@ extern pthread_mutex_t semI2c;
 extern int pipeFacialMsg[2];
 
 
-static const char eye_open_bmp[] =
+char eye_open_bmp[] =
   { 0xFF,
     0xF0,
     0x0F,
@@ -30,7 +30,7 @@ static const char eye_open_bmp[] =
     0xF0,
     0x0F,
     0x00 };
-static const char eye_closed_bmp[] =
+char eye_closed_bmp[] =
   { 0xFF,
     0xFF,
     0xFF,
@@ -157,7 +157,7 @@ void eyesWriteDisplay(int eye, char* dispBuff) {
 
 void *facialExpressions() {
    expressionType expr;
-
+   int result;
    while(1) {
       result = read (pipeFacialMsg[OUT],&expr,sizeof(expr));
       switch(expr.type) {

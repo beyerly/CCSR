@@ -115,7 +115,8 @@ char *set_cmd_lookup[] = {"rc",          // set rc <0,1> - turn off/on Remote co
 			  "allsens",     // set allsens <0,1> - turn off/on all sensors simultaneously
 			  "speed",       // set speed <targetSpeed [-255..255]> <delta [0..256]> - set CCSR forward 
 			                 // and turn-speed. This command will only finish if target speeds are met 
-			  "pantilt",     // set pantilt <pan [-90..90]> <tilt [-45..45]> - Set head (pantilt servos)
+			  "pantilt",     // set pantilt <pan [-90..90]> <tilt [-45..45]> <speed [0..100]>- Set head (pantilt servos)
+                                         // set pantilt <0=off, 1=on> - Turn on/off pantilt servo's
 			                 // in specific position. Value sare degrees, 0,0 is dead ahead. 
 			  "track",       // set track <0,1> - turn off/on opencv object tracking 
 			  "state",       // set state <int> - set ccsrState.state to state <int> 
@@ -128,15 +129,17 @@ char *set_cmd_lookup[] = {"rc",          // set rc <0,1> - turn off/on Remote co
 			  "maxopcurr",   // set maxopcurr <int> - Set maximum operating current in <int> mA. If CCSR
 			                 // draws more than this value, the 'exceeding current limit' alarm will be 
 					 // triggered  
-			  "arm",         // set arm <arm []> <elbow []> <wrist []> <hand []> <speed [1..100]> - 
+			  "arm",         // set arm <arm [0..45]> <elbow [0..180]> <wrist [0..180]> <hand [0..180]> <speed [1..100]> 
+			                 // set arm <0=off, 1=on> Turn arm servo's on/off 
 			                 // set arm in specific position, each joint indicated in degrees. Speed
 					 // indicates how fast arm moves into position. 
 			  "mprescaler",  // set mprescaler <int> - Set DC motor driver prescaler 
 			  "volume",      // set volume <int> - Increase speaker volume by <int> 
 			  "lcddisp",     // set lcddisp <0=off,1=on> <contrast> <brightness> - Set LCD Display  
-			  "tcolorvol"    // set tcolorvol <int> - Set Target Color volume, used as a threshhold to determine if CCSR
+			  "tcolorvol",    // set tcolorvol <int> - Set Target Color volume, used as a threshhold to determine if CCSR
 			                 // is close to target object. The larger the number, the bigger the portion of the camara image
 					 // the target color must occupy before CCSR considers itself right in front of object.
+                          "rgbled"       // Set RGB LED color
 			   };
 
 
@@ -607,6 +610,14 @@ void ccsrExecuteCmd(char **splitLine, int n, int wfd) {
  	            write(wfd, string, strlen(string));
  	            write(wfd, eom, strlen(eom));
 	         }
+	         else if (n>2) {
+	            // Turning on/off arm servo's
+		    value0 = atoi(splitLine[2]);
+		    enableArm(value0);
+		    sprintf(string, "Command succesful\n");
+ 	            write(wfd, string, strlen(string));
+ 	            write(wfd, eom, strlen(eom));
+	         }
 	         else {
  	            sprintf(string, "Expecting: set arm <arm pos> <elbow pos> <wrist pos> <hand pos>\n", cmd);
  	            write(wfd, eom, strlen(eom));
@@ -668,6 +679,22 @@ void ccsrExecuteCmd(char **splitLine, int n, int wfd) {
 	         }
 	         else {
  	            sprintf(string, "Expecting: set tcolorvol <value>\n", cmd);
+ 	            write(wfd, eom, strlen(eom));
+	         }
+	      break;
+	      case RGBLED:
+		 if (n>5) {
+	            value0 = atoi(splitLine[2]);
+	            value1 = atoi(splitLine[3]);
+	            value2 = atoi(splitLine[4]);
+	            value3 = atoi(splitLine[5]);
+	            setRGBLED(value0, value1, value2, value3);
+		    sprintf(string, "Command succesful\n");
+ 	            write(wfd, string, strlen(string));
+ 	            write(wfd, eom, strlen(eom));
+	         }
+	         else {
+ 	            sprintf(string, "Expecting: set rgbled <R [0..255]> <B [0..255]> <B [0..255]> <speed [0..100]>\n", cmd);
  	            write(wfd, eom, strlen(eom));
 	         }
 	      break;

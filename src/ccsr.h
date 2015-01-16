@@ -141,6 +141,11 @@ typedef struct ccsrStateType {
    int handPulseWidth;
    int hand;
 
+   int RPulseWidth;
+   int GPulseWidth;
+   int BPulseWidth;
+   
+
    // Enviroment 
    int   temp;     // Celcius
    int   ambientLight;

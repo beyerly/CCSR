@@ -119,7 +119,8 @@ int main () {
    configServoControl();
    initMotors();
    lcdDisplayInit();
-   facialInit();
+//   facialInit();
+set_playback_volume(0);
 
    if(pthread_create( &threadNavigation, NULL, navigation, NULL )) {
       logMsg(logFile, "Pthread can't be created", ERROR);
@@ -171,6 +172,8 @@ int main () {
    }
 
    write(pipeSoundGen[IN], &sound[linuxBooted], sizeof(sound[linuxBooted]));
+
+   lcdDisplayConfig(50, 1);
 
    lcdEvent = EVENT_LINUX_BOOTED;
    write(pipeLCDMsg[IN], &lcdEvent, sizeof(lcdEvent));

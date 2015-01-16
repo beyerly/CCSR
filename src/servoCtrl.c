@@ -85,6 +85,8 @@ void configServoControl() {
    // Set servo's in neutral position
    setPanTilt(0, 0, 100);     // Dead ahead
    setArm(45, 5, 0, 0, 100);  // Folded
+   enableArm(0);
+   enablePanTilt(0);
 
 } 
 
@@ -192,10 +194,125 @@ void setPanTilt(int pan, int tilt, int speed) {
 } 
 
 
+void setRGBLED(int R, int G, int B, int speed) {
+   unsigned char conv[13];
+   int n,m;
+   int RPW, GPW, BPW;
+   int RPWInc, GPWInc, BPWInc;
+   int delay;
+
+
+   
+   // speed = 0, 1 sec per step
+   // speed = 100, 0 sec per step 
+   delay = 10000 - speed * 100;
+
+   
+   // 100% = SERVOMAX, 0% = SERVOMIN
+   RPW  = R_MIN + R*(R_MAX-R_MIN)/R_RANGE;
+   GPW  = G_MIN + G*(G_MAX-G_MIN)/G_RANGE;
+   BPW  = B_MIN + B*(B_MAX-B_MIN)/B_RANGE;
+
+
+   if(speed == 100) {
+      RPWInc = RPW - ccsrState.RPulseWidth;
+      GPWInc = GPW - ccsrState.GPulseWidth;
+      BPWInc = BPW - ccsrState.BPulseWidth;
+   }
+   else {
+      if(ccsrState.RPulseWidth > RPW) {
+         RPWInc = -PW_STEP;
+      }
+      else {
+         RPWInc = PW_STEP;
+      }
+      if(ccsrState.GPulseWidth > GPW) {
+         GPWInc = -PW_STEP;
+      }
+      else {
+         GPWInc = PW_STEP;
+      }
+      if(ccsrState.BPulseWidth > BPW) {
+         BPWInc = -PW_STEP;
+      }
+      else {
+         BPWInc = PW_STEP;
+      }
+   }
+   while((ccsrState.RPulseWidth!=RPW) ||
+         (ccsrState.GPulseWidth!=GPW) ||
+	 (ccsrState.BPulseWidth!=BPW)) {
+      ccsrState.RPulseWidth = ccsrState.RPulseWidth + RPWInc;
+      ccsrState.GPulseWidth = ccsrState.GPulseWidth + GPWInc;
+      ccsrState.BPulseWidth = ccsrState.BPulseWidth + BPWInc;
+      if(RPWInc>0) {
+         if(ccsrState.RPulseWidth>=RPW) {
+            ccsrState.RPulseWidth = RPW;
+         }
+      }
+      else {
+         if(ccsrState.RPulseWidth<RPW) {
+            ccsrState.RPulseWidth = RPW;
+         }
+      }
+      if(GPWInc>0) {
+         if(ccsrState.GPulseWidth>=GPW) {
+            ccsrState.GPulseWidth = GPW;
+         }
+      }
+      else {
+         if(ccsrState.GPulseWidth<GPW) {
+            ccsrState.GPulseWidth = GPW;
+         }
+      }
+      if(BPWInc>0) {
+         if(ccsrState.BPulseWidth>=BPW) {
+            ccsrState.BPulseWidth = BPW;
+         }
+      }
+      else {
+         if(ccsrState.BPulseWidth<BPW) {
+            ccsrState.BPulseWidth = BPW;
+         }
+      }
+      conv[0] = PCA9685_REG_LED6_ON_L;
+      conv[1] = 0x00;  // On
+      conv[2] = 0x00;
+      conv[3] = (unsigned char) ccsrState.RPulseWidth & 0xFF;  
+      conv[4] = (unsigned char) (ccsrState.RPulseWidth >> 8 ) & 0x0F;
+      conv[5] = 0x00;  // On
+      conv[6] = 0x00;
+      conv[7] = (unsigned char) ccsrState.GPulseWidth & 0xFF;  
+      conv[8] = (unsigned char) (ccsrState.GPulseWidth >> 8 ) & 0x0F;
+      conv[9] = 0x00;  // On
+      conv[10] = 0x00;
+      conv[11] = (unsigned char) ccsrState.BPulseWidth & 0xFF;  
+      conv[12] = (unsigned char) (ccsrState.BPulseWidth >> 8 ) & 0x0F;
+
+      pthread_mutex_lock(&semI2c);
+ 
+      if(ioctl(i2cbus, I2C_SLAVE, PCA9685_ADDR)) {
+         logMsg(logFile, "Can't set PCA9685_ADDR I2C address", ERROR);
+      }
+      usleep(I2C_DELAY);
+ 
+ 
+      if(write(i2cbus, conv, 9) != 13) {
+         logMsg(logFile, "Unsuccessful cmd write to PCA9685", ERROR);
+      }
+      usleep(I2C_DELAY);
+      pthread_mutex_unlock(&semI2c);
+      usleep(delay);
+   }
+   
+} 
+
+
 // Set pan and tilt of (camera/sonar) head to specific values. Head moves at <speed>
 void enablePanTilt(int on) {
-   
-   if(on){
+   unsigned char conv[9];
+      
+   if(on==1){
       printf("Resuming current pantilt servo positions\n");
       conv[0] = PCA9685_REG_LED0_ON_L;
       conv[1] = 0x00;  // On
@@ -232,9 +349,69 @@ void enablePanTilt(int on) {
    }
    usleep(I2C_DELAY);
    pthread_mutex_unlock(&semI2c);
-   usleep(delay);
-   }
 } 
+
+
+// Set pan and tilt of (camera/sonar) head to specific values. Head moves at <speed>
+void enableArm(int on) {
+   unsigned char conv[17];
+      
+   if(on==1){
+      printf("Resuming current arm servo positions\n");
+      conv[0] = PCA9685_REG_LED2_ON_L;
+      conv[1] = 0x00;  // On
+      conv[2] = 0x00;
+      conv[3] = (unsigned char) ccsrState.armPulseWidth & 0xFF;  
+      conv[4] = (unsigned char) (ccsrState.armPulseWidth >> 8 ) & 0x0F;
+      conv[5] = 0x00;  // On
+      conv[6] = 0x00;
+      conv[7] = (unsigned char) ccsrState.elbowPulseWidth & 0xFF;  
+      conv[8] = (unsigned char) (ccsrState.elbowPulseWidth >> 8 ) & 0x0F;
+      conv[9] = 0x00;  // On
+      conv[10] = 0x00;
+      conv[11] = (unsigned char) ccsrState.wristPulseWidth & 0xFF;  
+      conv[12] = (unsigned char) (ccsrState.wristPulseWidth >> 8 ) & 0x0F;
+      conv[13] = 0x00;  // On
+      conv[14] = 0x00;
+      conv[15] = (unsigned char) ccsrState.handPulseWidth & 0xFF;  
+      conv[16] = (unsigned char) (ccsrState.handPulseWidth >> 8 ) & 0x0F;
+   }
+   else {
+      printf("Turning off arm servo's\n");
+      conv[0] = PCA9685_REG_LED2_ON_L;
+      conv[1] = 0x00;  // On
+      conv[2] = 0x00;
+      conv[3] = 0x00;
+      conv[4] = (unsigned char) (LED_FULL_OFF << LED_FULL_OFF_offset) & 0xFF;
+      conv[5] = 0x00;  // On
+      conv[6] = 0x00;
+      conv[7] = 0x00;
+      conv[8] = (unsigned char) (LED_FULL_OFF << LED_FULL_OFF_offset) & 0xFF;
+      conv[9] = 0x00;  // On
+      conv[10] = 0x00;
+      conv[11] = 0x00;
+      conv[12] = (unsigned char) (LED_FULL_OFF << LED_FULL_OFF_offset) & 0xFF;
+      conv[13] = 0x00;  // On
+      conv[14] = 0x00;
+      conv[15] = 0x00;
+      conv[16] = (unsigned char) (LED_FULL_OFF << LED_FULL_OFF_offset) & 0xFF;
+   }
+   
+      pthread_mutex_lock(&semI2c);
+ 
+      if(ioctl(i2cbus, I2C_SLAVE, PCA9685_ADDR)) {
+         logMsg(logFile, "Can't set PCA9685_ADDR I2C address", ERROR);
+      }
+      usleep(I2C_DELAY);
+ 
+ 
+      if(write(i2cbus, conv, 17) != 17) {
+         logMsg(logFile, "Unsuccessful cmd write to PCA9685", ERROR);
+      }
+      usleep(I2C_DELAY);
+      pthread_mutex_unlock(&semI2c);
+} 
+
 
 
 

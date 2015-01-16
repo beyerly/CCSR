@@ -62,6 +62,7 @@ enum telccsrset          {REMOTE,
 			  VOLUME,
 			  LCDDISP,
 			  TARGET_COLOR_VOLUME,
+			  RGBLED,
 			  NUM_SENS_CMD
 		         };
 

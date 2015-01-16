@@ -126,6 +126,8 @@ void lcdDisplayMinorMsg(char *s) {
 
 
 // Set LCD display contrast and brightness
+// contrast = [1..50]
+// brightness = 1 (off) .. 8 (brightest)
 void lcdDisplayConfig(char contrast , char brightness) {
    unsigned char buffer[3];
 
@@ -172,7 +174,8 @@ void lcdDisplayClear() {
    pthread_mutex_unlock(&semI2c);
 } 
 
-// Turn on/off LCD display backlight. 
+// Turn on/off LCD display (text only, not backlight).
+// on=1: on, on=0: off 
 void lcdDisplayPower(int on) {
 
    unsigned char buffer[2];
