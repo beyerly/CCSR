@@ -290,11 +290,11 @@ void initSounds(){
    sound[singleA].style = sine;
    sound[singleA].notes = 1;
 
-   sound[doubleA].freq[0] = 150;
-   sound[doubleA].length[0] = 2000;
+   sound[doubleA].freq[0] = 440;
+   sound[doubleA].length[0] = 200;
    sound[doubleA].vol[0] = 1000;
-   sound[doubleA].freq[1] = 150;
-   sound[doubleA].length[1] = 1000;
+   sound[doubleA].freq[1] = 440;
+   sound[doubleA].length[1] = 200;
    sound[doubleA].vol[1] = 1000;
    sound[doubleA].style = sine;
    sound[doubleA].notes = 2;
@@ -745,8 +745,12 @@ void drainAudioPlayback() {
 
 }
 
-// Pthread that continuously captures audio in a circular buffer. Total bufferspase is divided into blocks, and
-// after each block we set a flag 
+// Pthread that continuously captures audio in a circular buffer. This is used to continuously listen for voice, and detect when a 
+// full sentence has been captured. Total bufferspace is divided into blocks, and
+// after capturing each block we toggle a flag in an array indicatign back to the calling process a block is ready for analysis.
+// There is no sync back to this process, so we must assume the analysis process is always faster, which it should because we 
+// significantly downsample when analyzing a block. When a sentence is detected and captured, this pthread is killed, it will be
+// re-spawn when we start listenign for the next sentence.
 void *soundCapture() {
 
    int x;
@@ -759,51 +763,60 @@ void *soundCapture() {
    int flagIdx;
    int result;
    
-   frames       = cont_cap_length*PLAYBACK_SPEED/1000;
-   block_frames = cont_cap_block_length*PLAYBACK_SPEED/1000;
-   samples      = 2*frames;
+   frames       = cont_cap_length*PLAYBACK_SPEED/1000;          // total circular buffer space
+   block_frames = cont_cap_block_length*PLAYBACK_SPEED/1000;    // capture block
+   samples      = 2*frames;                                     // We sampel stereo (must change this!)
    wrPtr        = 0;
    flagIdx      = 0;
-   blocks       = cont_cap_length/cont_cap_block_length;
+   blocks       = cont_cap_length/cont_cap_block_length;        // total number of block in circular buffer
 
+   // Apparently, the first audio capture after opening the ALSA sound device contains excessive noise (maybe a 
+   // 'pop' when enabling audio?), so we discard this first block.
+   index = (short*) cont_capture_buffer + wrPtr;
+   result = snd_pcm_readi(capture_handle, index, block_frames);
+   if( result != block_frames) {
+      printf("err %s\n",  snd_strerror(result));
+      fprintf (stderr, "Unsuccessful aurio capture \n");
+   }
 
-     index = (short*) cont_capture_buffer + wrPtr;
-     result = snd_pcm_readi(capture_handle, index, block_frames);
-      if( result != block_frames) {
-         printf("err %s\n",  snd_strerror(result));
-         fprintf (stderr, "Unsuccessful aurio capture \n");
-      }
-
-   printf("Starting continuous capture using %d blocks \n", blocks);
+   printf("Starting continuous audio capture using %d blocks \n", blocks);
    while(ccsrState.continuousVoiceRecognitionOn){
-      index = (short*) cont_capture_buffer + wrPtr;
-//       printf("wrPtr %d block %d index %d\n", wrPtr, flagIdx, index);
+     index = (short*) cont_capture_buffer + wrPtr;
+     // read a block
      result = snd_pcm_readi(capture_handle, index, block_frames);
       if( result != block_frames) {
          printf("err %s\n",  snd_strerror(result));
          fprintf (stderr, "Unsuccessful aurio capture \n");
       }
+      // Set flag for this block to notify consumer. This is 2-phase handshake,
+      // so we simply toggle everytime a block is ready
       if(captureBufferFlags[flagIdx] == 0) {
          captureBufferFlags[flagIdx] = 1;
       }
       else {
          captureBufferFlags[flagIdx] = 0;
       }
+      // Move on to next block
       flagIdx = flagIdx + 1;
       if(flagIdx >= blocks) {
-         flagIdx = 0;
+         // Wrap circular buffer
+	 flagIdx = 0;
       }
       wrPtr = wrPtr + 2*block_frames;
       if (wrPtr>=samples) {
+         // Wrap circular buffer
          wrPtr = 0;
       }
-/*      for(x=0;x<blocks;x++){ 
-         printf("%d %d", captureBufferFlags[x], index);
-      }
-*/
    }
 }
 
+
+
+// Pthread serving as robot ears. We continuously loop to see if audio capture needs to be done.
+// Currently there's 2 modes: 
+// - noise-detection simply triggers on heading any sound
+// - continuousVoiceRecognition captures audio in a circular buffer, detects when a sentence has been spoken and writes
+//   this sentece to an audio file for speech2text and NLP.
 void *ears() {
 
    int x, y, p, q;
@@ -814,33 +827,21 @@ void *ears() {
    int xAvgWindow;
    short* capture_buffer_mono;
    int flagIdx;
-   int flagPolarity;
-      
+   int flagPolarity;      
    short* index;
-
-
    int soundDetected;
    int silenceCount;
    int acc, avg;
    int blocks;
 
+   cont_cap_length       = 10000;  // 10 sec total circular audio buffer. If we exceed that, we get garbled sentences, 
+                                   // tbd: detect overflow and state 'keep sentences short' 
+   cont_cap_block_length = 500;    //0.5 sec blocks
+   blocks                = cont_cap_length/cont_cap_block_length;
+   frames                = cont_cap_length*PLAYBACK_SPEED/1000;
+   block_frames          = cont_cap_block_length*PLAYBACK_SPEED/1000;
+   samples               = 2*frames;
 
-
-   cont_cap_length     = 10000;  //10 sec total circular audio buffer
-   cont_cap_block_length = 500;  //0.5 sec blocks
-   blocks = cont_cap_length/cont_cap_block_length;
-
-   frames     = cont_cap_length*PLAYBACK_SPEED/1000;
-   block_frames = cont_cap_block_length*PLAYBACK_SPEED/1000;
-   samples = 2*frames;
-
-
-
-   // CCSR mic amplifier runs on separate 3v battery to prevent noise
-   // WE use a GPIO pin to turn on power supply to mic amp through
-   // a solid state relay.
-
-   
    while(1) {
       usleep(EAR_PERIOD);
       if(ccsrState.noiseDetectOn) {
@@ -848,58 +849,73 @@ void *ears() {
 	 printf("ear %d\n", ccsrState.noiseDetected);
       }
       else if(ccsrState.continuousVoiceRecognitionOn) {
-         printf("continous VR blocks: %d\n", blocks);	
+         printf("Starting continous Voice recognition using %d blocks of %d ms\n", blocks, cont_cap_block_length);	
+	 write(pipeSoundGen[IN], &sound[singleA], sizeof(sound[doubleA]));
          rdPtr = 0;
-   flagIdx = 0;
-   flagPolarity = 0;
-   soundDetected = 0;
-   silenceCount  = 0;
-  	 cont_capture_buffer = (short*) calloc(samples, sizeof(short));
+	 flagIdx = 0;
+	 flagPolarity = 0;
+	 soundDetected = 0;
+	 silenceCount  = 0;
+  	 // Allocate circular audio buffer and flag array
+	 cont_capture_buffer = (short*) calloc(samples, sizeof(short));
  	 captureBufferFlags = (char*) calloc(blocks, sizeof(char));
+	 // CCSR mic amplifier runs on separate 3v battery to prevent noise
+	 // WE use a GPIO pin to turn on power supply to mic amp through
+	 // a solid state relay.
 	 powerMicAmp(ON);
-         pthread_mutex_lock(&semAudio);
-         initAudio(&capture_handle, SND_PCM_STREAM_CAPTURE);
- 	 if(pthread_create(&threadSoundCapture, NULL, soundCapture, NULL )) {
+         pthread_mutex_lock(&semAudio);                      // Clain audio device 
+         initAudio(&capture_handle, SND_PCM_STREAM_CAPTURE); // Open audio device
+ 	 // Spawn pthread that continuously captures audio into circular buffer
+	 if(pthread_create(&threadSoundCapture, NULL, soundCapture, NULL )) {
  	   logMsg(logFile, "Pthread can't be created", ERROR);
  	 }
          while(ccsrState.continuousVoiceRecognitionOn) {
 	    acc=0;
-            index = &cont_capture_buffer[rdPtr];
-//	    printf("consumer waiting for block at %d\n", rdPtr);
+	    // Wait for a block to become available
  	    while(captureBufferFlags[flagIdx] == flagPolarity) {
  	       usleep(200);
  	    }
-	    // Analyse Left channel only
+	    // We got a block, downsample and calculate average, rectified sound level. 
+	    // Analyse Left channel (even samples) only, right is not connected in CCSR
 	    for (x=rdPtr;x< rdPtr + 2*block_frames;x=x+2*ENERGY_DOWNSAMPLE_FACTOR) {
-//               printf("%d\n", abs(cont_capture_buffer[x]));
 	       acc = acc + abs(cont_capture_buffer[x]);
 	    }
 	    avg = acc*ENERGY_DOWNSAMPLE_FACTOR/block_frames;
-//	    if (avg>ccsrState.audioEnergyThreshold + NOISE_LEVEL) {
 	    if (avg>NOISE_LEVEL) {
- 	       silenceCount  = 0;
-               if(!soundDetected){
+ 	       // This block may contain valid voice phrase. If we previously had empty (silent) blocks, these were just
+	       // pauses in between words, so reset silence counter.
+	       silenceCount  = 0;
+               if(!soundDetected) {
+		  // This is the start of a phrase, capture read pointer and start looking for end of the phrase
 	     	  phraseStart = rdPtr;
    	     	  soundDetected = 1;
 	       }
 	    }
 	    else if (soundDetected) {
+	       // This block does not contain valid audio. This may be just a pause in the sentence, or the end of a sentence.
 	       if(silenceCount == 0) {
-	          phraseEnd = rdPtr + 2*block_frames;
+	          // This is the first empty block after one that contains audio, this may be the end of a phrase
+		  phraseEnd = rdPtr + 2*block_frames;
 		  if(phraseEnd>=samples) {
-	             phraseEnd = 0;
+	             // Wrap circular buffer
+		     phraseEnd = 0;
 	          }
- 		  }
+ 	       }
+	       // Count how many empty (silent) blocks we get in a row.
 	       silenceCount = silenceCount + 1;
 	    }
-            printf("doing analysis sd %d sc %d avg %d acc %d rptr %d\n", soundDetected, silenceCount, avg, acc, rdPtr);
+//            printf("doing analysis sd %d sc %d avg %d acc %d rptr %d\n", soundDetected, silenceCount, avg, acc, rdPtr);
+	    // Move on to next block
 	    rdPtr = rdPtr + 2*block_frames;
 	    if (rdPtr>=samples) {
+	       // Wrap circular buffer
 	       rdPtr = 0;
 	    }
  	    flagIdx = flagIdx + 1;
  	    if(flagIdx >= blocks) {
+	       // Wrap circular buffer
  	       flagIdx = 0;
+	       // 2-phase handshake: we toggle polarity of the flag once we wrap
 	       if(flagPolarity == 0) {
 	          flagPolarity = 1;
 	       }
@@ -908,46 +924,48 @@ void *ears() {
 	       }
  	    }
 	    if (silenceCount >= MIN_SILENCE/cont_cap_block_length) {
-		  if (phraseEnd>phraseStart){
-		     phraseSize = (phraseEnd - phraseStart)/2;
-		  }
-		  else{
-		     phraseSize = ((samples - phraseStart) + phraseEnd)/2;
-		  }
-		  printf("Captured phrase b %d e %d sz %d\n", phraseStart, phraseEnd, phraseSize);
-		  
-	          break;
-
+	       // The number of empty blocks exceeds the limit: we assume the sentence has ended so we're done
+	       // Note CCSR may misinterpret long mid-sentence silences as sentence ends, may need to fine-tune
+	       if (phraseEnd>phraseStart){
+		  phraseSize = (phraseEnd - phraseStart)/2;  // Number of frames of the captures sentence
+	       }
+	       else{
+                  // The captured sentence straddles the circular buffer loop-point
+		  phraseSize = ((samples - phraseStart) + phraseEnd)/2;
+	       }
+	       printf("Captured phrase b %d e %d sz %d\n", phraseStart, phraseEnd, phraseSize);
+	       // Break out of continuous VR loop, go write out this audio to a file for speech2text and NLP
+	       break;
 	       }
 	 }
          printf("stopping continous VR\n");	
-	 ccsrState.continuousVoiceRecognitionOn = 0;
-         soundDetected = 0;
-	 silenceCount  = 0;
-         printf("pthread join %d\n", pthread_join(threadSoundCapture, NULL));
-         snd_pcm_close (capture_handle);
-	 pthread_mutex_unlock(&semAudio);
-	 powerMicAmp(OFF);
-
+	 ccsrState.continuousVoiceRecognitionOn = 0; // Stop continuous VR. Depending on the NLP response, we will turn it back on explicitely
+         pthread_join(threadSoundCapture, NULL);     // wait for audio capture to terminate
+         snd_pcm_close (capture_handle);             // close audio
+	 pthread_mutex_unlock(&semAudio);            // release audio device
+	 powerMicAmp(OFF);                           // Turn mic-amp off
+         // Signal we captured a phrase
+	 write(pipeSoundGen[IN], &sound[singleA], sizeof(sound[singleA]));
+	 // Allocate audio buffer for captured phrase for sound-file generation
 	 capture_buffer_mono = (short*) malloc((phraseSize/WAV_DOWNSAMPLE_FACTOR) *sizeof(short));
  	 p=0;
-
-
+	 // Cut captured phrase from circular buffer, downsample and make mono, paste in new buffer
 	 if (phraseEnd>phraseStart){
-	 for(q=phraseStart;q<phraseEnd;q=q+2*WAV_DOWNSAMPLE_FACTOR){
-	    capture_buffer_mono[p] = cont_capture_buffer[q];
-	    p=p+1;
-	 }
+	    for(q=phraseStart;q<phraseEnd;q=q+2*WAV_DOWNSAMPLE_FACTOR){
+	       capture_buffer_mono[p] = cont_capture_buffer[q];
+	       p=p+1;
+	    }
 	 }
 	 else {
-	 for(q=phraseStart;q<samples;q=q+2*WAV_DOWNSAMPLE_FACTOR){
-	    capture_buffer_mono[p] = cont_capture_buffer[q];
-	    p=p+1;
-	 }
-	 for(q=0;q<phraseEnd;q=q+2*WAV_DOWNSAMPLE_FACTOR){
-	    capture_buffer_mono[p] = cont_capture_buffer[q];
-	    p=p+1;
-	 }
+            // The captured sentence straddles the circular buffer loop-point, so cut in 2-stages
+	    for(q=phraseStart;q<samples;q=q+2*WAV_DOWNSAMPLE_FACTOR){
+	       capture_buffer_mono[p] = cont_capture_buffer[q];
+	       p=p+1;
+	    }
+	    for(q=0;q<phraseEnd;q=q+2*WAV_DOWNSAMPLE_FACTOR){
+	       capture_buffer_mono[p] = cont_capture_buffer[q];
+	       p=p+1;
+	    }
 	 }
 	 // Write audio file to disk: GoogleVoiceToText.sh deamon is
 	 // waiting for this file to appear, and will post it to
@@ -956,8 +974,8 @@ void *ears() {
 	 // a telemetry channel. GoogleVoiceToText.sh deamon will delete
 	 // voice file after use, and resum polling
 	 writeSndFile((phraseSize/WAV_DOWNSAMPLE_FACTOR), capture_buffer_mono);
+         // free allocated buffers
 	 free(capture_buffer_mono);
-
 	 free(cont_capture_buffer);
 	 free(captureBufferFlags);
       }

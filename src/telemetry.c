@@ -86,7 +86,9 @@ char *cmd_lookup[] = {"set",             // followed by set_cmd_lookup[]
 		      "giveobj",         // Assuming CCSR is holding object, give it to user and fold arm 
 		      "move",            // move <1=fwd, 2=reverse> <time> move fwd/reverse for specified amount of time 
 		      "turn",             // turn <0=RIGHT, 1=LEFT> <time> turn left/right for specified amount of time 
-		      "facial"
+		      "facial",
+		      "listen"           // listen - start continuous voice recognition
+		                         // listen 0 - stop continuous voice recognition
 		      };
 // sub-commands of 'dump'
 char *dump_cmd_lookup[] = {"all",        // dump all - Print selected ccsrState fields to return-fifo
@@ -572,6 +574,7 @@ void ccsrExecuteCmd(char **splitLine, int n, int wfd) {
 	         }
 	         else {
  	            sprintf(string, "Expecting: set speed <target_Speed> <turn_delta>\n", cmd);
+     	            write(wfd, string, strlen(string));
  	            write(wfd, eom, strlen(eom));
 	         }
 	      break;
@@ -595,6 +598,7 @@ void ccsrExecuteCmd(char **splitLine, int n, int wfd) {
 	         }
 	         else {
  	            sprintf(string, "Expecting: set pantilt <on/off [0,1]> | <pan pos> <tilt pos> <speed [1..100]>\n", cmd);
+     	            write(wfd, string, strlen(string));
  	            write(wfd, eom, strlen(eom));
 	         }
 	      break;
@@ -620,6 +624,7 @@ void ccsrExecuteCmd(char **splitLine, int n, int wfd) {
 	         }
 	         else {
  	            sprintf(string, "Expecting: set arm <arm pos> <elbow pos> <wrist pos> <hand pos>\n", cmd);
+     	            write(wfd, string, strlen(string));
  	            write(wfd, eom, strlen(eom));
 	         }
 	      break;
@@ -633,6 +638,7 @@ void ccsrExecuteCmd(char **splitLine, int n, int wfd) {
 	         }
 	         else {
  	            sprintf(string, "Expecting: set mprescaler <value>\n", cmd);
+     	            write(wfd, string, strlen(string));
  	            write(wfd, eom, strlen(eom));
 	         }
 	      case VOLUME:
@@ -650,6 +656,7 @@ void ccsrExecuteCmd(char **splitLine, int n, int wfd) {
 	         }
 	         else {
  	            sprintf(string, "Expecting: set volume <value>\n", cmd);
+     	            write(wfd, string, strlen(string));
  	            write(wfd, eom, strlen(eom));
 	         }
 	      break;
@@ -666,6 +673,7 @@ void ccsrExecuteCmd(char **splitLine, int n, int wfd) {
 	         }
 	         else {
  	            sprintf(string, "Expecting: set lcddisp <0,1> <contrast> <brightness> \n", cmd);
+     	            write(wfd, string, strlen(string));
  	            write(wfd, eom, strlen(eom));
 	         }
 	      break;
@@ -679,6 +687,7 @@ void ccsrExecuteCmd(char **splitLine, int n, int wfd) {
 	         }
 	         else {
  	            sprintf(string, "Expecting: set tcolorvol <value>\n", cmd);
+     	            write(wfd, string, strlen(string));
  	            write(wfd, eom, strlen(eom));
 	         }
 	      break;
@@ -695,6 +704,7 @@ void ccsrExecuteCmd(char **splitLine, int n, int wfd) {
 	         }
 	         else {
  	            sprintf(string, "Expecting: set rgbled <R [0..255]> <B [0..255]> <B [0..255]> <speed [0..100]>\n", cmd);
+ 	            write(wfd, string, strlen(string));
  	            write(wfd, eom, strlen(eom));
 	         }
 	      break;
@@ -711,6 +721,7 @@ void ccsrExecuteCmd(char **splitLine, int n, int wfd) {
 	    }
 	    else {
  	       sprintf(string, "Expecting: turnto <heading> \n", cmd);
+ 	       write(wfd, string, strlen(string));
  	       write(wfd, eom, strlen(eom));
 	    }
 	 break;
@@ -828,6 +839,7 @@ void ccsrExecuteCmd(char **splitLine, int n, int wfd) {
 	    }
 	    else {
  	       sprintf(string, "Expecting: move <1=fwd, 2=reverse> <time> \n", cmd);
+ 	       write(wfd, string, strlen(string));
  	       write(wfd, eom, strlen(eom));
 	    }
 	 break;
@@ -842,6 +854,7 @@ void ccsrExecuteCmd(char **splitLine, int n, int wfd) {
 	    }
 	    else {
  	       sprintf(string, "Expecting: turn <0=RIGHT, 1=LEFT> <time> \n", cmd);
+ 	       write(wfd, string, strlen(string));
  	       write(wfd, eom, strlen(eom));
 	    }
 	 break;
@@ -856,6 +869,28 @@ void ccsrExecuteCmd(char **splitLine, int n, int wfd) {
 	    }
 	    else {
  	       sprintf(string, "Expecting: facial <int> \n", cmd);
+ 	       write(wfd, string, strlen(string));
+ 	       write(wfd, eom, strlen(eom));
+	    }
+	 break;
+	 case CMD_LISTEN:
+	    if (n>0) {
+               ccsrState.continuousVoiceRecognitionOn = 1;
+               sprintf(string, "Command succesful\n");
+ 	       write(wfd, string, strlen(string));
+ 	       write(wfd, eom, strlen(eom));
+	    }
+	    else if (n>1) {
+	       value0 = atoi(splitLine[1]);
+               expr.type = EXPR_BLINK;
+               ccsrState.continuousVoiceRecognitionOn = value0;
+               sprintf(string, "Command succesful\n");
+ 	       write(wfd, string, strlen(string));
+ 	       write(wfd, eom, strlen(eom));
+	    }
+	    else {
+ 	       sprintf(string, "Expecting: listen | listen <0> \n", cmd);
+ 	       write(wfd, string, strlen(string));
  	       write(wfd, eom, strlen(eom));
 	    }
 	 break;
