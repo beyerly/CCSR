@@ -201,7 +201,6 @@ void setRGBLED(int R, int G, int B, int speed) {
    int RPWInc, GPWInc, BPWInc;
    int delay;
 
-
    
    // speed = 0, 1 sec per step
    // speed = 100, 0 sec per step 
@@ -221,22 +220,22 @@ void setRGBLED(int R, int G, int B, int speed) {
    }
    else {
       if(ccsrState.RPulseWidth > RPW) {
-         RPWInc = -PW_STEP;
+         RPWInc = -LEDPW_STEP;
       }
       else {
-         RPWInc = PW_STEP;
+         RPWInc = LEDPW_STEP;
       }
       if(ccsrState.GPulseWidth > GPW) {
-         GPWInc = -PW_STEP;
+         GPWInc = -LEDPW_STEP;
       }
       else {
-         GPWInc = PW_STEP;
+         GPWInc = LEDPW_STEP;
       }
       if(ccsrState.BPulseWidth > BPW) {
-         BPWInc = -PW_STEP;
+         BPWInc = -LEDPW_STEP;
       }
       else {
-         BPWInc = PW_STEP;
+         BPWInc = LEDPW_STEP;
       }
    }
    while((ccsrState.RPulseWidth!=RPW) ||
@@ -275,7 +274,7 @@ void setRGBLED(int R, int G, int B, int speed) {
             ccsrState.BPulseWidth = BPW;
          }
       }
-      conv[0] = PCA9685_REG_LED6_ON_L;
+       conv[0] = PCA9685_REG_LED6_ON_L;
       conv[1] = 0x00;  // On
       conv[2] = 0x00;
       conv[3] = (unsigned char) ccsrState.RPulseWidth & 0xFF;  
@@ -297,7 +296,7 @@ void setRGBLED(int R, int G, int B, int speed) {
       usleep(I2C_DELAY);
  
  
-      if(write(i2cbus, conv, 9) != 13) {
+      if(write(i2cbus, conv, 13) != 13) {
          logMsg(logFile, "Unsuccessful cmd write to PCA9685", ERROR);
       }
       usleep(I2C_DELAY);

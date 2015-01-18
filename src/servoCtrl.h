@@ -102,6 +102,7 @@ void setRGBLED(int R, int G, int B, int speed);
 #define TILT_SERVO_NEUTRAL 425
 
 #define PW_STEP 1
+#define LEDPW_STEP 10
 
 #define PAN_ANGLE_RANGE 180 // degrees
 #define TILT_ANGLE_RANGE 90 // degrees

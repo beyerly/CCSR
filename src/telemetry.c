@@ -897,8 +897,7 @@ void ccsrExecuteCmd(char **splitLine, int n, int wfd) {
 	 case CMD_DUMMY:
 	    if (n>1) {
 	       value0 = atoi(splitLine[1]);
- 	       printf("%d \n", value0);
-               ccsrState.continuousVoiceRecognitionOn = value0;
+               eyesSetBrightness(value0);
 	       sprintf(string, "Command succesful\n");
  	       write(wfd, string, strlen(string));
  	       write(wfd, eom, strlen(eom));
