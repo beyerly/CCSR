@@ -207,11 +207,11 @@ void setRGBLED(int R, int G, int B, int speed) {
    delay = 10000 - speed * 100;
 
    
-   // 100% = SERVOMAX, 0% = SERVOMIN
-   RPW  = R_MIN + R*(R_MAX-R_MIN)/R_RANGE;
-   GPW  = G_MIN + G*(G_MAX-G_MIN)/G_RANGE;
-   BPW  = B_MIN + B*(B_MAX-B_MIN)/B_RANGE;
-
+   // Common annode LED, so 100% 'on' pulse width is fully off
+   // Calculate such that if R=R_MAX, pulse width is 0 (fully on) 
+   RPW  = R_MAX - R*(R_MAX-R_MIN)/R_RANGE;
+   GPW  = G_MAX - G*(G_MAX-G_MIN)/G_RANGE;
+   BPW  = B_MAX - B*(B_MAX-B_MIN)/B_RANGE;
 
    if(speed == 100) {
       RPWInc = RPW - ccsrState.RPulseWidth;
@@ -274,7 +274,7 @@ void setRGBLED(int R, int G, int B, int speed) {
             ccsrState.BPulseWidth = BPW;
          }
       }
-       conv[0] = PCA9685_REG_LED6_ON_L;
+      conv[0] = PCA9685_REG_LED6_ON_L;
       conv[1] = 0x00;  // On
       conv[2] = 0x00;
       conv[3] = (unsigned char) ccsrState.RPulseWidth & 0xFF;  

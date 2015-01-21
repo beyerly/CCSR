@@ -111,13 +111,6 @@ typedef struct ccsrStateType {
    int	 locationX;
    int	 locationY;
 
-   // Higher brain functions
-   int   stress;
-   int   mood;
-   int   fear;
-   int   endorphine;
-   int   adrenaline;
-
    // User interface
    char  button0Pressed; // big red one
    char  button1Pressed; // Pad #1
@@ -245,6 +238,22 @@ typedef struct ccsrStateType {
    int analyzedObjectH;  
    int analyzedObjectS;  
    int analyzedObjectV;  
+
+
+   // Mood/Emotions
+
+   char randomEyeMovements;
+   char blinkRate;
+   char eyeMovementRate;
+
+   int happiness;
+   int arousal;
+
+   int   mood;
+   int   fear;
+   int   endorphine;
+   int   adrenaline;
+
 
 } ccsrStateType;
 

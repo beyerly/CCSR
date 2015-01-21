@@ -119,7 +119,9 @@ int main () {
    configServoControl();
    initMotors();
    lcdDisplayInit();
+   moodInit();
    facialInit();
+
 set_playback_volume(0);
 
    if(pthread_create( &threadNavigation, NULL, navigation, NULL )) {

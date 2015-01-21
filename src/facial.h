@@ -1,6 +1,11 @@
 void *facialExpressions();
-void eyesSetBrightness(char b);
-void eyesSetBlinkRate(int b);
+void dispEnable(int i2cAddr);
+void facialInit();
+void dispSetBrightness(int i2cAddr, char b);
+void dispSetBlinkRate(int i2cAddr, int b);
+void writeDisplay(int i2cAddr, char* dispBuff);
+void draw_bmp_8x8(char* dispBuf, char* bitmap, char* mask);
+void draw_bmp_16x8(char* dispBuf, char* bitmap, char* mask);
 
 
 typedef struct expressionType {
@@ -10,6 +15,15 @@ typedef struct expressionType {
 
 enum expressionset       {EXPR_BLINK,
                           EXPR_TALK,
+			  EXPR_LOOKSTRAIGHT,
+			  EXPR_LOOKLEFT,
+			  EXPR_LOOKRIGHT,
+			  EXPR_LOOKUP,
+			  EXPR_LOOKDOWN,
+			  EXPR_SLEEP,
+			  EXPR_WAKE,
+			  EXPR_ANGRY,
+			  EXPR_SCARED,
                           NUM_EXPR
 		         };
 
@@ -24,6 +38,11 @@ enum expressionset       {EXPR_BLINK,
 
 #define EYE_R_ADDR 0x70
 #define EYE_L_ADDR 0x71
+#define MOUTH_ADDR 0x72
+#define DISP_ROWS 16       // 8x16 displays
+#define DISP_PAGES 2
 
-void facialInit();
+
+#define EXPR_BLINK_FRAME_RATE 50000
+
 

@@ -22,10 +22,10 @@
 
 #include "ccsr.h"
 #include "sound.h"
+#include "servoCtrl.h"
 #include "telemetry.h"
 #include "telccsr.h"
 #include "lcdDisp.h"
-#include "servoCtrl.h"
 #include "actions.h"
 #include "motor.h"
 #include "facial.h"
@@ -141,8 +141,9 @@ char *set_cmd_lookup[] = {"rc",          // set rc <0,1> - turn off/on Remote co
 			  "tcolorvol",    // set tcolorvol <int> - Set Target Color volume, used as a threshhold to determine if CCSR
 			                 // is close to target object. The larger the number, the bigger the portion of the camara image
 					 // the target color must occupy before CCSR considers itself right in front of object.
-                          "rgbled"       // Set RGB LED color
-			   };
+                          "rgbled",       // Set RGB LED color
+			  "mood"
+                          };
 
 
 
@@ -708,6 +709,28 @@ void ccsrExecuteCmd(char **splitLine, int n, int wfd) {
  	            write(wfd, eom, strlen(eom));
 	         }
 	      break;
+	      case MOOD:
+		 if (n>3) {
+	            value0 = atoi(splitLine[2]);
+	            value1 = atoi(splitLine[3]);
+	            ccsrState.happiness = ccsrState.happiness + value0;
+		    ccsrState.arousal = ccsrState.arousal + value1;
+		    if(ccsrState.happiness>MAX_HAPPINESS){
+		       ccsrState.happiness = MAX_HAPINESS;
+		    }
+		    if(ccsrState.arousal>MAX_AROUSAL){
+		       ccsrState.arousal=MAX_AROUSAL;
+		    }
+		    sprintf(string, "Command succesful\n");
+ 	            write(wfd, string, strlen(string));
+ 	            write(wfd, eom, strlen(eom));
+	         }
+	         else {
+ 	            sprintf(string, "Expecting: set mood <happiness> <arousal>\n", cmd);
+ 	            write(wfd, string, strlen(string));
+ 	            write(wfd, eom, strlen(eom));
+	         }
+	      break;
             }
 	 break;
 	 case CMD_TURN_TO:
@@ -861,14 +884,24 @@ void ccsrExecuteCmd(char **splitLine, int n, int wfd) {
 	 case CMD_FACIAL:
  	    if (n>1) {
 	       value0 = atoi(splitLine[1]);
-               expr.type = EXPR_BLINK;
+               expr.type = value0;
+	       write(pipeFacialMsg[IN], &expr,sizeof(expr));
+               sprintf(string, "Command succesful\n");
+ 	       write(wfd, string, strlen(string));
+ 	       write(wfd, eom, strlen(eom));
+	    }
+ 	    else if (n>2) {
+	       value0 = atoi(splitLine[1]);
+	       value1 = atoi(splitLine[2]);
+               expr.type = value0;
+               expr.length = value1;
 	       write(pipeFacialMsg[IN], &expr,sizeof(expr));
                sprintf(string, "Command succesful\n");
  	       write(wfd, string, strlen(string));
  	       write(wfd, eom, strlen(eom));
 	    }
 	    else {
- 	       sprintf(string, "Expecting: facial <int> \n", cmd);
+ 	       sprintf(string, "Expecting: facial <type> <lenght> \n", cmd);
  	       write(wfd, string, strlen(string));
  	       write(wfd, eom, strlen(eom));
 	    }
