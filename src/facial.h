@@ -24,6 +24,8 @@ enum expressionset       {EXPR_BLINK,
 			  EXPR_WAKE,
 			  EXPR_ANGRY,
 			  EXPR_SCARED,
+			  EXPR_CROSSEYED,
+			  EXPR_SCANNER,
                           NUM_EXPR
 		         };
 

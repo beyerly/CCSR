@@ -11,6 +11,7 @@
 #include "mood.h"
 #include "facial.h"
 #include "servoCtrl.h"
+#include "mood.h"
 
 
 
@@ -24,7 +25,7 @@ expressionType expr;
 void moodInit() {
    ccsrState.happiness    = 0;
    ccsrState.arousal   = 0;
-   ccsrState.randomEyeMovements = 0;
+   ccsrState.randomEyeMovements = 1;
    ccsrState.blinkRate     = 5;
    ccsrState.eyeMovementRate = 10;
    expr.type = EXPR_LOOKSTRAIGHT;
@@ -61,7 +62,8 @@ void *mood() {
       if(ccsrState.happiness<0){
 	 B = abs(ccsrState.happiness);
       }
-      setRGBLED(R, G, B, 90);
+      
+//      setRGBLED(R, G, B, 90);
       
       if(ccsrState.randomEyeMovements){
 	 if(blinkCount==0){

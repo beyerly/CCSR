@@ -25,6 +25,7 @@ char* dispBuf;
 char* dispBufBase;
    char* eyeL_bmp;
    char* eyeR_bmp;
+   char* mouth_bmp;
 
 
 char eye_open_bmp[] =
@@ -32,8 +33,8 @@ char eye_open_bmp[] =
    0x3C,
    0x7E,
    0xE7,
-   0x3C,
-   0x3C,
+   0xC3,
+   0xC3,
    0xE7,
    0x7E,
    0x3C
@@ -187,14 +188,52 @@ char mask_0[] =
    0x00
    };
 
-
-char mouth_scanner_bmp[] =
+char mask_1_16x8[] =
+   { 
+   0xFF,
+   0xFF,
+    0xFF,
+   0xFF,
+   0xFF,
+   0xFF,
+    0xFF,
+   0xFF,
+   0xFF,
+   0xFF,
+    0xFF,
+   0xFF,
+   0xFF,
+   0xFF,
+    0xFF,
+   0xFF
+ };
+char mask_0_16x8[] =
    { 
    0x00,
    0x00,
    0x00,
    0x00,
+   0x00,
+   0x00,
+   0x00,
+   0x00,
+   0x00,
+   0x00,
+   0x00,
+   0x00,
+   0x00,
+   0x00,
+   0x00,
    0x00
+ };
+
+char mouth_scanner0_bmp[] =
+   { 
+   0x00,
+   0x00,
+   0x00,
+   0x00,
+   0x00,
    0x00,
    0x00,
    0x00,
@@ -207,6 +246,25 @@ char mouth_scanner_bmp[] =
    0x10,
    0x10
    };
+char mouth_scanner_bmp[] =
+   { 
+   0xFF,
+   0xAA,
+   0x00,
+   0x00,
+   0x00,
+   0x00,
+   0x00,
+   0x00,
+   0x00,
+   0x00,
+   0x00,
+   0x00,
+   0x00,
+   0x00,
+   0x00,
+   0xFF
+  };
 
 char mouth_open_bmp[] =
    { 
@@ -346,7 +404,7 @@ void draw_bmp_16x8(char* dispBuf, char* bitmap, char* mask) {
 void drawEyes(char* maskR, char* maskL){
    draw_bmp_8x8(dispBuf, eyeR_bmp, maskR);
    writeDisplay(EYE_R_ADDR, dispBuf);
-   draw_bmp_8x8(dispBuf, eyeR_bmp, maskL);
+   draw_bmp_8x8(dispBuf, eyeL_bmp, maskL);
    writeDisplay(EYE_L_ADDR, dispBuf);
 }
 
@@ -354,8 +412,9 @@ void drawEyes(char* maskR, char* maskL){
 void *facialExpressions() {
    expressionType expr;
    int result;
-   int i,q;
+   int i,j,q;
    char random;
+   int talkCount;
 
    dispBufBase = (char*) malloc(DISP_ROWS*DISP_PAGES+1 *sizeof(char));
    dispBuf = dispBufBase + 1; // Start on page 0, but leave room for i2c address.
@@ -366,7 +425,7 @@ void *facialExpressions() {
 
    while(1) {
       result = read (pipeFacialMsg[OUT],&expr,sizeof(expr));
-      printf("facial %d\n", expre.type);
+      printf("facial %d\n", expr.type);
       switch(expr.type) {
  	 case EXPR_BLINK:
             drawEyes(mask_blink0, mask_blink0);
@@ -493,7 +552,7 @@ void *facialExpressions() {
 	    mouth_bmp = mouth_scanner_bmp;
 	    draw_bmp_16x8(dispBuf, mouth_bmp, mask_1_16x8);
             writeDisplay(MOUTH_ADDR, dispBuf);
-            usleep(EXPR_BLINK_FRAME_RATE);
+/*            usleep(EXPR_BLINK_FRAME_RATE);
             for(i=1;i<13;i++){
 	       writeDisplay(MOUTH_ADDR, dispBuf+i);
 	       usleep(EXPR_BLINK_FRAME_RATE);
@@ -502,12 +561,13 @@ void *facialExpressions() {
 	       writeDisplay(MOUTH_ADDR, dispBuf+i);
 	       usleep(EXPR_BLINK_FRAME_RATE);
 	    }
+*/
          break;
  	 case EXPR_TALK:
 	    mouth_bmp = mouth_open_bmp;
 	    while(i<expr.length){
-	       read(devRandom, &random, 1)
-	       talkCOunt = (10 * abs(random)/128);
+	       read(devRandom, &random, 1);
+	       talkCount = (10 * abs(random)/128);
 	       draw_bmp_16x8(dispBuf, mouth_bmp, mask_1_16x8);
                writeDisplay(MOUTH_ADDR, dispBuf);
 	       for(j=0;j<talkCount;j++){
@@ -515,7 +575,7 @@ void *facialExpressions() {
 		  usleep(EXPR_BLINK_FRAME_RATE);
 	       }
 	       read(devRandom, &random, 1);
-	       talkCOunt = (10 * abs(random)/128);
+	       talkCount = (10 * abs(random)/128);
 	       draw_bmp_16x8(dispBuf, mouth_bmp, mask_0_16x8);
                writeDisplay(MOUTH_ADDR, dispBuf);
 	       for(j=0;j<talkCount;j++){

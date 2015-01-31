@@ -313,7 +313,7 @@ set_playback_volume(0);
  	       }
                stateChange(SM_ORIENTATION);           
 	    }
-	    else if(ccsrState.stress > 3) {
+	    else if(ccsrState.happiness > 3) {
                while(!speedFiltered(0, 0)) {
  	          brainCycle();
  	       }
@@ -340,7 +340,7 @@ set_playback_volume(0);
  	            brainCycle();
 	         }
 	      }
-	      ccsrState.stress = 0;
+	      ccsrState.happiness = 0;
 	    }
 	    else if ((ccsrState.ambientLight > 500) &&
 	             (ccsrState.fear == 0)) {

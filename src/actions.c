@@ -84,7 +84,7 @@ int evasiveAction() {
    int x; 
 
 
-   ccsrState.stress =  ccsrState.stress + 1;  // limit this?
+//   ccsrState.happiness =  ccsrState.happiness + 1;  // limit this?
 
    heading_orig = ccsrState.heading;
    target_heading_orig = ccsrState.targetHeading;

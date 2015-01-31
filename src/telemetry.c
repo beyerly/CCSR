@@ -29,6 +29,7 @@
 #include "actions.h"
 #include "motor.h"
 #include "facial.h"
+#include "mood.h"
 
 extern FILE *logFile;
 extern ccsrStateType ccsrState;
@@ -161,7 +162,7 @@ char *CCSRStateTemplate[] = {"state,  		      %4d, \n",   // 0
                              "gyroOn,		      %4d, \n",	// 6
                              "noiseDetectOn,	      %4d, \n",	// 7
                              "fear,		      %4d, \n",	// 8
-                             "stress,		      %4d, \n",	// 9
+                             "happiness,	      %4d, \n",	// 9
                              "light,                  %4d, lumen \n",	// 10
                              "irDistFrontLeft,	      %4d, \n",	// 11
                              "irDistFrontRight,       %4d, \n",	// 12
@@ -319,7 +320,7 @@ void dumpCCSRState(int wfd, char** template) {
    sprintf(string, template[6],ccsrState.gyroOn);write(wfd, string, strlen(string));
    sprintf(string, template[7],ccsrState.noiseDetectOn);write(wfd, string, strlen(string));
    sprintf(string, template[8],ccsrState.fear);write(wfd, string, strlen(string));
-   sprintf(string, template[9],ccsrState.stress);write(wfd, string, strlen(string));
+   sprintf(string, template[9],ccsrState.happiness);write(wfd, string, strlen(string));
    sprintf(string, template[10],ccsrState.ambientLight);write(wfd, string, strlen(string));
    sprintf(string, template[11],ccsrState.irDistFrontLeft );write(wfd, string, strlen(string));
    sprintf(string, template[12],ccsrState.irDistFrontRight);write(wfd, string, strlen(string));
@@ -346,7 +347,7 @@ void dumpCCSRStateShort(int wfd, char** template) {
    int power;
    power = ccsrState.operatingCurrent*ccsrState.batteryVoltage;
    power = power/10000;
-   sprintf(string, template[9],ccsrState.stress);write(wfd, string, strlen(string));
+   sprintf(string, template[9],ccsrState.happiness);write(wfd, string, strlen(string));
    sprintf(string, template[10],ccsrState.ambientLight);write(wfd, string, strlen(string));
    sprintf(string, template[14],ccsrState.temp    );write(wfd, string, strlen(string));
    sprintf(string, template[18],ccsrState.heading); write(wfd, string, strlen(string));
@@ -716,7 +717,7 @@ void ccsrExecuteCmd(char **splitLine, int n, int wfd) {
 	            ccsrState.happiness = ccsrState.happiness + value0;
 		    ccsrState.arousal = ccsrState.arousal + value1;
 		    if(ccsrState.happiness>MAX_HAPPINESS){
-		       ccsrState.happiness = MAX_HAPINESS;
+		       ccsrState.happiness = MAX_HAPPINESS;
 		    }
 		    if(ccsrState.arousal>MAX_AROUSAL){
 		       ccsrState.arousal=MAX_AROUSAL;
@@ -930,7 +931,7 @@ void ccsrExecuteCmd(char **splitLine, int n, int wfd) {
 	 case CMD_DUMMY:
 	    if (n>1) {
 	       value0 = atoi(splitLine[1]);
-               eyesSetBrightness(value0);
+               dispSetBrightness(EYE_R_ADDR, value0);
 	       sprintf(string, "Command succesful\n");
  	       write(wfd, string, strlen(string));
  	       write(wfd, eom, strlen(eom));
