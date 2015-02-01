@@ -13,21 +13,23 @@ typedef struct expressionType {
    int length;
 } expressionType;
 
-enum expressionset       {EXPR_BLINK,
-                          EXPR_TALK,
-			  EXPR_LOOKSTRAIGHT,
-			  EXPR_LOOKLEFT,
-			  EXPR_LOOKRIGHT,
-			  EXPR_LOOKUP,
-			  EXPR_LOOKDOWN,
-			  EXPR_SLEEP,
-			  EXPR_WAKE,
-			  EXPR_ANGRY,
-			  EXPR_SCARED,
-			  EXPR_CROSSEYED,
-			  EXPR_SCANNER,
-                          NUM_EXPR
-		         };
+enum expressionset       {
+   EXPR_BLINK,
+   EXPR_TALK,
+   EXPR_LOOKSTRAIGHT,
+   EXPR_LOOKLEFT,
+   EXPR_LOOKRIGHT,
+   EXPR_LOOKUP,
+   EXPR_LOOKDOWN,
+   EXPR_SLEEP,
+   EXPR_HAPPY,
+   EXPR_WAKE,
+   EXPR_ANGRY,
+   EXPR_SCARED,
+   EXPR_CROSSEYED,
+   EXPR_SCANNER,   // unused, no scannel HW yet
+   NUM_EXPR
+};
 
 #define HT16K33_BLINK_CMD 0x80
 #define HT16K33_BLINK_DISPLAYON 0x01
@@ -45,6 +47,6 @@ enum expressionset       {EXPR_BLINK,
 #define DISP_PAGES 2
 
 
-#define EXPR_BLINK_FRAME_RATE 50000
+#define EXPR_BLINK_FRAME_RATE 25000
 
 

@@ -878,3 +878,33 @@ void analyzeObject() {
    write(pipeLCDMsg[IN], &lcdEvent, sizeof(lcdEvent));
 
 }
+
+// Go to sleep. This is always called based on emotions from mood.c: low arousal and happiness
+void goToSleep(){
+   say("Goodnight!");
+   // Shut Eyes
+   expr.type = EXPR_SLEEP;
+   write(pipeFacialMsg[IN], &expr,sizeof(expr));
+   lcdDisplayConfig(50, 1);           // Turn off LCD
+   ccsrState.trackTargetColorOn = 0;  // Stop visual tracking, if any 
+   enableArm(0);                      // Turn off arm servos
+   setPanTilt(0, -30, 20);            // Slowly lower head (nodding)
+   enablePanTilt(0);                  // Turn off head servo's
+   stateChange(SM_SLEEP);
+}
+
+
+// Wake from sleep. Always called based on emotions from mood.c: if happiness or arousal increase due to soem kind of action
+void wakeFromSleep(){
+   enablePanTilt(1);                  // Turn on head servo's
+   setPanTilt(0, 0, 20);              // Raise head
+   enableArm(1);                      // Turn on arm servos
+   lcdDisplayConfig(50, 1);           // Turn on LCD
+   // Open eyes
+   expr.type = EXPR_WAKE;
+   write(pipeFacialMsg[IN], &expr,sizeof(expr));
+   say("Goodmorning!");
+   orientation(FORWARD_ONLY);           // Look around and start visual tracking if target object is found
+   stateChange(SM_REMOTE_CONTROLLED);   // Go back to remote controlled state
+}
+

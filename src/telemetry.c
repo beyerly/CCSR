@@ -139,11 +139,11 @@ char *set_cmd_lookup[] = {"rc",          // set rc <0,1> - turn off/on Remote co
 			  "mprescaler",  // set mprescaler <int> - Set DC motor driver prescaler 
 			  "volume",      // set volume <int> - Increase speaker volume by <int> 
 			  "lcddisp",     // set lcddisp <0=off,1=on> <contrast> <brightness> - Set LCD Display  
-			  "tcolorvol",    // set tcolorvol <int> - Set Target Color volume, used as a threshhold to determine if CCSR
+			  "tcolorvol",   // set tcolorvol <int> - Set Target Color volume, used as a threshhold to determine if CCSR
 			                 // is close to target object. The larger the number, the bigger the portion of the camara image
 					 // the target color must occupy before CCSR considers itself right in front of object.
-                          "rgbled",       // Set RGB LED color
-			  "mood"
+                          "rgbled",      // set rgbled <R> <G> <B> - Set RGB LED color
+			  "mood"         // set mood <happiness [-255..255]> <arousal [0..255]> - increment emotions
                           };
 
 
@@ -161,7 +161,7 @@ char *CCSRStateTemplate[] = {"state,  		      %4d, \n",   // 0
                              "pidMotionDetectOn,      %4d, \n",   // 5
                              "gyroOn,		      %4d, \n",	// 6
                              "noiseDetectOn,	      %4d, \n",	// 7
-                             "fear,		      %4d, \n",	// 8
+                             "arousal,		      %4d, \n",	// 8
                              "happiness,	      %4d, \n",	// 9
                              "light,                  %4d, lumen \n",	// 10
                              "irDistFrontLeft,	      %4d, \n",	// 11
@@ -319,7 +319,7 @@ void dumpCCSRState(int wfd, char** template) {
    sprintf(string, template[5],ccsrState.pidMotionDetectOn);write(wfd, string, strlen(string));
    sprintf(string, template[6],ccsrState.gyroOn);write(wfd, string, strlen(string));
    sprintf(string, template[7],ccsrState.noiseDetectOn);write(wfd, string, strlen(string));
-   sprintf(string, template[8],ccsrState.fear);write(wfd, string, strlen(string));
+   sprintf(string, template[8],ccsrState.arousal);write(wfd, string, strlen(string));
    sprintf(string, template[9],ccsrState.happiness);write(wfd, string, strlen(string));
    sprintf(string, template[10],ccsrState.ambientLight);write(wfd, string, strlen(string));
    sprintf(string, template[11],ccsrState.irDistFrontLeft );write(wfd, string, strlen(string));
@@ -528,12 +528,12 @@ void ccsrExecuteCmd(char **splitLine, int n, int wfd) {
  	            write(wfd, eom, strlen(eom));
 	         }	        
 	      break;
-	      case TRACK_COLOR:
-	         subSubCmd = tokenLookup(splitLine[2], onoff_cmd_lookup, NUM_ONOFFSUBCMD, (n>2), wfd);
-	         ccsrState.trackTargetColorOn = subSubCmd;
-		 sprintf(string, "Command succesful\n");
- 	         write(wfd, string, strlen(string));
- 	         write(wfd, eom, strlen(eom));
+         case TRACK_COLOR:
+            subSubCmd = tokenLookup(splitLine[2], onoff_cmd_lookup, NUM_ONOFFSUBCMD, (n>2), wfd);
+            ccsrState.trackTargetColorOn = subSubCmd;
+            sprintf(string, "Command succesful\n");
+            write(wfd, string, strlen(string));
+            write(wfd, eom, strlen(eom));
 	      break;
 	      case STATE:
                  if (n>2) {
@@ -693,44 +693,37 @@ void ccsrExecuteCmd(char **splitLine, int n, int wfd) {
  	            write(wfd, eom, strlen(eom));
 	         }
 	      break;
-	      case RGBLED:
-		 if (n>5) {
-	            value0 = atoi(splitLine[2]);
-	            value1 = atoi(splitLine[3]);
-	            value2 = atoi(splitLine[4]);
-	            value3 = atoi(splitLine[5]);
-	            setRGBLED(value0, value1, value2, value3);
-		    sprintf(string, "Command succesful\n");
- 	            write(wfd, string, strlen(string));
- 	            write(wfd, eom, strlen(eom));
-	         }
-	         else {
- 	            sprintf(string, "Expecting: set rgbled <R [0..255]> <B [0..255]> <B [0..255]> <speed [0..100]>\n", cmd);
- 	            write(wfd, string, strlen(string));
- 	            write(wfd, eom, strlen(eom));
-	         }
-	      break;
-	      case MOOD:
-		 if (n>3) {
-	            value0 = atoi(splitLine[2]);
-	            value1 = atoi(splitLine[3]);
-	            ccsrState.happiness = ccsrState.happiness + value0;
-		    ccsrState.arousal = ccsrState.arousal + value1;
-		    if(ccsrState.happiness>MAX_HAPPINESS){
-		       ccsrState.happiness = MAX_HAPPINESS;
-		    }
-		    if(ccsrState.arousal>MAX_AROUSAL){
-		       ccsrState.arousal=MAX_AROUSAL;
-		    }
-		    sprintf(string, "Command succesful\n");
- 	            write(wfd, string, strlen(string));
- 	            write(wfd, eom, strlen(eom));
-	         }
-	         else {
- 	            sprintf(string, "Expecting: set mood <happiness> <arousal>\n", cmd);
- 	            write(wfd, string, strlen(string));
- 	            write(wfd, eom, strlen(eom));
-	         }
+         case RGBLED:
+            if (n>5) {
+               value0 = atoi(splitLine[2]);
+               value1 = atoi(splitLine[3]);
+               value2 = atoi(splitLine[4]);
+               value3 = atoi(splitLine[5]);
+               setRGBLED(value0, value1, value2, value3);
+               sprintf(string, "Command succesful\n");
+               write(wfd, string, strlen(string));
+               write(wfd, eom, strlen(eom));
+            }
+            else {
+               sprintf(string, "Expecting: set rgbled <R [0..255]> <B [0..255]> <B [0..255]> <speed [0..100]>\n", cmd);
+               write(wfd, string, strlen(string));
+               write(wfd, eom, strlen(eom));
+            }
+            break;
+         case MOOD:
+            if (n>3) {
+               value0 = atoi(splitLine[2]);
+               value1 = atoi(splitLine[3]);
+               setMood(value0, value1);
+               sprintf(string, "Command succesful\n");
+               write(wfd, string, strlen(string));
+               write(wfd, eom, strlen(eom));
+            }
+            else {
+               sprintf(string, "Expecting: set mood <happiness> <arousal>\n", cmd);
+               write(wfd, string, strlen(string));
+               write(wfd, eom, strlen(eom));
+            }
 	      break;
             }
 	 break;

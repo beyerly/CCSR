@@ -33,6 +33,8 @@ void initColors();
 void extendArm();
 void dropAndFoldArm();
 
+void goToSleep();
+void wakeFromSleep();
 
 
 #define SONAR_SCAN_DELAY 40000

@@ -3,8 +3,16 @@
 #define MAX_HAPPINESS 255
 #define MIN_AROUSAL 0
 #define MAX_AROUSAL 255
-
+#define MOOD_DEGRADATION_SPEED 10
+#define MED_HAPPY_INC 50;
+#define MED_AROUSAL_INC 50;
+#define LOW_HAPPY_INC 10;
+#define LOW_AROUSAL_INC 10;
+#define HIGH_HAPPY_INC 100;
+#define HIGH_AROUSAL_INC 100;
+#define MOOD_NORMAL 0
 
 
 void *mood();
 void moodInit();
+void setMood(int h, int a);

@@ -12,6 +12,7 @@
 #include <sndfile.h>
 #include "ccsr.h"
 #include "sound.h"
+#include "facial.h"
 #include "lcdDisp.h"
 #include <alsa/asoundlib.h>
     
@@ -59,7 +60,7 @@ t_espeak_callback *SynthCallback;
 espeak_PARAMETER Parm;
 char Voice[] = {"lt+klatt2"};
 unsigned int Size,position=0, end_position=0, flags=espeakCHARS_AUTO, *unique_identifier;
-
+expressionType expr;
 
 
 int writeSndFile(int numFrames, short* buffer) {
@@ -121,7 +122,9 @@ void initEspeak() {
 */}
 
 void say(char *text) {
-    Size = strlen(text)+1;    
+    Size = strlen(text)+1;
+    expr.type = EXPR_TALK;
+    write(pipeFacialMsg[IN], &expr,sizeof(expr));
     pthread_mutex_lock(&semAudio);
     espeak_Synth( text, Size, position, position_type, end_position, flags,
     unique_identifier, user_data );
@@ -978,6 +981,8 @@ void *ears() {
 	 free(capture_buffer_mono);
 	 free(cont_capture_buffer);
 	 free(captureBufferFlags);
+         // Update emotions. This may wake CCSR if he was asleep
+         setMood(MED_HAPPY_INC, MED_AROUSAL_INC);
       }
    }
 }

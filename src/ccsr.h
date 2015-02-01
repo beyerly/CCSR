@@ -63,7 +63,6 @@ void ccsrTerminate();
 void stateChange(char state);
 
 
-
 enum enableType {OFF, ON};
 enum turnDirType {RIGHT, LEFT};
 enum turnType {NOSCAN, SCAN};
@@ -80,7 +79,8 @@ enum ccsrSMType {SM_RESET,
 		 SM_OBSERVE, 
 		 SM_REMOTE_CONTROLLED,
 		 SM_TURN_TO_LOCKED_OBJECT, // unused
-		 SM_TRACK_AND_FOLLOW       // unused
+		 SM_TRACK_AND_FOLLOW,      // unused
+                 SM_SLEEP
 		 };
 
 #define NUM_BOTTONS 7 // one big red, 4 numpads, one PID
@@ -245,6 +245,7 @@ typedef struct ccsrStateType {
    char randomEyeMovements;
    char blinkRate;
    char eyeMovementRate;
+   char showEmotion;
 
    int happiness;
    int arousal;

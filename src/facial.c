@@ -23,13 +23,13 @@ extern int devRandom;
 
 char* dispBuf;
 char* dispBufBase;
-   char* eyeL_bmp;
-   char* eyeR_bmp;
-   char* mouth_bmp;
+char* eyeL_bmp;
+char* eyeR_bmp;
+char* mouth_bmp;
 
 
 char eye_open_bmp[] =
-   { 
+{ 
    0x3C,
    0x7E,
    0xE7,
@@ -38,46 +38,46 @@ char eye_open_bmp[] =
    0xE7,
    0x7E,
    0x3C
-   };
-
-char eye_left_bmp[] =
-   { 
-   0x3C,
-   0x7E,
-   0xCF,
-   0x87,
-   0x87,
-   0xCF,
-   0x7E,
-   0x3C
-   };
+};
 
 char eye_right_bmp[] =
-   { 
+{ 
    0x3C,
    0x7E,
-   0xF3,
-   0xE1,
-   0xE1,
-   0xF3,
+   0xCF,
+   0x87,
+   0x87,
+   0xCF,
    0x7E,
    0x3C
-   };
+};
 
-char eye_up_bmp[] =
-   { 
+char eye_left_bmp[] =
+{ 
    0x3C,
-   0xE7,
-   0xC3,
-   0xC3,
-   0xE7,
-   0xFF,
+   0x7E,
+   0xF3,
+   0xE1,
+   0xE1,
+   0xF3,
    0x7E,
    0x3C
-   };
+};
 
 char eye_down_bmp[] =
-   { 
+{ 
+   0x3C,
+   0xE7,
+   0xC3,
+   0xC3,
+   0xE7,
+   0xFF,
+   0x7E,
+   0x3C
+};
+
+char eye_up_bmp[] =
+{ 
    0x3C,
    0x7E,
    0xFF,
@@ -86,10 +86,10 @@ char eye_down_bmp[] =
    0xC3,
    0xE7,
    0x3C
-   };
+};
 
 char eye_sleep_bmp[] =
-   { 
+{ 
    0x00,
    0x00,
    0x00,
@@ -98,38 +98,38 @@ char eye_sleep_bmp[] =
    0x00,
    0x00,
    0x00
-   };
+};
 
-// Angry as left eye, scared as right eye
-char eye_posangle_bmp[] =
-   { 
-   0x00,
-   0x60,
-   0xD8,
-   0xC6,
-   0xC3,
-   0xE7,
-   0x7E,
-   0x3C
-   };
 
-// Angry as right eye, scared as left eye
 char eye_negangle_bmp[] =
-   { 
-   0x00,
-   0x06,
-   0x1B,
-   0x63,
-   0xC3,
-   0xE7,
+{ 
+   0x3C,
    0x7E,
+   0xE7,
+   0xC3,
+   0xC6,
+   0xD8,
+   0x60,
+   0x00
+}
+
+
+char eye_posangle_bmp[] =
+{ 
    0x3C
-   };
+   0x7E,
+   0xE7,
+   0xC3,
+   0x63,
+   0x1B,
+   0x06,
+   0x00
+};
 
 
 
 char mask_1[] =
-   { 
+{ 
    0xFF,
    0xFF,
    0xFF,
@@ -138,10 +138,10 @@ char mask_1[] =
    0xFF,
    0xFF,
    0xFF
-   };
+};
 
 char mask_blink0[] =
-   { 
+{ 
    0x00,
    0xFF,
    0xFF,
@@ -150,10 +150,10 @@ char mask_blink0[] =
    0xFF,
    0xFF,
    0x00
-   };
-   
+};
+
 char mask_blink1[] =
-   { 
+{ 
    0x00,
    0x00,
    0xFF,
@@ -162,10 +162,10 @@ char mask_blink1[] =
    0xFF,
    0x00,
    0x00
-   };
- 
+};
+
 char mask_blink2[] =
-   { 
+{ 
    0x00,
    0x00,
    0x00,
@@ -174,10 +174,10 @@ char mask_blink2[] =
    0x00,
    0x00,
    0x00
-   };
- 
+};
+
 char mask_0[] =
-   { 
+{ 
    0x00,
    0x00,
    0x00,
@@ -186,105 +186,9 @@ char mask_0[] =
    0x00,
    0x00,
    0x00
-   };
+};
 
-char mask_1_16x8[] =
-   { 
-   0xFF,
-   0xFF,
-    0xFF,
-   0xFF,
-   0xFF,
-   0xFF,
-    0xFF,
-   0xFF,
-   0xFF,
-   0xFF,
-    0xFF,
-   0xFF,
-   0xFF,
-   0xFF,
-    0xFF,
-   0xFF
- };
-char mask_0_16x8[] =
-   { 
-   0x00,
-   0x00,
-   0x00,
-   0x00,
-   0x00,
-   0x00,
-   0x00,
-   0x00,
-   0x00,
-   0x00,
-   0x00,
-   0x00,
-   0x00,
-   0x00,
-   0x00,
-   0x00
- };
 
-char mouth_scanner0_bmp[] =
-   { 
-   0x00,
-   0x00,
-   0x00,
-   0x00,
-   0x00,
-   0x00,
-   0x00,
-   0x00,
-   0x00,
-   0x00,
-   0x00,
-   0x00,
-   0x00,
-   0x10,
-   0x10,
-   0x10
-   };
-char mouth_scanner_bmp[] =
-   { 
-   0xFF,
-   0xAA,
-   0x00,
-   0x00,
-   0x00,
-   0x00,
-   0x00,
-   0x00,
-   0x00,
-   0x00,
-   0x00,
-   0x00,
-   0x00,
-   0x00,
-   0x00,
-   0xFF
-  };
-
-char mouth_open_bmp[] =
-   { 
-   0x18,
-   0x3C,
-   0x7E,
-   0xFF,
-   0xFF,
-   0xFF,
-   0xFF,
-   0xFF,
-   0xFF,
-   0xFF,
-   0xFF,
-   0xFF,
-   0xFF,
-   0x7E,
-   0x3C,
-   0x18
-   };
 
 void facialInit() {
    dispEnable(EYE_R_ADDR);
@@ -293,9 +197,9 @@ void facialInit() {
    dispEnable(EYE_L_ADDR);
    dispSetBlinkRate(EYE_L_ADDR, HT16K33_BLINK_OFF);
    dispSetBrightness(EYE_L_ADDR, 15); // max brightness
-   dispEnable(MOUTH_ADDR);
-   dispSetBlinkRate(MOUTH_ADDR, HT16K33_BLINK_OFF);
-   dispSetBrightness(MOUTH_ADDR, 15); // max brightness
+   //dispEnable(MOUTH_ADDR);
+   //dispSetBlinkRate(MOUTH_ADDR, HT16K33_BLINK_OFF);
+   //dispSetBrightness(MOUTH_ADDR, 15); // max brightness
 }
 
 void dispEnable(int i2cAddr) {
@@ -322,7 +226,7 @@ void dispSetBrightness(int i2cAddr, char b) {
 
    buffer[0] = HT16K33_CMD_BRIGHTNESS | b;
    pthread_mutex_lock(&semI2c);
-  
+
    if(ioctl(i2cbus, I2C_SLAVE, i2cAddr)) {
       logMsg(logFile, "Can't set LCD_ADDR I2C address", ERROR);
    }
@@ -336,7 +240,7 @@ void dispSetBrightness(int i2cAddr, char b) {
 
 void dispSetBlinkRate(int i2cAddr, int b) {
    char buffer[4];
-   
+
    if (b > 3) b = 0; // turn off if not sure
    buffer[0] = HT16K33_BLINK_CMD | HT16K33_BLINK_DISPLAYON | (b << 1);
    pthread_mutex_lock(&semI2c);
@@ -427,162 +331,178 @@ void *facialExpressions() {
       result = read (pipeFacialMsg[OUT],&expr,sizeof(expr));
       printf("facial %d\n", expr.type);
       switch(expr.type) {
- 	 case EXPR_BLINK:
-            drawEyes(mask_blink0, mask_blink0);
-	    usleep(EXPR_BLINK_FRAME_RATE);
-            drawEyes(mask_blink1, mask_blink1);
-            usleep(EXPR_BLINK_FRAME_RATE);
-            drawEyes(mask_blink2, mask_blink2);
-            usleep(EXPR_BLINK_FRAME_RATE);
-            drawEyes(mask_0, mask_0);
-            usleep(EXPR_BLINK_FRAME_RATE);
-            drawEyes(mask_blink2, mask_blink2);
-            usleep(EXPR_BLINK_FRAME_RATE);
-            drawEyes(mask_blink1, mask_blink1);
-            usleep(EXPR_BLINK_FRAME_RATE);
-            drawEyes(mask_blink0, mask_blink0);
-            usleep(EXPR_BLINK_FRAME_RATE);
-            drawEyes(mask_1, mask_1);
+      case EXPR_BLINK:
+         drawEyes(mask_blink0, mask_blink0);
+         usleep(EXPR_BLINK_FRAME_RATE);
+         drawEyes(mask_blink1, mask_blink1);
+         usleep(EXPR_BLINK_FRAME_RATE);
+         drawEyes(mask_blink2, mask_blink2);
+         usleep(EXPR_BLINK_FRAME_RATE);
+         drawEyes(mask_0, mask_0);
+         usleep(EXPR_BLINK_FRAME_RATE);
+         drawEyes(mask_blink2, mask_blink2);
+         usleep(EXPR_BLINK_FRAME_RATE);
+         drawEyes(mask_blink1, mask_blink1);
+         usleep(EXPR_BLINK_FRAME_RATE);
+         drawEyes(mask_blink0, mask_blink0);
+         usleep(EXPR_BLINK_FRAME_RATE);
+         drawEyes(mask_1, mask_1);
          break;
- 	 case EXPR_LOOKSTRAIGHT:
-	    eyeR_bmp = eye_open_bmp;
-	    eyeL_bmp = eye_open_bmp;
-	    drawEyes(mask_1, mask_1);
+      case EXPR_LOOKSTRAIGHT:
+         eyeR_bmp = eye_open_bmp;
+         eyeL_bmp = eye_open_bmp;
+         drawEyes(mask_1, mask_1);
          break;
- 	 case EXPR_LOOKLEFT:
-	    eyeR_bmp = eye_left_bmp;
-	    eyeL_bmp = eye_left_bmp;
-	    drawEyes(mask_1, mask_1);
+      case EXPR_LOOKLEFT:
+         eyeR_bmp = eye_left_bmp;
+         eyeL_bmp = eye_left_bmp;
+         drawEyes(mask_1, mask_1);
          break;
- 	 case EXPR_LOOKRIGHT:
-	    eyeR_bmp = eye_right_bmp;
-	    eyeL_bmp = eye_right_bmp;
-	    drawEyes(mask_1, mask_1);
+      case EXPR_LOOKRIGHT:
+         eyeR_bmp = eye_right_bmp;
+         eyeL_bmp = eye_right_bmp;
+         drawEyes(mask_1, mask_1);
          break;
- 	 case EXPR_LOOKUP:
-	    eyeR_bmp = eye_up_bmp;
-	    eyeL_bmp = eye_up_bmp;
-	    drawEyes(mask_1, mask_1);
+      case EXPR_LOOKUP:
+         eyeR_bmp = eye_up_bmp;
+         eyeL_bmp = eye_up_bmp;
+         drawEyes(mask_1, mask_1);
          break;
- 	 case EXPR_LOOKDOWN:
-	    eyeR_bmp = eye_down_bmp;
-	    eyeL_bmp = eye_down_bmp;
-	    drawEyes(mask_1, mask_1);
+      case EXPR_LOOKDOWN:
+         eyeR_bmp = eye_down_bmp;
+         eyeL_bmp = eye_down_bmp;
+         drawEyes(mask_1, mask_1);
          break;
- 	 case EXPR_ANGRY:
-            drawEyes(mask_blink0, mask_blink0);
-	    usleep(EXPR_BLINK_FRAME_RATE);
-            drawEyes(mask_blink1, mask_blink1);
-            usleep(EXPR_BLINK_FRAME_RATE);
-            drawEyes(mask_blink2, mask_blink2);
-            usleep(EXPR_BLINK_FRAME_RATE);
-            drawEyes(mask_0, mask_0);
-            usleep(EXPR_BLINK_FRAME_RATE);
-	    eyeR_bmp = eye_posangle_bmp;
-	    eyeL_bmp = eye_negangle_bmp;
-	    drawEyes(mask_blink2, mask_blink2);
-            usleep(EXPR_BLINK_FRAME_RATE);
-            drawEyes(mask_blink1, mask_blink1);
-            usleep(EXPR_BLINK_FRAME_RATE);
-            drawEyes(mask_blink0, mask_blink0);
-            usleep(EXPR_BLINK_FRAME_RATE);
-            drawEyes(mask_1, mask_1);
+      case EXPR_ANGRY:
+         drawEyes(mask_blink0, mask_blink0);
+         usleep(EXPR_BLINK_FRAME_RATE);
+         drawEyes(mask_blink1, mask_blink1);
+         usleep(EXPR_BLINK_FRAME_RATE);
+         drawEyes(mask_blink2, mask_blink2);
+         usleep(EXPR_BLINK_FRAME_RATE);
+         drawEyes(mask_0, mask_0);
+         usleep(EXPR_BLINK_FRAME_RATE);
+         eyeR_bmp = eye_posangle_bmp;
+         eyeL_bmp = eye_negangle_bmp;
+         drawEyes(mask_blink2, mask_blink2);
+         usleep(EXPR_BLINK_FRAME_RATE);
+         drawEyes(mask_blink1, mask_blink1);
+         usleep(EXPR_BLINK_FRAME_RATE);
+         drawEyes(mask_blink0, mask_blink0);
+         usleep(EXPR_BLINK_FRAME_RATE);
+         drawEyes(mask_1, mask_1);
          break;
- 	 case EXPR_SCARED:
-            drawEyes(mask_blink0, mask_blink0);
-	    usleep(EXPR_BLINK_FRAME_RATE);
-            drawEyes(mask_blink1, mask_blink1);
-            usleep(EXPR_BLINK_FRAME_RATE);
-            drawEyes(mask_blink2, mask_blink2);
-            usleep(EXPR_BLINK_FRAME_RATE);
-            drawEyes(mask_0, mask_0);
-            usleep(EXPR_BLINK_FRAME_RATE);
-	    eyeR_bmp = eye_negangle_bmp;
-	    eyeL_bmp = eye_posangle_bmp;
-	    drawEyes(mask_blink2, mask_blink2);
-            usleep(EXPR_BLINK_FRAME_RATE);
-            drawEyes(mask_blink1, mask_blink1);
-            usleep(EXPR_BLINK_FRAME_RATE);
-            drawEyes(mask_blink0, mask_blink0);
-            usleep(EXPR_BLINK_FRAME_RATE);
-            drawEyes(mask_1, mask_1);
+      case EXPR_SCARED:
+         drawEyes(mask_blink0, mask_blink0);
+         usleep(EXPR_BLINK_FRAME_RATE);
+         drawEyes(mask_blink1, mask_blink1);
+         usleep(EXPR_BLINK_FRAME_RATE);
+         drawEyes(mask_blink2, mask_blink2);
+         usleep(EXPR_BLINK_FRAME_RATE);
+         drawEyes(mask_0, mask_0);
+         usleep(EXPR_BLINK_FRAME_RATE);
+         eyeR_bmp = eye_negangle_bmp;
+         eyeL_bmp = eye_posangle_bmp;
+         drawEyes(mask_blink2, mask_blink2);
+         usleep(EXPR_BLINK_FRAME_RATE);
+         drawEyes(mask_blink1, mask_blink1);
+         usleep(EXPR_BLINK_FRAME_RATE);
+         drawEyes(mask_blink0, mask_blink0);
+         usleep(EXPR_BLINK_FRAME_RATE);
+         drawEyes(mask_1, mask_1);
          break;
- 	 case EXPR_CROSSEYED:
-            drawEyes(mask_blink0, mask_blink0);
-	    usleep(EXPR_BLINK_FRAME_RATE);
-            drawEyes(mask_blink1, mask_blink1);
-            usleep(EXPR_BLINK_FRAME_RATE);
-            drawEyes(mask_blink2, mask_blink2);
-            usleep(EXPR_BLINK_FRAME_RATE);
-            drawEyes(mask_0, mask_0);
-            usleep(EXPR_BLINK_FRAME_RATE);
-	    eyeR_bmp = eye_left_bmp;
-	    eyeL_bmp = eye_right_bmp;
-	    drawEyes(mask_blink2, mask_blink2);
-            usleep(EXPR_BLINK_FRAME_RATE);
-            drawEyes(mask_blink1, mask_blink1);
-            usleep(EXPR_BLINK_FRAME_RATE);
-            drawEyes(mask_blink0, mask_blink0);
-            usleep(EXPR_BLINK_FRAME_RATE);
-            drawEyes(mask_1, mask_1);
+      case EXPR_CROSSEYED:
+         drawEyes(mask_blink0, mask_blink0);
+         usleep(EXPR_BLINK_FRAME_RATE);
+         drawEyes(mask_blink1, mask_blink1);
+         usleep(EXPR_BLINK_FRAME_RATE);
+         drawEyes(mask_blink2, mask_blink2);
+         usleep(EXPR_BLINK_FRAME_RATE);
+         drawEyes(mask_0, mask_0);
+         usleep(EXPR_BLINK_FRAME_RATE);
+         eyeR_bmp = eye_left_bmp;
+         eyeL_bmp = eye_right_bmp;
+         drawEyes(mask_blink2, mask_blink2);
+         usleep(EXPR_BLINK_FRAME_RATE);
+         drawEyes(mask_blink1, mask_blink1);
+         usleep(EXPR_BLINK_FRAME_RATE);
+         drawEyes(mask_blink0, mask_blink0);
+         usleep(EXPR_BLINK_FRAME_RATE);
+         drawEyes(mask_1, mask_1);
          break;
- 	 case EXPR_SLEEP:
-            drawEyes(mask_blink0, mask_blink0);
-	    usleep(EXPR_BLINK_FRAME_RATE);
-            drawEyes(mask_blink1, mask_blink1);
-            usleep(EXPR_BLINK_FRAME_RATE);
-            drawEyes(mask_blink2, mask_blink2);
-            usleep(EXPR_BLINK_FRAME_RATE);
-	    eyeR_bmp = eye_sleep_bmp;
-	    eyeL_bmp = eye_sleep_bmp;
-	    drawEyes(mask_blink2, mask_blink2);
+      case EXPR_SLEEP:
+         drawEyes(mask_blink0, mask_blink0);
+         usleep(EXPR_BLINK_FRAME_RATE);
+         drawEyes(mask_blink1, mask_blink1);
+         usleep(EXPR_BLINK_FRAME_RATE);
+         drawEyes(mask_blink2, mask_blink2);
+         usleep(EXPR_BLINK_FRAME_RATE);
+         eyeR_bmp = eye_sleep_bmp;
+         eyeL_bmp = eye_sleep_bmp;
+         drawEyes(mask_blink2, mask_blink2);
          break;
- 	 case EXPR_WAKE:
-	    eyeR_bmp = eye_open_bmp;
-	    eyeL_bmp = eye_open_bmp;
-	    drawEyes(mask_blink2, mask_blink2);
-            usleep(EXPR_BLINK_FRAME_RATE);
-            drawEyes(mask_blink1, mask_blink1);
-            usleep(EXPR_BLINK_FRAME_RATE);
-            drawEyes(mask_blink0, mask_blink0);
-            usleep(EXPR_BLINK_FRAME_RATE);
-            drawEyes(mask_1, mask_1);
+      case EXPR_HAPPY:
+         drawEyes(mask_blink0, mask_blink0);
+         usleep(EXPR_BLINK_FRAME_RATE);
+         drawEyes(mask_blink1, mask_blink1);
+         usleep(EXPR_BLINK_FRAME_RATE);
+         drawEyes(mask_blink2, mask_blink2);
+         usleep(EXPR_BLINK_FRAME_RATE);
+         eyeR_bmp = eye_happy_bmp;
+         eyeL_bmp = eye_happy_bmp;
+         drawEyes(mask_1, mask_1);
          break;
- 	 case EXPR_SCANNER:
-	    mouth_bmp = mouth_scanner_bmp;
-	    draw_bmp_16x8(dispBuf, mouth_bmp, mask_1_16x8);
-            writeDisplay(MOUTH_ADDR, dispBuf);
-/*            usleep(EXPR_BLINK_FRAME_RATE);
-            for(i=1;i<13;i++){
-	       writeDisplay(MOUTH_ADDR, dispBuf+i);
-	       usleep(EXPR_BLINK_FRAME_RATE);
-	    }
-            for(i=13;i>=1;i--){
-	       writeDisplay(MOUTH_ADDR, dispBuf+i);
-	       usleep(EXPR_BLINK_FRAME_RATE);
-	    }
-*/
+      case EXPR_WAKE:
+         eyeR_bmp = eye_open_bmp;
+         eyeL_bmp = eye_open_bmp;
+         drawEyes(mask_blink2, mask_blink2);
+         usleep(EXPR_BLINK_FRAME_RATE);
+         drawEyes(mask_blink1, mask_blink1);
+         usleep(EXPR_BLINK_FRAME_RATE);
+         drawEyes(mask_blink0, mask_blink0);
+         usleep(EXPR_BLINK_FRAME_RATE);
+         drawEyes(mask_1, mask_1);
          break;
- 	 case EXPR_TALK:
-	    mouth_bmp = mouth_open_bmp;
-	    while(i<expr.length){
-	       read(devRandom, &random, 1);
-	       talkCount = (10 * abs(random)/128);
-	       draw_bmp_16x8(dispBuf, mouth_bmp, mask_1_16x8);
-               writeDisplay(MOUTH_ADDR, dispBuf);
-	       for(j=0;j<talkCount;j++){
-	          i=i+1;
-		  usleep(EXPR_BLINK_FRAME_RATE);
-	       }
-	       read(devRandom, &random, 1);
-	       talkCount = (10 * abs(random)/128);
-	       draw_bmp_16x8(dispBuf, mouth_bmp, mask_0_16x8);
-               writeDisplay(MOUTH_ADDR, dispBuf);
-	       for(j=0;j<talkCount;j++){
-	          i=i+1;
-		  usleep(EXPR_BLINK_FRAME_RATE);
-	       }
-	    }
+      case EXPR_SCANNER:
+         //mouth_bmp = mouth_scanner_bmp;
+         //draw_bmp_16x8(dispBuf, mouth_bmp, mask_1_16x8);
+         //writeDisplay(MOUTH_ADDR, dispBuf);
+         //usleep(EXPR_BLINK_FRAME_RATE);
+         //for(i=1;i<13;i++){
+         //   writeDisplay(MOUTH_ADDR, dispBuf+i);
+         //   usleep(EXPR_BLINK_FRAME_RATE);
+         //}
+         //for(i=13;i>=1;i--){
+         //   writeDisplay(MOUTH_ADDR, dispBuf+i);
+         //   usleep(EXPR_BLINK_FRAME_RATE);
+         //}
+         break;
+      case EXPR_TALK:
+         ccsrState.showEmotion = 0;
+         while(1) {
+            read(devRandom, &random, 1);
+            talkCount = (10 * abs(random)/128);
+            setRGBLED(abs(random)/128, 0, 0, 100);
+            for(j=0;j<talkCount;j++){
+               i=i+1;
+               if(i>expr.length){
+                  break
+               }
+               usleep(EXPR_BLINK_FRAME_RATE);
+            }
+            read(devRandom, &random, 1);
+            talkCount = (10 * abs(random)/128);
+            setRGBLED(0, 0, 0, 100);
+            for(j=0;j<talkCount;j++){
+               i=i+1;
+               if(i>expr.length){
+                  break
+               }
+               usleep(EXPR_BLINK_FRAME_RATE);
+            }
+         }
+         setRGBLED(0, 0, 0, 100);
+         ccsrState.showEmotion = 1;
          break;
       }
    }
