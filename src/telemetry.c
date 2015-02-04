@@ -876,7 +876,7 @@ void ccsrExecuteCmd(char **splitLine, int n, int wfd) {
 	    }
 	 break;
 	 case CMD_FACIAL:
- 	    if (n>1) {
+ 	    if (n==2) {
 	       value0 = atoi(splitLine[1]);
                expr.type = value0;
 	       write(pipeFacialMsg[IN], &expr,sizeof(expr));

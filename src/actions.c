@@ -14,6 +14,8 @@
 #include "powerMonitor.h"
 #include "servoCtrl.h"
 #include "visual.h"
+#include "mood.h"
+#include "facial.h"
 #include <linux/i2c-dev.h>
 
 
@@ -28,6 +30,8 @@ extern ccsrStateType ccsrState;
 extern int  pipeLCDMsg[2];
 extern soundType sound[standardSoundsCount];
 extern int pipeSoundGen[2];
+extern int pipeFacialMsg[2];
+expressionType expr;
 
 char lcdEvent;
 // Static list of known colors by HSV value range
@@ -881,7 +885,6 @@ void analyzeObject() {
 
 // Go to sleep. This is always called based on emotions from mood.c: low arousal and happiness
 void goToSleep(){
-   say("Goodnight!");
    // Shut Eyes
    expr.type = EXPR_SLEEP;
    write(pipeFacialMsg[IN], &expr,sizeof(expr));
@@ -899,7 +902,7 @@ void wakeFromSleep(){
    enablePanTilt(1);                  // Turn on head servo's
    setPanTilt(0, 0, 20);              // Raise head
    enableArm(1);                      // Turn on arm servos
-   lcdDisplayConfig(50, 1);           // Turn on LCD
+   lcdDisplayConfig(50, 3);           // Turn on LCD
    // Open eyes
    expr.type = EXPR_WAKE;
    write(pipeFacialMsg[IN], &expr,sizeof(expr));

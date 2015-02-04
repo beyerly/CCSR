@@ -99,6 +99,17 @@ char eye_sleep_bmp[] =
    0x00,
    0x00
 };
+char eye_happy_bmp[] =
+{ 
+   0x00,
+   0x00,
+   0x00,
+   0x81,
+   0x7E,
+   0x00,
+   0x00,
+   0x00
+};
 
 
 char eye_negangle_bmp[] =
@@ -111,12 +122,12 @@ char eye_negangle_bmp[] =
    0xD8,
    0x60,
    0x00
-}
+};
 
 
 char eye_posangle_bmp[] =
 { 
-   0x3C
+   0x3C,
    0x7E,
    0xE7,
    0xC3,
@@ -329,7 +340,7 @@ void *facialExpressions() {
 
    while(1) {
       result = read (pipeFacialMsg[OUT],&expr,sizeof(expr));
-      printf("facial %d\n", expr.type);
+//      printf("facial %d\n", expr.type);
       switch(expr.type) {
       case EXPR_BLINK:
          drawEyes(mask_blink0, mask_blink0);
@@ -479,15 +490,15 @@ void *facialExpressions() {
          break;
       case EXPR_TALK:
          ccsrState.showEmotion = 0;
-         while(1) {
+	 i=0;
+	 while(1) {
             read(devRandom, &random, 1);
             talkCount = (10 * abs(random)/128);
-            setRGBLED(abs(random)/128, 0, 0, 100);
+         printf("bb %d %d\n", abs(random), talkCount);
+
+            setRGBLED(abs(random), 0, 0, 100);
             for(j=0;j<talkCount;j++){
                i=i+1;
-               if(i>expr.length){
-                  break
-               }
                usleep(EXPR_BLINK_FRAME_RATE);
             }
             read(devRandom, &random, 1);
@@ -495,10 +506,10 @@ void *facialExpressions() {
             setRGBLED(0, 0, 0, 100);
             for(j=0;j<talkCount;j++){
                i=i+1;
-               if(i>expr.length){
-                  break
-               }
                usleep(EXPR_BLINK_FRAME_RATE);
+            }
+            if(i>expr.length){
+               break;
             }
          }
          setRGBLED(0, 0, 0, 100);

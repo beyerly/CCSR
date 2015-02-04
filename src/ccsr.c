@@ -175,7 +175,7 @@ set_playback_volume(0);
 
    write(pipeSoundGen[IN], &sound[linuxBooted], sizeof(sound[linuxBooted]));
 
-   lcdDisplayConfig(50, 1);
+//   lcdDisplayConfig(50, 1);
 
    lcdEvent = EVENT_LINUX_BOOTED;
    write(pipeLCDMsg[IN], &lcdEvent, sizeof(lcdEvent));

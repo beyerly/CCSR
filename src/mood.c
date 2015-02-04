@@ -22,7 +22,7 @@ extern int pipeFacialMsg[2];
 expressionType expr;
 int moodDegradationCounter;
 
-char moodLUT[][] = {
+char moodLUT[4][4] = {
    { 
       EXPR_ANGRY,
       MOOD_NORMAL,
@@ -30,13 +30,13 @@ char moodLUT[][] = {
       EXPR_HAPPY
    },
    { 
-      EXPR_SAD,
+      EXPR_SCARED,
       MOOD_NORMAL,
       MOOD_NORMAL,
       MOOD_NORMAL
    },
    { 
-      EXPR_SAD,
+      EXPR_SCARED,
       MOOD_NORMAL,
       MOOD_NORMAL,
       MOOD_NORMAL
@@ -47,13 +47,13 @@ char moodLUT[][] = {
       MOOD_NORMAL,
       MOOD_NORMAL
    }
-}
+};
 
 void moodInit() {
    ccsrState.happiness    = 0;
-   ccsrState.arousal   = 0;
+   ccsrState.arousal   = 128;
    ccsrState.randomEyeMovements = 1;
-   ccsrState showEmotion = 1;
+   ccsrState.showEmotion = 0;
    ccsrState.blinkRate     = 5;
    ccsrState.eyeMovementRate = 10;
    moodDegradationCounter = MOOD_DEGRADATION_SPEED;
@@ -67,8 +67,14 @@ void setMood(int h, int a){
    if(ccsrState.happiness > MAX_HAPPINESS){
       ccsrState.happiness = MAX_HAPPINESS;
    }
+   else if(ccsrState.happiness < MIN_HAPPINESS){
+      ccsrState.happiness = MIN_HAPPINESS;
+   }
    if(ccsrState.arousal > MAX_AROUSAL){
       ccsrState.arousal = MAX_AROUSAL;
+   }
+   else if(ccsrState.arousal < MIN_AROUSAL){
+      ccsrState.arousal = MIN_AROUSAL;
    }
 }
 
@@ -85,30 +91,30 @@ void *mood() {
    eyeMovementCount = ccsrState.eyeMovementRate;
 
    while(1) {
-      if(moodDegradationCounter==0){
+//      if(moodDegradationCounter==0){
          if(ccsrState.happiness > MIN_HAPPINESS) {
             ccsrState.happiness  = ccsrState.happiness - 1;
          }
          if(ccsrState.arousal > MIN_AROUSAL) {
             ccsrState.arousal = ccsrState.arousal - 1;
          }
-         moodDegradationCounter = MOOD_DEGRADATION_SPEED;
-      }
-      else{
-         moodDegradationCounter = moodDegradationCounter - 1;
-      }
+//         moodDegradationCounter = MOOD_DEGRADATION_SPEED;
+//      }
+//      else{
+//         moodDegradationCounter = moodDegradationCounter - 1;
+//      }
 
-      R = ccsrState.arousal;
-      G = (ccsrState.happiness + MAX_HAPPINESS)/2;
-      B = MAX_HAPPINESS - G;
+      R = 30*ccsrState.arousal/MAX_AROUSAL;
+      G = 20* ((ccsrState.happiness + MAX_HAPPINESS)/2)/MAX_HAPPINESS;
+      B = 20 - G;
 
       if(ccsrState.showEmotion){
-         setRGBLED(R, G, B, 90);
+//         setRGBLED(R, G, B, 90);
       }
 
       xLUT = 2*(ccsrState.happiness + MAX_HAPPINESS)/MAX_HAPPINESS;
-      yLUT = 4*ccsrState.arousal/MAX_AROUSAL;
-      printf("mood hap %d ar %d X %d Y %d\n", ccsrState.happiness, ccsrState.arousal, xLUT, yLUT);
+      yLUT = 3 - 4*ccsrState.arousal/MAX_AROUSAL;
+//      printf("mood hap %d ar %d X %d Y %d RGB %d %d %d\n", ccsrState.happiness, ccsrState.arousal, xLUT, yLUT, R, G, B);
       if(moodLUT[yLUT][xLUT] != MOOD_NORMAL){
          if(ccsrState.showEmotion){
             if(moodLUT[yLUT][xLUT] == EXPR_SLEEP){

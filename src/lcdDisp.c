@@ -34,7 +34,7 @@ char *sm_lookup[] = {"SM_RESET        ",    // 0
 		     "Awaiting command",    // 9
 		     "SM_TRN_LCKD_OBJ ",    // 10
 		     "SM_TRK_AND_FLW  ",    // 11
-                     "SM_SLEEP"             // 12 
+                     "SM_SLEEP        "     // 12 
 		      };
 char *sm_espeak_lookup[] = {"Reset",
  			    "Running diagnostics",
@@ -47,7 +47,8 @@ char *sm_espeak_lookup[] = {"Reset",
 			    "Observing",
 			    "Awaiting command",
 		            "xx ",
-		            "xx  "
+		            "xx  ",
+			    "Goodnight!"
 			     };
 
 //                        0              16

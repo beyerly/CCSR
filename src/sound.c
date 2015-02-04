@@ -14,6 +14,7 @@
 #include "sound.h"
 #include "facial.h"
 #include "lcdDisp.h"
+#include "mood.h"
 #include <alsa/asoundlib.h>
     
 FILE *txtFile;
@@ -26,6 +27,8 @@ extern int pipeSoundGen[2];
 extern soundType sound[NUM_SOUNDS];
 extern int pipeLCDMsg[2];
 extern pthread_mutex_t semAudio;
+extern int pipeFacialMsg[2];
+expressionType expr;
 char lcdEvent;
 
 int x;
@@ -123,6 +126,7 @@ void initEspeak() {
 
 void say(char *text) {
     Size = strlen(text)+1;
+    expr.length = 2*Size;
     expr.type = EXPR_TALK;
     write(pipeFacialMsg[IN], &expr,sizeof(expr));
     pthread_mutex_lock(&semAudio);
