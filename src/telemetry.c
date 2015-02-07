@@ -347,6 +347,7 @@ void dumpCCSRStateShort(int wfd, char** template) {
    int power;
    power = ccsrState.operatingCurrent*ccsrState.batteryVoltage;
    power = power/10000;
+   sprintf(string, template[8],ccsrState.arousal);write(wfd, string, strlen(string));
    sprintf(string, template[9],ccsrState.happiness);write(wfd, string, strlen(string));
    sprintf(string, template[10],ccsrState.ambientLight);write(wfd, string, strlen(string));
    sprintf(string, template[14],ccsrState.temp    );write(wfd, string, strlen(string));

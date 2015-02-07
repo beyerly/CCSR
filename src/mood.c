@@ -83,6 +83,7 @@ void *mood() {
    int blinkCount;
    int eyeMovementCount;
    expressionType expr;
+   float r, g, b, h, v;
    int R, G, B;
    char xLUT, yLUT;
 
@@ -91,30 +92,30 @@ void *mood() {
    eyeMovementCount = ccsrState.eyeMovementRate;
 
    while(1) {
-//      if(moodDegradationCounter==0){
-         if(ccsrState.happiness > MIN_HAPPINESS) {
-            ccsrState.happiness  = ccsrState.happiness - 1;
-         }
-         if(ccsrState.arousal > MIN_AROUSAL) {
-            ccsrState.arousal = ccsrState.arousal - 1;
-         }
-//         moodDegradationCounter = MOOD_DEGRADATION_SPEED;
-//      }
-//      else{
-//         moodDegradationCounter = moodDegradationCounter - 1;
-//      }
+      if(ccsrState.happiness > MIN_HAPPINESS) {
+         ccsrState.happiness  = ccsrState.happiness - 1;
+      }
+      if(ccsrState.arousal > MIN_AROUSAL) {
+         ccsrState.arousal = ccsrState.arousal - 1;
+      }
 
-      R = 30*ccsrState.arousal/MAX_AROUSAL;
-      G = 20* ((ccsrState.happiness + MAX_HAPPINESS)/2)/MAX_HAPPINESS;
-      B = 20 - G;
+
+      v = 100*ccsrState.arousal/MAX_AROUSAL;
+      h = 300 - (300 * ((ccsrState.happiness + MAX_HAPPINESS)/(2*MAX_HAPPINESS)));
+
+      HVtoRGB( &r, &g, &b, h, v );
+
+      R = (int) 255*r;
+      G = (int) 255*g;
+      B = (int) 255*b;
 
       if(ccsrState.showEmotion){
-//         setRGBLED(R, G, B, 90);
+         setRGBLED(R, G, B, 90);
       }
 
       xLUT = 2*(ccsrState.happiness + MAX_HAPPINESS)/MAX_HAPPINESS;
       yLUT = 3 - 4*ccsrState.arousal/MAX_AROUSAL;
-//      printf("mood hap %d ar %d X %d Y %d RGB %d %d %d\n", ccsrState.happiness, ccsrState.arousal, xLUT, yLUT, R, G, B);
+      printf("mood hap %d ar %d X %d Y %d RGB %f %f %f HV %f %f \n", ccsrState.happiness, ccsrState.arousal, xLUT, yLUT, r, g, b, h, v);
       if(moodLUT[yLUT][xLUT] != MOOD_NORMAL){
          if(ccsrState.showEmotion){
             if(moodLUT[yLUT][xLUT] == EXPR_SLEEP){
@@ -169,3 +170,98 @@ void *mood() {
    }
 }
 
+// HSVtoRGB, but always S=1: fully saturated 
+void HVtoRGB( float *r, float *g, float *b, float h, float v )
+{
+	int i;
+	float f, p, q, t;
+	h /= 60;			// sector 0 to 5
+	i = floor( h );
+	f = h - i;			// factorial part of h
+	p = 0;
+	q = v * ( 1 -  f );
+	t = v * ( 1 - ( 1 - f ) );
+	switch( i ) {
+		case 0:
+			*r = v;
+			*g = t;
+			*b = p;
+			break;
+		case 1:
+			*r = q;
+			*g = v;
+			*b = p;
+			break;
+		case 2:
+			*r = p;
+			*g = v;
+			*b = t;
+			break;
+		case 3:
+			*r = p;
+			*g = q;
+			*b = v;
+			break;
+		case 4:
+			*r = t;
+			*g = p;
+			*b = v;
+			break;
+		default:		// case 5:
+			*r = v;
+			*g = p;
+			*b = q;
+			break;
+	}
+}
+
+/*
+void HSVtoRGB( float *r, float *g, float *b, float h, float s, float v )
+{
+	int i;
+	float f, p, q, t;
+	if( s == 0 ) {
+		// achromatic (grey)
+		*r = *g = *b = v;
+		return;
+	}
+	h /= 60;			// sector 0 to 5
+	i = floor( h );
+	f = h - i;			// factorial part of h
+	p = v * ( 1 - s );
+	q = v * ( 1 - s * f );
+	t = v * ( 1 - s * ( 1 - f ) );
+	switch( i ) {
+		case 0:
+			*r = v;
+			*g = t;
+			*b = p;
+			break;
+		case 1:
+			*r = q;
+			*g = v;
+			*b = p;
+			break;
+		case 2:
+			*r = p;
+			*g = v;
+			*b = t;
+			break;
+		case 3:
+			*r = p;
+			*g = q;
+			*b = v;
+			break;
+		case 4:
+			*r = t;
+			*g = p;
+			*b = v;
+			break;
+		default:		// case 5:
+			*r = v;
+			*g = p;
+			*b = q;
+			break;
+	}
+}
+*/

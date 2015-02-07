@@ -14,20 +14,22 @@ typedef struct expressionType {
 } expressionType;
 
 enum expressionset       {
-   EXPR_BLINK,
-   EXPR_TALK,
-   EXPR_LOOKSTRAIGHT,
-   EXPR_LOOKLEFT,
-   EXPR_LOOKRIGHT,
-   EXPR_LOOKUP,
-   EXPR_LOOKDOWN,
-   EXPR_SLEEP,
-   EXPR_HAPPY,
-   EXPR_WAKE,
-   EXPR_ANGRY,
-   EXPR_SCARED,
-   EXPR_CROSSEYED,
-   EXPR_SCANNER,   // unused, no scannel HW yet
+   EXPR_BLINK,              // 0
+   EXPR_TALK,               // 1
+   EXPR_LOOKSTRAIGHT,       // 2
+   EXPR_LOOKLEFT,           // 3
+   EXPR_LOOKRIGHT,          // 4
+   EXPR_LOOKUP,             // 5
+   EXPR_LOOKDOWN,           // 6
+   EXPR_SLEEP,              // 7
+   EXPR_HAPPY,              // 8
+   EXPR_WAKE,               // 9
+   EXPR_ANGRY,              // 10
+   EXPR_SCARED,             // 11
+   EXPR_CROSSEYED,          // 12
+   EXPR_SCANNER,            // 13 unused, no scannel HW yet
+   EXPR_NODYES,             // 14
+   EXPR_SHAKENO,            // 15
    NUM_EXPR
 };
 

@@ -911,3 +911,41 @@ void wakeFromSleep(){
    stateChange(SM_REMOTE_CONTROLLED);   // Go back to remote controlled state
 }
 
+void shakeNo(){
+   char trackTargetColorOnPrev;
+   int panPrev, tiltPrev;
+   int shakeWidth = 20;
+   trackTargetColorOnPrev = ccsrState.trackTargetColorOn;
+   ccsrState.trackTargetColorOn = 0;
+   
+   setPanTilt(ccsrState.pan + shakeWidth, ccsrState.tilt, 90);
+   usleep(1000);
+   setPanTilt(ccsrState.pan - 2*shakeWidth, ccsrState.tilt, 90);
+   usleep(1000);
+   setPanTilt(ccsrState.pan + 2*shakeWidth, ccsrState.tilt, 90);
+   usleep(1000);
+   setPanTilt(ccsrState.pan - 2*shakeWidth, ccsrState.tilt, 90);
+   usleep(1000);
+   setPanTilt(ccsrState.pan + shakeWidth, ccsrState.tilt, 90);
+
+   ccsrState.trackTargetColorOn = trackTargetColorOnPrev;
+}
+
+void nodYes(){
+   char trackTargetColorOnPrev;
+   int panPrev, tiltPrev;
+   int nodDepth = 20;
+   trackTargetColorOnPrev = ccsrState.trackTargetColorOn;
+   ccsrState.trackTargetColorOn = 0;
+   
+   setPanTilt(ccsrState.pan, ccsrState.tilt - nodDepth, 90);
+   usleep(1000);
+   setPanTilt(ccsrState.pan, ccsrState.tilt + 2*nodDepth, 90);
+   usleep(1000);
+   setPanTilt(ccsrState.pan, ccsrState.tilt - 2*nodDepth, 90);
+   usleep(1000);
+   setPanTilt(ccsrState.pan, ccsrState.tilt + nodDepth, 90);
+   usleep(1000);
+
+   ccsrState.trackTargetColorOn = trackTargetColorOnPrev;
+}

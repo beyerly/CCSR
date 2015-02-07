@@ -16,3 +16,4 @@
 void *mood();
 void moodInit();
 void setMood(int h, int a);
+void HVtoRGB( float *r, float *g, float *b, float h, float v );

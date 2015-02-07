@@ -103,10 +103,10 @@ char eye_happy_bmp[] =
 { 
    0x00,
    0x00,
-   0x00,
    0x81,
-   0x7E,
-   0x00,
+   0xC3,
+   0xE7,
+   0x3C,
    0x00,
    0x00
 };
@@ -487,6 +487,12 @@ void *facialExpressions() {
          //   writeDisplay(MOUTH_ADDR, dispBuf+i);
          //   usleep(EXPR_BLINK_FRAME_RATE);
          //}
+         break;
+      case EXPR_SHAKENO:
+         shakeNo();
+         break;
+      case EXPR_NODYES:
+         nodYes();
          break;
       case EXPR_TALK:
          ccsrState.showEmotion = 0;
