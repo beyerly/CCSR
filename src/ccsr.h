@@ -255,6 +255,8 @@ typedef struct ccsrStateType {
    int   endorphine;
    int   adrenaline;
 
+   char talking;
+
 
 } ccsrStateType;
 

@@ -1,4 +1,6 @@
 
+#define NOD_SHAKE_SPEED 95
+#define NOD_SHAKE_DELAY 100
 
 
 enum ccsrActionType {EVASIVE_ACTION,

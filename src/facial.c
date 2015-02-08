@@ -496,31 +496,47 @@ void *facialExpressions() {
          break;
       case EXPR_TALK:
          ccsrState.showEmotion = 0;
+	 ccsrState.talking = 1;
+	 if(expr.length>15) {
+	 expr.length = 15;
+	 }
 	 i=0;
-	 while(1) {
-            read(devRandom, &random, 1);
-            talkCount = (10 * abs(random)/128);
-         printf("bb %d %d\n", abs(random), talkCount);
+//	 while(1) {
 
+            for(j=0;j<expr.length;j++){
+            read(devRandom, &random, 1);
+            talkCount = 1 + (2 * abs(random)/128);
+            printf("ww %d\n", talkCount);
+	    setRGBLED(100, 0, 0, 100);
+            usleep(talkCount*60000  );
+            setRGBLED(0, 0, 0, 100);
+            usleep(talkCount*60000);
+            }
+
+
+/*            read(devRandom, &random, 1);
+            talkCount = (3 * abs(random)/128);
             setRGBLED(abs(random), 0, 0, 100);
             for(j=0;j<talkCount;j++){
                i=i+1;
-               usleep(EXPR_BLINK_FRAME_RATE);
+               usleep(250000);
             }
             read(devRandom, &random, 1);
-            talkCount = (10 * abs(random)/128);
+            talkCount = (3 * abs(random)/128);
             setRGBLED(0, 0, 0, 100);
             for(j=0;j<talkCount;j++){
                i=i+1;
-               usleep(EXPR_BLINK_FRAME_RATE);
+               usleep(250000);
             }
             if(i>expr.length){
                break;
             }
          }
+*/
          setRGBLED(0, 0, 0, 100);
          ccsrState.showEmotion = 1;
-         break;
+	 ccsrState.talking = 0;
+	 break;
       }
    }
 }

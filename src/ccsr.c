@@ -122,7 +122,7 @@ int main () {
    moodInit();
    facialInit();
 
-set_playback_volume(0);
+   // set_playback_volume(0);
 
    if(pthread_create( &threadNavigation, NULL, navigation, NULL )) {
       logMsg(logFile, "Pthread can't be created", ERROR);

@@ -6,7 +6,7 @@
 #define BUF_SIZE 32000
 #define WAV_BUF_SIZE 1024 
 #define PLAYBACK_SPEED 44100
-#define WAV_DOWNSAMPLE_FACTOR 4   // So we are downsampling to 11025
+#define WAV_DOWNSAMPLE_FACTOR 5   // So we are downsampling to 11025
 #define ENERGY_DOWNSAMPLE_FACTOR 16   // So we are downsampling to 11025
 
 #define NUM_SOUNDS 6
@@ -21,7 +21,7 @@
 #define AUDIO_ENERGY_HYSTRESIS 10
 #define EAR_PERIOD 500000          // 1s
 
-#define MIN_SILENCE 2000 //2s
+#define MIN_SILENCE 1000 //2s
 
 #define MAX_FADE_VOL 1000
 #define FADE_TIME 1000

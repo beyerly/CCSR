@@ -101,7 +101,6 @@ int writeSndFile(int numFrames, short* buffer) {
    // Tidy up
    sf_write_sync(sndFile);
    sf_close(sndFile);
-
    return 0;
 }   
    
@@ -126,14 +125,17 @@ void initEspeak() {
 
 void say(char *text) {
     Size = strlen(text)+1;
-    expr.length = 2*Size;
+    expr.length = Size/4;
     expr.type = EXPR_TALK;
-    write(pipeFacialMsg[IN], &expr,sizeof(expr));
+    write(pipeFacialMsg[IN], &expr,sizeof(expr)); 
     pthread_mutex_lock(&semAudio);
     espeak_Synth( text, Size, position, position_type, end_position, flags,
     unique_identifier, user_data );
     espeak_Synchronize( );
     pthread_mutex_unlock(&semAudio);
+    while(ccsrState.talking) {
+    usleep(10);
+    }
 }
 
 
@@ -986,7 +988,7 @@ void *ears() {
 	 free(cont_capture_buffer);
 	 free(captureBufferFlags);
          // Update emotions. This may wake CCSR if he was asleep
-         setMood(MED_HAPPY_INC, MED_AROUSAL_INC);
+         setMood(LOW_HAPPY_INC, LOW_AROUSAL_INC);
       }
    }
 }

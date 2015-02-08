@@ -9,8 +9,8 @@ void ccsrExecuteCmd(char **splitLine, int n, int wfd);
 #define STATE_CSV_DUMP "./data/ccsrState_dump.csv"
 #define NLP_FIFO_IN   "nlp_fifo_in"
 #define NLP_FIFO_OUT  "nlp_fifo_out"
-#define MAX_STRING_LEN 100		  
-#define MAX_TELEMETRY_STRING_LEN 1000		  
+#define MAX_STRING_LEN 200		  
+#define MAX_TELEMETRY_STRING_LEN 1500		  
 
 enum cmdInterfaces {CMDIF_NLP,
 		    CMDIF_TELEMETRY,

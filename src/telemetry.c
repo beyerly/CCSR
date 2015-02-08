@@ -241,7 +241,7 @@ void openCmdInterfaceFifos(int* rfd, int* wfd, char* fin, char* fout) {
 void ccsrParseAndExecuteCmd(int rfd, int wfd) {
    char in;
    char line[MAX_TELEMETRY_STRING_LEN];
-   char i, n, q;
+   int i, n, q;
    char *token;
    char **splitLine;
 
@@ -272,7 +272,7 @@ void ccsrParseAndExecuteCmd(int rfd, int wfd) {
 
     ccsrExecuteCmd(splitLine, n, wfd);
 
-   for(i=0;i<10;i++) {
+   for(i=0;i<MAX_ARGS;i++) {
       free(splitLine[i]);
    }
    free(splitLine);
@@ -363,7 +363,7 @@ void dumpCCSRStateShort(int wfd, char** template) {
 void ccsrExecuteCmd(char **splitLine, int n, int wfd) {
       int x, y;
       char lcdEvent;
-      char string[100];
+      char string[MAX_STRING_LEN];
       char cmd, subCmd, subSubCmd;
       int value0, value1, value2, value3, value4;
       expressionType expr;
@@ -772,7 +772,9 @@ void ccsrExecuteCmd(char **splitLine, int n, int wfd) {
 	       strcat(string, splitLine[y]);
 	       strcat(string, " ");
 	    }   
- 	    say(string);
+ 	        
+
+	    say(string);
 	    sprintf(string, "Command succesful\n");
  	    write(wfd, string, strlen(string));
  	    write(wfd, eom, strlen(eom));

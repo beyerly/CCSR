@@ -225,8 +225,8 @@ void *lcdManager() {
  	 case EVENT_LINUX_BOOTED:
 	    strcpy (majorMsg, "Linux booted    ");
 	    strcpy (minorMsg, "Awaiting start");
-	    say(majorMsg);
-	    say(minorMsg);
+//	    say(majorMsg);
+//	    say(minorMsg);
  	 break;
  	 case EVENT_HOLD_TO_TERMINATE:
 	    strcpy (majorMsg, "Hold 3 sec to   ");
@@ -244,7 +244,7 @@ void *lcdManager() {
  	 break;
  	 case EVENT_SM_STATE_CHANGE:
 	    strcpy (majorMsg, sm_lookup[ccsrState.state]);
-	    say(sm_espeak_lookup[ccsrState.state]);
+//	    say(sm_espeak_lookup[ccsrState.state]);
  	 break;
  	 case EVENT_MOTION_DETECTED:
 	    strcpy (eventMsg, "Motion detected ");
@@ -290,7 +290,7 @@ void *lcdManager() {
  	 break;
  	 case EVENT_TELEMETRY_CONN:
 	    strcpy (eventMsg, "BT connected ");
-   	    say("Telemetry connected");
+//   	    say("Telemetry connected");
 	    if(ccsrState.minorMsgMode == SHOW_EVENT) {
 	       strcpy (minorMsg, eventMsg);
 	    }

@@ -914,19 +914,19 @@ void wakeFromSleep(){
 void shakeNo(){
    char trackTargetColorOnPrev;
    int panPrev, tiltPrev;
-   int shakeWidth = 20;
+   int shakeWidth = 10;
    trackTargetColorOnPrev = ccsrState.trackTargetColorOn;
    ccsrState.trackTargetColorOn = 0;
    
-   setPanTilt(ccsrState.pan + shakeWidth, ccsrState.tilt, 90);
-   usleep(1000);
-   setPanTilt(ccsrState.pan - 2*shakeWidth, ccsrState.tilt, 90);
-   usleep(1000);
-   setPanTilt(ccsrState.pan + 2*shakeWidth, ccsrState.tilt, 90);
-   usleep(1000);
-   setPanTilt(ccsrState.pan - 2*shakeWidth, ccsrState.tilt, 90);
-   usleep(1000);
-   setPanTilt(ccsrState.pan + shakeWidth, ccsrState.tilt, 90);
+   setPanTilt(ccsrState.pan + shakeWidth, ccsrState.tilt, NOD_SHAKE_SPEED);
+   usleep(NOD_SHAKE_DELAY);
+   setPanTilt(ccsrState.pan - 2*shakeWidth, ccsrState.tilt, NOD_SHAKE_SPEED);
+   usleep(NOD_SHAKE_DELAY);
+   setPanTilt(ccsrState.pan + 2*shakeWidth, ccsrState.tilt, NOD_SHAKE_SPEED);
+   usleep(NOD_SHAKE_DELAY);
+   setPanTilt(ccsrState.pan - 2*shakeWidth, ccsrState.tilt, NOD_SHAKE_SPEED);
+   usleep(NOD_SHAKE_DELAY);
+   setPanTilt(ccsrState.pan + shakeWidth, ccsrState.tilt, NOD_SHAKE_SPEED);
 
    ccsrState.trackTargetColorOn = trackTargetColorOnPrev;
 }
@@ -934,18 +934,18 @@ void shakeNo(){
 void nodYes(){
    char trackTargetColorOnPrev;
    int panPrev, tiltPrev;
-   int nodDepth = 20;
+   int nodDepth = 10;
    trackTargetColorOnPrev = ccsrState.trackTargetColorOn;
    ccsrState.trackTargetColorOn = 0;
    
-   setPanTilt(ccsrState.pan, ccsrState.tilt - nodDepth, 90);
-   usleep(1000);
-   setPanTilt(ccsrState.pan, ccsrState.tilt + 2*nodDepth, 90);
-   usleep(1000);
-   setPanTilt(ccsrState.pan, ccsrState.tilt - 2*nodDepth, 90);
-   usleep(1000);
-   setPanTilt(ccsrState.pan, ccsrState.tilt + nodDepth, 90);
-   usleep(1000);
+   setPanTilt(ccsrState.pan, ccsrState.tilt - nodDepth, NOD_SHAKE_SPEED);
+   usleep(NOD_SHAKE_DELAY);
+   setPanTilt(ccsrState.pan, ccsrState.tilt + 2*nodDepth, NOD_SHAKE_SPEED);
+   usleep(NOD_SHAKE_DELAY);
+   setPanTilt(ccsrState.pan, ccsrState.tilt - 2*nodDepth, NOD_SHAKE_SPEED);
+   usleep(NOD_SHAKE_DELAY);
+   setPanTilt(ccsrState.pan, ccsrState.tilt + nodDepth, NOD_SHAKE_SPEED);
+   usleep(NOD_SHAKE_DELAY);
 
    ccsrState.trackTargetColorOn = trackTargetColorOnPrev;
 }

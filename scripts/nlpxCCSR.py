@@ -34,20 +34,22 @@ appID = 'T3H9JX-RQQ2273TJ9'        # Fill in yur own Wolfram AppID here
 useFifos = True                    # Only set True if integrated with CCSR robot platform
 s = ccsrNlpClass(useFifos, appID)
 
-# log = open(logfile, 'w')
-# log.writeline('starting nlpxCCSR')
+log = open(logfile, 'w')
+print log
+log.write('starting nlpxCCSR\n')
 
 while (1):
    # Open pipe from googleVoice2Text.sh
    f = open(fifo, 'r')
-#   log.writeline(fifo + ' opened for reading')
+   log.write(fifo + ' opened for reading\n')
    # Read sentence, this blocks untill googleVoice2Text.sh posts a sentence.
    line = f.readline()
-   print line
-#   log.writeline('parsing: ' + line)
+#   print line
+   log.write('parsing: ' + line + '\n')
+   log.flush()
    s.nlpParse(line)
    f.close()
    if not loop:
       break
 
-# log.close()
+log.close()

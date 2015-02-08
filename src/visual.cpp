@@ -51,7 +51,7 @@ void *visual () {
    int roiX = IMAGE_WIDTH/2 - ROI_WIDTH/2;
    int roiY = IMAGE_HEIGHT/2 - ROI_HEIGHT/2;
    // Adjust ROI from center to spot covering the grabber.
-   roiX = roiX - 58 ;
+   roiX = roiX ;
    roiY = roiY + 130;
    
 

@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <fcntl.h>
@@ -43,7 +44,7 @@ char moodLUT[4][4] = {
    },
    { 
       EXPR_SLEEP,
-      EXPR_SLEEP,
+      MOOD_NORMAL,
       MOOD_NORMAL,
       MOOD_NORMAL
    }
@@ -101,13 +102,14 @@ void *mood() {
 
 
       v = 100*ccsrState.arousal/MAX_AROUSAL;
-      h = 300 - (300 * ((ccsrState.happiness + MAX_HAPPINESS)/(2*MAX_HAPPINESS)));
+      h = 280 - ( (280*(ccsrState.happiness + MAX_HAPPINESS))/(2*MAX_HAPPINESS));
 
       HVtoRGB( &r, &g, &b, h, v );
 
-      R = (int) 255*r;
-      G = (int) 255*g;
-      B = (int) 255*b;
+      R = (int) 255*r/255;
+      G = (int) 255*g/255;
+      B = (int) 255*b/255;
+//      printf("mood RGB %d %d %d\n", R, G, B);
 
       if(ccsrState.showEmotion){
          setRGBLED(R, G, B, 90);
@@ -115,7 +117,7 @@ void *mood() {
 
       xLUT = 2*(ccsrState.happiness + MAX_HAPPINESS)/MAX_HAPPINESS;
       yLUT = 3 - 4*ccsrState.arousal/MAX_AROUSAL;
-      printf("mood hap %d ar %d X %d Y %d RGB %f %f %f HV %f %f \n", ccsrState.happiness, ccsrState.arousal, xLUT, yLUT, r, g, b, h, v);
+      printf("mood hap %d ar %d X %d Y %d rgb %f %f %f RGB %d %d %d HV %f %f \n", ccsrState.happiness, ccsrState.arousal, xLUT, yLUT, r, g, b, R, G, B, h, v);
       if(moodLUT[yLUT][xLUT] != MOOD_NORMAL){
          if(ccsrState.showEmotion){
             if(moodLUT[yLUT][xLUT] == EXPR_SLEEP){
