@@ -537,6 +537,18 @@ void *facialExpressions() {
          ccsrState.showEmotion = 1;
 	 ccsrState.talking = 0;
 	 break;
+      case EXPR_WHITELIGHT:
+         // Used when we analyse objects using camera, switch off blue eyes and turn LED to white
+         // Note before calling this, set ccsrState.showEmotion = 0 so mood.c doesn't blink eyes
+         drawEyes(mask_blink0, mask_blink0);
+         usleep(EXPR_BLINK_FRAME_RATE);
+         drawEyes(mask_blink1, mask_blink1);
+         usleep(EXPR_BLINK_FRAME_RATE);
+         drawEyes(mask_blink2, mask_blink2);
+         usleep(EXPR_BLINK_FRAME_RATE);
+         drawEyes(mask_0, mask_0);
+         setRGBLED(255, 255, 255, 50);
+         break;
       }
    }
 }
