@@ -159,21 +159,9 @@ int i;
          else {
             ccsrState.button0Pressed = 0;
          }
-         if(fgetc(gpio245Val) ==  (int) '1') {
-            // keypad #2
-            if(ccsrState.button1Pressed == 0) {
-               write(pipeSoundGen[IN], &sound[keyPressed], sizeof(sound[keyPressed]));
-               toggleLcdDisplayStatus();
- 	       lcdEvent = EVENT_DISPLAY_STATUS;
- 	       write(pipeLCDMsg[IN], &lcdEvent, sizeof(lcdEvent));
-            }
-            ccsrState.button1Pressed = 1;
-         }
-         else {
-            ccsrState.button1Pressed = 0;
-         }
          if(fgetc(gpio246Val) ==  (int) '1') {
             // keypad #1
+            // Select menu item
             if(ccsrState.button2Pressed == 0) {
                write(pipeSoundGen[IN], &sound[keyPressed], sizeof(sound[keyPressed]));
                toggleLcdDisplayMode();
@@ -185,94 +173,126 @@ int i;
          else {
             ccsrState.button2Pressed = 0;
          }
-         if(fgetc(gpio251Val) ==  (int) '1') {
-            // keypad #4
-            if(ccsrState.button3Pressed == 0) {
+         if(fgetc(gpio245Val) ==  (int) '1') {
+            // keypad #2
+            // 'toggle backward'
+            if(ccsrState.button1Pressed == 0) {
                write(pipeSoundGen[IN], &sound[keyPressed], sizeof(sound[keyPressed]));
-               toggleLcdDisplayMenue();
-               lcdEvent = EVENT_DISPLAY_MENUE;
-               write(pipeLCDMsg[IN], &lcdEvent, sizeof(lcdEvent));
+               switch(ccsrState.minorMsgMode){
+               case SHOW_STATUS:
+                  toggleLcdDisplayStatus(-1);
+                  break;
+               case SHOW_MENUE:
+                  toggleLcdDisplayMenue(-1);
+                  break;
+               default:
+                  break;
+               }
             }
-            ccsrState.button3Pressed = 1;
+            ccsrState.button1Pressed = 1;
          }
          else {
-            ccsrState.button3Pressed = 0;
+            ccsrState.button1Pressed = 0;
          }
          if(fgetc(gpio248Val) ==  (int) '1') {
-            // keypad #3 Toggle menue field
+            // keypad #3
+            // Toggle forward
             if(ccsrState.button4Pressed == 0) {
  	       write(pipeSoundGen[IN], &sound[keyPressed], sizeof(sound[keyPressed]));
- 	       switch(ccsrState.menueItem) {
- 	          case menueItemMotorsOn:
- 	             if(ccsrState.noMotors==0) {
-	        	ccsrState.noMotors = 1;
- 	        	say("Motors off");
-	             }
-	             else {
-	        	ccsrState.noMotors = 0;
- 	        	say("Motors on");
-	             }
-
- 	          break;
- 	          case menueItemSonarOn:
- 	             if(ccsrState.sonarSensorsOn==0) {
-	        	ccsrState.sonarSensorsOn = 1;
- 	        	say("Sonar on");
-	             }
-	             else {
-	        	ccsrState.sonarSensorsOn = 0;
- 	        	say("Sonar off");
-	             }
- 	          break;
- 	          case menueItemNavigationOn:
-	             if(ccsrState.navigationOn==0) {
-	        	ccsrState.navigationOn = 1;
- 	        	say("Navigation on");
-	             }
-	             else {
-	        	ccsrState.navigationOn = 0;
- 	        	say("Navigation off");
-	             }
- 	          break;
- 	          case menueItemnvironmentalOn:
-	             if(ccsrState.environmantalSensorsOn==0) {
-	        	ccsrState.environmantalSensorsOn = 1;
- 	        	say("Environmental on");
-	             }
-	             else {
-	        	ccsrState.environmantalSensorsOn = 0;
- 	        	say("Environmental off");
-	             }
- 	          break;
- 	          case menueItemMotionDetectOn:
-	             if(ccsrState.pidMotionDetectOn==0) {
-	        	ccsrState.pidMotionDetectOn = 1;
- 	        	say("Motion Detection on");
-	             }
-	             else {
-	        	ccsrState.pidMotionDetectOn = 0;
- 	        	say("Motion Detection off");
-	             }
- 	          break;
- 	          case menueItemNoiseDetectOn :
-	             if(ccsrState.noiseDetectOn==0) {
-	        	ccsrState.noiseDetectOn = 1;
- 	        	say("Noise Detection on");
-	             }
-	             else {
-	        	ccsrState.noiseDetectOn = 0;
- 	        	say("Noise Detection off");
-	             }
- 	          break;
-
-	          }
- 	       lcdEvent = EVENT_DISPLAY_MENUE;
- 	       write(pipeLCDMsg[IN], &lcdEvent, sizeof(lcdEvent));
+               switch(ccsrState.minorMsgMode){
+               case SHOW_STATUS:
+                  toggleLcdDisplayStatus(1);
+                  break;
+               case SHOW_MENUE:
+                  toggleLcdDisplayMenue(1);
+                  break;
+               default:
+                  break;
 	    }
             ccsrState.button4Pressed = 1;
          }
          else {
             ccsrState.button4Pressed = 0;
+         }
+         if(fgetc(gpio251Val) ==  (int) '1') {
+            // keypad #4
+            // toggle value
+            if(ccsrState.button3Pressed == 0) {
+               write(pipeSoundGen[IN], &sound[keyPressed], sizeof(sound[keyPressed]));
+               switch(ccsrState.minorMsgMode){
+               case SHOW_STATUS:
+                  break;
+               case SHOW_MENUE:
+                  switch(ccsrState.menueItem) {
+                  case menueItemMotorsOn:
+                     if(ccsrState.noMotors==0) {
+                        ccsrState.noMotors = 1;
+                        say("Motors off");
+                     }
+                     else {
+                        ccsrState.noMotors = 0;
+                        say("Motors on");
+                     }
+                     break;
+                  case menueItemSonarOn:
+                     if(ccsrState.sonarSensorsOn==0) {
+                        ccsrState.sonarSensorsOn = 1;
+                        say("Sonar on");
+                     }
+                     else {
+                        ccsrState.sonarSensorsOn = 0;
+                        say("Sonar off");
+                     }
+                     break;
+                  case menueItemNavigationOn:
+                     if(ccsrState.navigationOn==0) {
+                        ccsrState.navigationOn = 1;
+                        say("Navigation on");
+                     }
+                     else {
+                        ccsrState.navigationOn = 0;
+                        say("Navigation off");
+                     }
+                     break;
+                  case menueItemnvironmentalOn:
+                     if(ccsrState.environmantalSensorsOn==0) {
+                        ccsrState.environmantalSensorsOn = 1;
+                        say("Environmental on");
+                     }
+                     else {
+                        ccsrState.environmantalSensorsOn = 0;
+                        say("Environmental off");
+                     }
+                     break;
+                  case menueItemMotionDetectOn:
+                     if(ccsrState.pidMotionDetectOn==0) {
+                        ccsrState.pidMotionDetectOn = 1;
+                        say("Motion Detection on");
+                     }
+                     else {
+                        ccsrState.pidMotionDetectOn = 0;
+                        say("Motion Detection off");
+                     }
+                     break;
+                  case menueItemNoiseDetectOn :
+                     if(ccsrState.noiseDetectOn==0) {
+                        ccsrState.noiseDetectOn = 1;
+                        say("Noise Detection on");
+                     }
+                     else {
+                        ccsrState.noiseDetectOn = 0;
+                        say("Noise Detection off");
+                     }
+                     break;
+                  }
+                  break;
+               default:
+                  break;
+            }
+            ccsrState.button3Pressed = 1;
+         }
+         else {
+            ccsrState.button3Pressed = 0;
          }
          if(fgetc(gpio249Val) ==  (int) '1') {
             // PID motion detector

@@ -30,8 +30,9 @@ enum expressionset       {
    EXPR_SCANNER,            // 13 unused, no scannel HW yet
    EXPR_NODYES,             // 14
    EXPR_SHAKENO,            // 15
+   EXPR_WHITELIGHT          // 16
    NUM_EXPR
-};
+} expressionSetType;
 
 #define HT16K33_BLINK_CMD 0x80
 #define HT16K33_BLINK_DISPLAYON 0x01

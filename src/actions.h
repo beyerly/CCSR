@@ -4,12 +4,14 @@
 
 
 enum ccsrActionType {EVASIVE_ACTION,
- 		     ORIENTATION,
-		     PAUSED,
-		     TURN_TO_TARGET_HEADING,
-		     CAP_PLAYB_ACTION,
-		     NO_ACTION,
-                     ANALYZING_OBJ};
+   ORIENTATION,
+   PAUSED,
+   TURN_TO_TARGET_HEADING,
+   CAP_PLAYB_ACTION,
+   NO_ACTION,
+   ANALYZING_OBJ,
+   FINDING_OBJ
+};
 
 enum orientationModeType {FULL,
                           FORWARD_ONLY,
@@ -34,6 +36,7 @@ void giveObjectAndFoldArm();
 void initColors();
 void extendArm();
 void dropAndFoldArm();
+void grabObjectFromFixedGroundLocation();
 
 void goToSleep();
 void wakeFromSleep();

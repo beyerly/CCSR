@@ -28,6 +28,7 @@ enum telccsrcmd  {CMD_SET,
 		  CMD_TURN,
 		  CMD_FACIAL,
 		  CMD_LISTEN,
+                  CMD_OBJ,
 		  NUM_CMD
 		  };
 
@@ -39,6 +40,14 @@ enum telccsrdumpsubcmd  {DUMPSUBCMD_ALL,
 enum telccsronoffsubcmd  {SUBCMD_OFF,
  			  SUBCMD_ON,
 			  NUM_ONOFFSUBCMD
+		         };
+
+enum telccsrobjsubcmd    {OBJSUBCMD_PICKUP,
+ 			  OBJSUBCMD_DROP,
+                          OBJSUBCMD_GIVE,
+                          OBJSUBCMD_ANALYZE,
+                          OBJSUBCMD_FIND,
+			  NUM_OBJSUBCMD
 		         };
 
 enum telccsrset          {REMOTE,

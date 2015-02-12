@@ -987,7 +987,7 @@ void *ears() {
 	 free(capture_buffer_mono);
 	 free(cont_capture_buffer);
 	 free(captureBufferFlags);
-         // Update emotions. This may wake CCSR if he was asleep
+         // Update emotions. Talking to him makes him a little happy and excited. This may wake CCSR if he was asleep
          setMood(LOW_HAPPY_INC, LOW_AROUSAL_INC);
       }
    }

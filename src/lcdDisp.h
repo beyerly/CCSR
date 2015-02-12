@@ -5,6 +5,8 @@ void lcdDisplayStatus();
 void lcdDisplayRefresh();
 void lcdDisplayConfig(char contrast , char brightness);
 void lcdDisplayPower(int on);
+void toggleLcdDisplayStatus(char i);
+void toggleLcdDisplayMenue(char i);
 
 void *lcdRefresh();
 void *lcdManager();
@@ -52,6 +54,8 @@ enum lcdStatusField {fieldNone,
 	             fieldSonarDistFront, 
 		     fieldAmbLight,
 		     fieldFear,
+                     fieldHappiness,
+                     fieldArousal,
 		     numFields};
 
 enum lcdMenueItem   {menueItemMotorsOn, 

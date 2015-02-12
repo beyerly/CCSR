@@ -58,8 +58,9 @@ char *action_lookup[] = {"Evasive Action ",  // 0
 			 "Turn to Target ",  // 3
 			 "Capt & Playb   ",  // 4
 			 "Idle           ",  // 5
-			 "Analyzing Obj  "   // 6
-			 };
+			 "Analyzing Obj  ",  // 6
+                         "Finding Obj    "   // 7			 
+};
 
 char majorMsg[17];
 char minorMsg[17];
@@ -295,11 +296,13 @@ void *lcdManager() {
 	       strcpy (minorMsg, eventMsg);
 	    }
  	 break;
- 	 case EVENT_ACTION:
-	    strcpy (actionMsg, action_lookup[ccsrState.action]);
-	    if(ccsrState.minorMsgMode == SHOW_ACTION) {
-	       strcpy (minorMsg, actionMsg);
-	    }
+         case EVENT_ACTION:
+            // Update emotions. Doing an action makes him a little more happy and excited. 
+            setMood(MED_HAPPY_INC, MED_AROUSAL_INC);
+            strcpy (actionMsg, action_lookup[ccsrState.action]);
+            if(ccsrState.minorMsgMode == SHOW_ACTION) {
+               strcpy (minorMsg, actionMsg);
+            }
  	 break;
  	 case EVENT_TOGGLE_MODE:
 	    switch(ccsrState.minorMsgMode) {
@@ -361,7 +364,16 @@ void *lcdManager() {
  	          minorMsgArgPtr = &ccsrState.fear;
                   minorMsgHasArg = 1;
  	       break;
-
+               case fieldHappiness:
+ 	          strcpy (minorMsg, "Happiness: ");
+ 	          minorMsgArgPtr = &ccsrState.happiness;
+                  minorMsgHasArg = 1;
+ 	       break;
+               case fieldArousal:
+ 	          strcpy (minorMsg, "Arousal:   ");
+ 	          minorMsgArgPtr = &ccsrState.arousal;
+                  minorMsgHasArg = 1;
+ 	       break;
   	       case fieldNone:
    	       strcpy (minorMsg, action_lookup[ccsrState.action]);
                minorMsgHasArg = 0;
@@ -463,21 +475,25 @@ void lcdDisplayRefresh() {
 } 
 
 
+void toggleLcdDisplayStatus(char i) {
+   ccsrState.statusField = ccsrState.statusField + i;
 
-void toggleLcdDisplayStatus() {
-   if(ccsrState.statusField == numFields - 1) {
+   if(ccsrState.statusField == numFields) {
       ccsrState.statusField = 0;
    }
-   else {
-      ccsrState.statusField = ccsrState.statusField + 1;
+   else if (ccsrState.statusField < 0){
+      ccsrState.statusField = numFields - 1;
    }
 }
-void toggleLcdDisplayMenue() {
-   if(ccsrState.menueItem == numMenueItems - 1) {
+
+void toggleLcdDisplayMenue(char i) {
+   ccsrState.menueItem = ccsrState.menueItem + i;
+
+   if(ccsrState.menueItem == numMenueItems) {
       ccsrState.menueItem = 0;
    }
-   else {
-      ccsrState.menueItem = ccsrState.menueItem + 1;
+   else if(ccsrState.menueItem < 0) {
+      ccsrState.menueItem = numMenueItems - 1;
    }
 }
    

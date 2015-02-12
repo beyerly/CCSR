@@ -85,11 +85,12 @@ char *cmd_lookup[] = {"set",             // followed by set_cmd_lookup[]
 		                         // target object color that CCSR can track.
 		      "findobj",         // Find and pick up object of target color 
 		      "giveobj",         // Assuming CCSR is holding object, give it to user and fold arm 
-		      "move",            // move <1=fwd, 2=reverse> <time> move fwd/reverse for specified amount of time 
-		      "turn",             // turn <0=RIGHT, 1=LEFT> <time> turn left/right for specified amount of time 
-		      "facial",
-		      "listen"           // listen - start continuous voice recognition
+		      "move",            // move <1=fwd, 2=reverse> <time> - move fwd/reverse for specified amount of time 
+		      "turn",            // turn <0=RIGHT, 1=LEFT> <time> - turn left/right for specified amount of time 
+		      "facial",          // facial <expressionSetType> - Do facial expression using eyes and LED. For expressions see expressionset in facial.h
+		      "listen",          // listen - start continuous voice recognition
 		                         // listen 0 - stop continuous voice recognition
+                      "obj"              // followed by obj_cmd_lookup[] - object manipulation
 		      };
 // sub-commands of 'dump'
 char *dump_cmd_lookup[] = {"all",        // dump all - Print selected ccsrState fields to return-fifo
@@ -151,6 +152,16 @@ char *set_cmd_lookup[] = {"rc",          // set rc <0,1> - turn off/on Remote co
 char *onoff_cmd_lookup[] = {"0",
 			   "1"
 			   };
+
+char *obj_cmd_lookup[] =  {"pickup",   // Pick up object from fixed location on floor
+			   "drop",     // Put object down on fixed location on the floor
+                           "give",     // Stretch arm and release object in the air
+                           "analyze",  // strech arm, ask for object, when object detected, close grabber, analyse the color 
+                                       // and put it down on the floor
+                           "find"      // Look for and track target color, position CCSR to put object in fixed target location
+                                       // pick up the object.
+			   };
+
 
 // List of selected fields in ccsrState. This is used by dump commands, to generate CSV file or pass on to telCCSR temeletry.
 char *CCSRStateTemplate[] = {"state,  		      %4d, \n",   // 0
@@ -413,7 +424,39 @@ void ccsrExecuteCmd(char **splitLine, int n, int wfd) {
 	      break;
 	    }
 	 break;
-	 case CMD_SET:
+         case CMD_OBJ:
+            subCmd = tokenLookup(splitLine[1], obj_cmd_lookup, NUM_OBJSUBCMD, (n>1), wfd);
+            switch (subCmd) {
+            case -1:
+               break;
+            case OBJSUBCMD_PICKUP:
+               grabObjectFromFixedGroundLocation();
+               sprintf(string, "Command succesful\n");
+               write(wfd, string, strlen(string));
+               break;
+            case OBJSUBCMD_DROP:
+               dropAndFoldArm();
+               sprintf(string, "Command succesful\n");
+               write(wfd, string, strlen(string));
+               break;
+            case OBJSUBCMD_GIVE:
+               giveObjectAndFoldArm();
+               sprintf(string, "Command succesful\n");
+               write(wfd, string, strlen(string));
+               break;
+            case OBJSUBCMD_ANALYZE:
+               analyzeObject();
+               sprintf(string, "Command succesful\n");
+               write(wfd, string, strlen(string));
+               break;
+            case OBJSUBCMD_FIND:
+               findAndPickupObject();
+               sprintf(string, "Command succesful\n");
+               write(wfd, string, strlen(string));
+               break;
+            }
+            break;
+            case CMD_SET:
             subCmd = tokenLookup(splitLine[1], set_cmd_lookup, NUM_SENS_CMD, (n>1), wfd);
 	    switch (subCmd) {
  	      case -1:
@@ -529,28 +572,28 @@ void ccsrExecuteCmd(char **splitLine, int n, int wfd) {
  	            write(wfd, eom, strlen(eom));
 	         }	        
 	      break;
-         case TRACK_COLOR:
-            subSubCmd = tokenLookup(splitLine[2], onoff_cmd_lookup, NUM_ONOFFSUBCMD, (n>2), wfd);
-            ccsrState.trackTargetColorOn = subSubCmd;
-            sprintf(string, "Command succesful\n");
-            write(wfd, string, strlen(string));
-            write(wfd, eom, strlen(eom));
-	      break;
-	      case STATE:
+              case TRACK_COLOR:
+                 subSubCmd = tokenLookup(splitLine[2], onoff_cmd_lookup, NUM_ONOFFSUBCMD, (n>2), wfd);
+                 ccsrState.trackTargetColorOn = subSubCmd;
+                 sprintf(string, "Command succesful\n");
+                 write(wfd, string, strlen(string));
+                 write(wfd, eom, strlen(eom));
+                 break;
+              case STATE:
                  if (n>2) {
-	            value0 = atoi(splitLine[2]);
- 		    ccsrState.remoteControlled = 0;
-		    stateChange(value0);
-		    sprintf(string, "Command succesful\n");
- 		    write(wfd, string, strlen(string));
- 		    write(wfd, eom, strlen(eom));
-	         }
-	         else {
- 	            sprintf(string, "Expecting: set state <state>\n", cmd);
- 		    write(wfd, string, strlen(string));
- 	            write(wfd, eom, strlen(eom));
-	         }	        
-	      break;
+                    value0 = atoi(splitLine[2]);
+                    ccsrState.remoteControlled = 0;
+                    stateChange(value0);
+                    sprintf(string, "Command succesful\n");
+                    write(wfd, string, strlen(string));
+                    write(wfd, eom, strlen(eom));
+                 }
+                 else {
+                    sprintf(string, "Expecting: set state <state>\n", cmd);
+                    write(wfd, string, strlen(string));
+                    write(wfd, eom, strlen(eom));
+                 }	        
+                 break;
 	      case SENS_ALL:
 	         subSubCmd = tokenLookup(splitLine[2], onoff_cmd_lookup, NUM_ONOFFSUBCMD, (n>2), wfd);
 	         ccsrState.proximitySensorsOn = subSubCmd;
@@ -772,8 +815,6 @@ void ccsrExecuteCmd(char **splitLine, int n, int wfd) {
 	       strcat(string, splitLine[y]);
 	       strcat(string, " ");
 	    }   
- 	        
-
 	    say(string);
 	    sprintf(string, "Command succesful\n");
  	    write(wfd, string, strlen(string));
@@ -904,7 +945,7 @@ void ccsrExecuteCmd(char **splitLine, int n, int wfd) {
 	    }
 	 break;
 	 case CMD_LISTEN:
-	    if (n>0) {
+	    if (n==1) {
                ccsrState.continuousVoiceRecognitionOn = 1;
                sprintf(string, "Command succesful\n");
  	       write(wfd, string, strlen(string));
@@ -912,7 +953,6 @@ void ccsrExecuteCmd(char **splitLine, int n, int wfd) {
 	    }
 	    else if (n>1) {
 	       value0 = atoi(splitLine[1]);
-               expr.type = EXPR_BLINK;
                ccsrState.continuousVoiceRecognitionOn = value0;
                sprintf(string, "Command succesful\n");
  	       write(wfd, string, strlen(string));

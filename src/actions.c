@@ -362,7 +362,7 @@ int orientation(int mode) {
    if(sonarScan(160)) {
       return 1;
    }
-   sonarScanDown();    
+//   sonarScanDown();    
    
    if(mode==FULL) {
       // DO full 360 sweep
@@ -612,7 +612,16 @@ void findAndPickupObject() {
    int dir;
    char string[100];
 
+   ccsrState.action = FINDING_OBJ;
+   lcdEvent = EVENT_ACTION;
+   write(pipeLCDMsg[IN], &lcdEvent, sizeof(lcdEvent));
+
+
    setPanTilt(0,-48,20);  // Move camera down to look at floor in front. Bottom of cam view is just above top of arm.
+   // Turn off eyes and make LED bright white to illuminate object
+   ccsrState.showEmotion = 0;
+   expr.type = EXPR_WHITELIGHT;
+   write(pipeFacialMsg[IN], &expr,sizeof(expr));
    sleep(2); // Wait a little for tracking lock 
    if (ccsrState.objectTracked) {
       // We are tracking, now center CCSR chassis on X-axis
@@ -698,12 +707,10 @@ void findAndPickupObject() {
 	    }
 	 }
      }
-     // We are centered! Go grab object from prefixed location.      
 
-     setArm(45, 100, 0, 0, 90);      // Extend elbow halfway
-     setArm(0, 140, 0, 0, 90);       // raise shoulder, bring elbow in untill object touches ground
-     setArm(0, 140, 0, 150, 90);     // ober grabber, drop object
-     setArm(15, 180, 180, 150, 90);  // Lower shoulder, extend elbow fully, rotate wrist, grabber remains oben
+     ccsrState.showEmotion = 1;
+     // We are centered! Go grab object from prefixed location.      
+     grabObjectFromFixedGroundLocation();
 
      strcpy(string,"there you go, the ");
      strcat(string,ccsrState.targetColorName);
@@ -715,16 +722,19 @@ void findAndPickupObject() {
       say("I can't see it yet, let me go and look for it");
 //      stateChange(SM_ORIENTATION);
    }
+   ccsrState.action = NO_ACTION;
+   lcdEvent = EVENT_ACTION;
+   write(pipeLCDMsg[IN], &lcdEvent, sizeof(lcdEvent));
 }
 
 // From folded position, extend arm and open grabber. This is the first step in handing CCSR an object for him to 
 // analyze.
 void extendArm() {
    setArm(45, 100, 0, 0, 90);    // Extend elbow halfway
-   setArm(15, 180, 180, 0, 90);  // Lower shoulder, extend elbow fully, rotate wrist, grabber remains oben
+   setArm(15, 180, 180, 0, 90);  // Lower shoulder, extend elbow fully, rotate wrist, grabber remains open
 }
 
-// Assuming arm is grabbing object, put it doen on the floor and fold arm back in
+// Assuming arm is grabbing object, put it down on the floor and fold arm back in
 // Note this movement is such to prevent colision: must rotate wrist fully back before retracting elbow
 void dropAndFoldArm() {
    setArm(25, 80, 180, 150, 90); // raise shoulder, bring elbow in untill object touches ground
@@ -733,14 +743,22 @@ void dropAndFoldArm() {
    setArm(45, 5, 0, 0, 90);      // pull in elbow fully, rotate wrist fully in
 }
 
-// Assuming arm is grabbing object, put it doen on the floor and fold arm back in
+// Assuming arm is grabbing object and user is holding out hand to receive object, Stretch arm, drop object and fold arm back in
 // Note this movement is such to prevent colision: must rotate wrist fully back before retracting elbow
 void giveObjectAndFoldArm() {
    setArm(15, 120, 180, 150, 90); // Stretch arm out, keep grabber closed
    say("there you go");
-   setArm(20, 120, 180, 0, 90);   // oper grabber, drop object, assuming in hands or user
+   setArm(20, 120, 180, 0, 90);   // oper grabber, drop object, assuming into hands of user
    setArm(45, 80, 90, 0, 90);     // raise shoulder fully up, rotate wrist halfway
    setArm(45, 5, 0, 0, 90);       // pull in elbow fully, rotate wrist fully in
+}
+
+// Assuming target object is at fixed location in front of CCSR, extend arm from folded position, pick it up and present. 
+void grabObjectFromFixedGroundLocation() {
+   setArm(45, 100, 0, 0, 90);      // extend elbow
+   setArm(0, 140, 0, 0, 90);       // lower shoulder, extend elbow further untill grabber touches ground
+   setArm(0, 140, 0, 150, 90);     // close grabber
+   setArm(15, 180, 180, 150, 90);  // Raise shoulder, extend elbow fully, rotate wrist, grabber remains closed. Presenting object
 }
 
 
@@ -763,6 +781,11 @@ void analyzeObject() {
 
    extendArm();           // Extend arm from folded position, and open grabber
    setPanTilt(0,-30,20);  // Move camera to center grabber into image 'region of interest'
+   // Turn off eyes and make LED bright white to illuminate object
+   ccsrState.showEmotion = 0;
+   expr.type = EXPR_WHITELIGHT;
+   write(pipeFacialMsg[IN], &expr,sizeof(expr));
+   
    say("please hand me the object");
    
    // Enable object analyzing: this will cause the *visual process in visual.cpp to calculate and
@@ -874,7 +897,8 @@ void analyzeObject() {
    // For now we only analyze test-object of knows size: 
    ccsrState.targetColorVolume = TEST_OBJECT_1_VOLUME;
 
-   setPanTilt(0,0,20);  // Move camera back to reset position
+   setPanTilt(0,0,20);          // Move camera back to reset position
+   ccsrState.showEmotion = 1;   // Turn eyes and LEd back on
    dropAndFoldArm();
 
    ccsrState.action = NO_ACTION;
