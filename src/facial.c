@@ -204,10 +204,10 @@ char mask_0[] =
 void facialInit() {
    dispEnable(EYE_R_ADDR);
    dispSetBlinkRate(EYE_R_ADDR, HT16K33_BLINK_OFF);
-   dispSetBrightness(EYE_R_ADDR, 15); // max brightness
+   dispSetBrightness(EYE_R_ADDR, 1); // max brightness
    dispEnable(EYE_L_ADDR);
    dispSetBlinkRate(EYE_L_ADDR, HT16K33_BLINK_OFF);
-   dispSetBrightness(EYE_L_ADDR, 15); // max brightness
+   dispSetBrightness(EYE_L_ADDR, 1); // max brightness
    //dispEnable(MOUTH_ADDR);
    //dispSetBlinkRate(MOUTH_ADDR, HT16K33_BLINK_OFF);
    //dispSetBrightness(MOUTH_ADDR, 15); // max brightness
@@ -506,7 +506,6 @@ void *facialExpressions() {
             for(j=0;j<expr.length;j++){
             read(devRandom, &random, 1);
             talkCount = 1 + (2 * abs(random)/128);
-            printf("ww %d\n", talkCount);
 	    setRGBLED(100, 0, 0, 100);
             usleep(talkCount*60000  );
             setRGBLED(0, 0, 0, 100);

@@ -44,6 +44,9 @@ void wakeFromSleep();
 void shakeNo();
 void nodYes();
 
+void grab0();
+void drop0();
+
 #define SONAR_SCAN_DELAY 40000
 #define NUM_COLORS 16
 

@@ -46,8 +46,7 @@ enum lcdEventType {EVENT_NONE,
 		   EVENT_TARGET_LOCKED
 		   };
 
-enum lcdStatusField {fieldNone, 
-                     fieldBattery, 
+enum lcdStatusField {fieldBattery, 
 		     fieldHeading,
 		     fieldtargetHeading, 
 		     fieldTemp, 

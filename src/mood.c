@@ -54,7 +54,7 @@ void moodInit() {
    ccsrState.happiness    = 0;
    ccsrState.arousal   = 128;
    ccsrState.randomEyeMovements = 1;
-   ccsrState.showEmotion = 0;
+   ccsrState.showEmotion = 1;
    ccsrState.blinkRate     = 5;
    ccsrState.eyeMovementRate = 10;
    moodDegradationCounter = MOOD_DEGRADATION_SPEED;
@@ -93,6 +93,8 @@ void *mood() {
    eyeMovementCount = ccsrState.eyeMovementRate;
 
    while(1) {
+ //     printf("semot %d\n", ccsrState.showEmotion);
+
       if(ccsrState.happiness > MIN_HAPPINESS) {
          ccsrState.happiness  = ccsrState.happiness - 1;
       }
@@ -117,7 +119,7 @@ void *mood() {
 
       xLUT = 2*(ccsrState.happiness + MAX_HAPPINESS)/MAX_HAPPINESS;
       yLUT = 3 - 4*ccsrState.arousal/MAX_AROUSAL;
-      printf("mood hap %d ar %d X %d Y %d rgb %f %f %f RGB %d %d %d HV %f %f \n", ccsrState.happiness, ccsrState.arousal, xLUT, yLUT, r, g, b, R, G, B, h, v);
+//      printf("mood hap %d ar %d X %d Y %d rgb %f %f %f RGB %d %d %d HV %f %f \n", ccsrState.happiness, ccsrState.arousal, xLUT, yLUT, r, g, b, R, G, B, h, v);
       if(moodLUT[yLUT][xLUT] != MOOD_NORMAL){
          if(ccsrState.showEmotion){
             if(moodLUT[yLUT][xLUT] == EXPR_SLEEP){

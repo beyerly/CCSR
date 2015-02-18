@@ -44,14 +44,14 @@ colorType colors[NUM_COLORS];
 void initColors(){
    colors[0].iLowH  = 100;
    colors[0].iHighH = 120;
-   colors[0].iLowS  = 130;
+   colors[0].iLowS  = 100;
    colors[0].iHighS = 208;
    colors[0].iLowV  = 89;
    colors[0].iHighV = 255;
    strcpy(colors[0].name, "blue");
 
    colors[1].iLowH  = 75;
-   colors[1].iHighH = 177;
+   colors[1].iHighH = 99;
    colors[1].iLowS  = 100;
    colors[1].iHighS = 200;
    colors[1].iLowV  = 89;
@@ -611,6 +611,7 @@ void driveAtMinPower(int dir, int time) {
 void findAndPickupObject() {
    int dir;
    char string[100];
+   char trackTargetColorOnPrev;
 
    ccsrState.action = FINDING_OBJ;
    lcdEvent = EVENT_ACTION;
@@ -618,8 +619,14 @@ void findAndPickupObject() {
 
 
    setPanTilt(0,-48,20);  // Move camera down to look at floor in front. Bottom of cam view is just above top of arm.
+//   trackTargetColorOnPrev = ccsrState.trackTargetColorOn;
+//   ccsrState.trackTargetColorOn = 1;
+
+
+
    // Turn off eyes and make LED bright white to illuminate object
    ccsrState.showEmotion = 0;
+   ccsrState.randomEyeMovements = 0;
    expr.type = EXPR_WHITELIGHT;
    write(pipeFacialMsg[IN], &expr,sizeof(expr));
    sleep(2); // Wait a little for tracking lock 
@@ -709,6 +716,7 @@ void findAndPickupObject() {
      }
 
      ccsrState.showEmotion = 1;
+     ccsrState.randomEyeMovements = 1;
      // We are centered! Go grab object from prefixed location.      
      grabObjectFromFixedGroundLocation();
 
@@ -720,8 +728,11 @@ void findAndPickupObject() {
    else {
       // Target color is not in view, go find it first
       say("I can't see it yet, let me go and look for it");
+     ccsrState.showEmotion = 1;
+     ccsrState.randomEyeMovements = 1;
 //      stateChange(SM_ORIENTATION);
    }
+//   ccsrState.trackTargetColorOn = trackTargetColorOnPrev;
    ccsrState.action = NO_ACTION;
    lcdEvent = EVENT_ACTION;
    write(pipeLCDMsg[IN], &lcdEvent, sizeof(lcdEvent));
@@ -762,6 +773,55 @@ void grabObjectFromFixedGroundLocation() {
 }
 
 
+void grab0() {
+
+   int panPrev, tiltPrev;
+   char trackTargetColorOnPrev;
+   panPrev = ccsrState.pan;
+   tiltPrev = ccsrState.tilt;
+   
+    trackTargetColorOnPrev = ccsrState.trackTargetColorOn;
+   ccsrState.trackTargetColorOn = 0;
+  setPanTilt(0,-30,90);
+
+   setArm(45, 100, 0, 0, 90);      // extend elbow
+   setArm(0, 140, 0, 0, 90);       // lower shoulder, extend elbow further untill grabber touches ground
+   setArm(0, 140, 0, 150, 90);     // close grabber
+   setArm(15, 180, 180, 150, 90);  // Raise shoulder, extend elbow fully, rotate wrist, grabber remains closed. Presenting object
+
+   setPanTilt(panPrev, tiltPrev, 90);
+  ccsrState.trackTargetColorOn = trackTargetColorOnPrev;
+
+}
+
+// Assuming arm is grabbing object, put it down on the floor and fold arm back in
+// Note this movement is such to prevent colision: must rotate wrist fully back before retracting elbow
+void drop0() {
+
+   int panPrev, tiltPrev;
+   char trackTargetColorOnPrev;
+
+   trackTargetColorOnPrev = ccsrState.trackTargetColorOn;
+   ccsrState.trackTargetColorOn = 0;
+
+   panPrev = ccsrState.pan;
+   tiltPrev = ccsrState.tilt;
+   
+   setPanTilt(0,-30,90);
+
+   setArm(15, 180, 0, 150, 95);  // 
+   setArm(0, 140, 0, 150, 95);     // 
+   setArm(0, 140, 0, 0, 95);       // 
+   setArm(45, 80, 0, 0, 95);     // raise shoulder fully up, rotate wrist halfway
+   setArm(45, 5, 0, 0, 95);       // pull in elbow fully, rotate wrist fully in
+
+   setPanTilt(panPrev, tiltPrev, 90);
+   ccsrState.trackTargetColorOn = trackTargetColorOnPrev;
+
+}
+
+
+
 // From folded position, extend arm and open grabber. Move camera to center grabber in visual's 'ROI' box. 
 // Wait untill we detect an object being held between grabber fingers (color-based motion detection),
 // then close grabber. Bring hand in front of camera. 
@@ -771,6 +831,11 @@ void analyzeObject() {
    char *colorName;
    char objectDetected;
    colorType color;
+   char trackTargetColorOnPrev;
+
+   trackTargetColorOnPrev = ccsrState.trackTargetColorOn;
+   ccsrState.trackTargetColorOn = 0;
+
    
    objectDetected=0;
    ccsrState.action = ANALYZING_OBJ;
@@ -782,7 +847,8 @@ void analyzeObject() {
    extendArm();           // Extend arm from folded position, and open grabber
    setPanTilt(0,-30,20);  // Move camera to center grabber into image 'region of interest'
    // Turn off eyes and make LED bright white to illuminate object
-   ccsrState.showEmotion = 0;
+   ccsrState.showEmotion        = 0;
+   ccsrState.randomEyeMovements = 0;
    expr.type = EXPR_WHITELIGHT;
    write(pipeFacialMsg[IN], &expr,sizeof(expr));
    
@@ -899,6 +965,8 @@ void analyzeObject() {
 
    setPanTilt(0,0,20);          // Move camera back to reset position
    ccsrState.showEmotion = 1;   // Turn eyes and LEd back on
+   ccsrState.randomEyeMovements = 1;
+   ccsrState.trackTargetColorOn = trackTargetColorOnPrev;
    dropAndFoldArm();
 
    ccsrState.action = NO_ACTION;

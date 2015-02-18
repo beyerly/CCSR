@@ -83,7 +83,10 @@ void configServoControl() {
    pthread_mutex_unlock(&semI2c);
    
    // Set servo's in neutral position
-   setPanTilt(0, 0, 100);     // Dead ahead
+   ccsrState.pan = 1;
+   ccsrState.tilt = 1;
+   setPanTilt(10, 10, 100);     // Dead ahead
+   setPanTilt(0, 0, 30);     // Dead ahead
    setArm(45, 5, 0, 0, 100);  // Folded
    enableArm(0);
    enablePanTilt(0);
@@ -562,7 +565,7 @@ void setArm(int arm, int elbow, int wrist, int hand, int speed) {
       pthread_mutex_unlock(&semI2c);
       usleep(delay);
    }
-   printf("%d %d %d %d\n",      ccsrState.armPulseWidth, ccsrState.elbowPulseWidth , ccsrState.wristPulseWidth, ccsrState.handPulseWidth);
+//   printf("%d %d %d %d\n",      ccsrState.armPulseWidth, ccsrState.elbowPulseWidth , ccsrState.wristPulseWidth, ccsrState.handPulseWidth);
 
 
    ccsrState.arm = arm;
@@ -679,7 +682,7 @@ void *camtrack() {
 	    // We don't consider tilt value (yet), because only pan is important to turn CCSR in the right direction
 	    if(ccsrState.trackedObjectCentered == 0) {
    	       //If we weren't previously centered before, sound happy alarm that now we do.
-	       write(pipeSoundGen[IN], &sound[singleA], sizeof(sound[singleA]));
+//	       write(pipeSoundGen[IN], &sound[singleA], sizeof(sound[singleA]));
 	       lcdEvent = EVENT_TARGET_LOCKED;
  	       write(pipeLCDMsg[IN], &lcdEvent, sizeof(lcdEvent));
             }

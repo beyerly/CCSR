@@ -9,6 +9,7 @@
 #include "ccsr.h"
 #include "lcdDisp.h"
 #include "utils.h"
+#include "mood.h"
 
 #ifndef I2C_SLAVE
 #define I2C_SLAVE 0
@@ -73,7 +74,7 @@ char eventMsg[17];
 char actionMsg[17];
 
 void lcdDisplayInit() {
-//   lcdDisplayConfig(value1, value2);
+   lcdDisplayConfig(50, 3);
 }
 
 void lcdDisplayMajorMsg(char *s) {
@@ -216,7 +217,7 @@ void *lcdManager() {
 
    majorMsgHasArg = 0;
    minorMsgHasArg = 0;
-   ccsrState.statusField=fieldNone;
+   ccsrState.statusField=fieldBattery;
    ccsrState.minorMsgMode = SHOW_ACTION;
    strcpy(eventMsg, "No event        ");
    strcpy(actionMsg, "No action      ");
@@ -270,14 +271,14 @@ void *lcdManager() {
  	 break;
  	 case EVENT_TRACKING_OBJECT:
 	    strcpy (eventMsg, "Tracking Object ");
-   	    say("Found Target Object, tracking!");
+//   	    say("Found Target Object, tracking!");
 	    if(ccsrState.minorMsgMode == SHOW_EVENT) {
 	       strcpy (minorMsg, eventMsg);
 	    }
  	 break;
  	 case EVENT_TARGET_LOCKED:
 	    strcpy (eventMsg, "Object Locked");
-   	    say("Locked on target Object");
+//   	    say("Locked on target Object");
 	    if(ccsrState.minorMsgMode == SHOW_EVENT) {
 	       strcpy (minorMsg, eventMsg);
 	    }
@@ -374,10 +375,6 @@ void *lcdManager() {
  	          minorMsgArgPtr = &ccsrState.arousal;
                   minorMsgHasArg = 1;
  	       break;
-  	       case fieldNone:
-   	       strcpy (minorMsg, action_lookup[ccsrState.action]);
-               minorMsgHasArg = 0;
-	       break;
 	    }
  	 break;
  	 case EVENT_DISPLAY_MENUE:
@@ -484,6 +481,7 @@ void toggleLcdDisplayStatus(char i) {
    else if (ccsrState.statusField < 0){
       ccsrState.statusField = numFields - 1;
    }
+    printf("status %d \n", ccsrState.statusField);
 }
 
 void toggleLcdDisplayMenue(char i) {
@@ -510,6 +508,7 @@ void toggleLcdDisplayMode() {
    else {
       ccsrState.continuousLCDRefresh = 0;
    }
+
 }
 
 

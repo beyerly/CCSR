@@ -125,9 +125,11 @@ void initEspeak() {
 
 void say(char *text) {
     Size = strlen(text)+1;
-    expr.length = Size/4;
-    expr.type = EXPR_TALK;
-    write(pipeFacialMsg[IN], &expr,sizeof(expr)); 
+    if(ccsrState.showEmotion) {
+       expr.length = Size/4;
+       expr.type = EXPR_TALK;
+       write(pipeFacialMsg[IN], &expr,sizeof(expr)); 
+    }
     pthread_mutex_lock(&semAudio);
     espeak_Synth( text, Size, position, position_type, end_position, flags,
     unique_identifier, user_data );
@@ -988,7 +990,12 @@ void *ears() {
 	 free(cont_capture_buffer);
 	 free(captureBufferFlags);
          // Update emotions. Talking to him makes him a little happy and excited. This may wake CCSR if he was asleep
-         setMood(LOW_HAPPY_INC, LOW_AROUSAL_INC);
+         if(ccsrState.state == SM_SLEEP){
+	    setMood(HIGH_HAPPY_INC, HIGH_AROUSAL_INC);
+         } 
+	 else {
+	    setMood(MED_HAPPY_INC, MED_AROUSAL_INC);
+         }
       }
    }
 }

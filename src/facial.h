@@ -30,7 +30,7 @@ enum expressionset       {
    EXPR_SCANNER,            // 13 unused, no scannel HW yet
    EXPR_NODYES,             // 14
    EXPR_SHAKENO,            // 15
-   EXPR_WHITELIGHT          // 16
+   EXPR_WHITELIGHT,         // 16
    NUM_EXPR
 } expressionSetType;
 

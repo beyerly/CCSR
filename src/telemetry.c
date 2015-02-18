@@ -430,29 +430,34 @@ void ccsrExecuteCmd(char **splitLine, int n, int wfd) {
             case -1:
                break;
             case OBJSUBCMD_PICKUP:
-               grabObjectFromFixedGroundLocation();
+               grab0();
                sprintf(string, "Command succesful\n");
                write(wfd, string, strlen(string));
+ 	       write(wfd, eom, strlen(eom));
                break;
             case OBJSUBCMD_DROP:
-               dropAndFoldArm();
+               drop0();
                sprintf(string, "Command succesful\n");
                write(wfd, string, strlen(string));
+ 	       write(wfd, eom, strlen(eom));
                break;
             case OBJSUBCMD_GIVE:
                giveObjectAndFoldArm();
                sprintf(string, "Command succesful\n");
                write(wfd, string, strlen(string));
+ 	       write(wfd, eom, strlen(eom));
                break;
             case OBJSUBCMD_ANALYZE:
                analyzeObject();
                sprintf(string, "Command succesful\n");
                write(wfd, string, strlen(string));
+ 	       write(wfd, eom, strlen(eom));
                break;
             case OBJSUBCMD_FIND:
                findAndPickupObject();
                sprintf(string, "Command succesful\n");
                write(wfd, string, strlen(string));
+ 	       write(wfd, eom, strlen(eom));
                break;
             }
             break;
@@ -954,7 +959,8 @@ void ccsrExecuteCmd(char **splitLine, int n, int wfd) {
 	    else if (n>1) {
 	       value0 = atoi(splitLine[1]);
                ccsrState.continuousVoiceRecognitionOn = value0;
-               sprintf(string, "Command succesful\n");
+               printf ("VR: %d\n", ccsrState.continuousVoiceRecognitionOn);
+	       sprintf(string, "Command succesful\n");
  	       write(wfd, string, strlen(string));
  	       write(wfd, eom, strlen(eom));
 	    }
@@ -967,7 +973,9 @@ void ccsrExecuteCmd(char **splitLine, int n, int wfd) {
 	 case CMD_DUMMY:
 	    if (n>1) {
 	       value0 = atoi(splitLine[1]);
-               dispSetBrightness(EYE_R_ADDR, value0);
+
+   ccsrState.randomEyeMovements = value0;
+   ccsrState.showEmotion = value0;
 	       sprintf(string, "Command succesful\n");
  	       write(wfd, string, strlen(string));
  	       write(wfd, eom, strlen(eom));

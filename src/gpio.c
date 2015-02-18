@@ -181,9 +181,13 @@ int i;
                switch(ccsrState.minorMsgMode){
                case SHOW_STATUS:
                   toggleLcdDisplayStatus(-1);
+ 	          lcdEvent = EVENT_DISPLAY_STATUS;
+ 	          write(pipeLCDMsg[IN], &lcdEvent, sizeof(lcdEvent));
                   break;
                case SHOW_MENUE:
                   toggleLcdDisplayMenue(-1);
+ 	          lcdEvent = EVENT_DISPLAY_MENUE;
+ 	          write(pipeLCDMsg[IN], &lcdEvent, sizeof(lcdEvent));
                   break;
                default:
                   break;
@@ -202,14 +206,19 @@ int i;
                switch(ccsrState.minorMsgMode){
                case SHOW_STATUS:
                   toggleLcdDisplayStatus(1);
-                  break;
+ 	          lcdEvent = EVENT_DISPLAY_STATUS;
+ 	          write(pipeLCDMsg[IN], &lcdEvent, sizeof(lcdEvent));
+		  break;
                case SHOW_MENUE:
                   toggleLcdDisplayMenue(1);
+ 	          lcdEvent = EVENT_DISPLAY_MENUE;
+ 	          write(pipeLCDMsg[IN], &lcdEvent, sizeof(lcdEvent));
                   break;
                default:
                   break;
+	       }
+               ccsrState.button4Pressed = 1;
 	    }
-            ccsrState.button4Pressed = 1;
          }
          else {
             ccsrState.button4Pressed = 0;
@@ -287,9 +296,10 @@ int i;
                   }
                   break;
                default:
-                  break;
+               break;
+               }
             }
-            ccsrState.button3Pressed = 1;
+	    ccsrState.button3Pressed = 1;
          }
          else {
             ccsrState.button3Pressed = 0;
