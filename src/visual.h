@@ -30,6 +30,9 @@ extern "C" {
 #define OBJECT_PICKUP_WINDOW_Y 10
 #define OBJECT_PICKUP_OFFSET_Y 130  // Use this offset to position CCSR on Y-axis such that arm can grab target object
 
+#define CAM_CAPTURE_RAW       = "../data/ccsr_camera_cap_raw.jpg"
+#define CAM_CAPTURE_THRESHOLD = "../data/ccsr_camera_cap_proc.jpg"
+
 
 void *visual ();
 void setTargetColorRange(int iLowH, int iHighH, int iLowS, int iHighS, int iLowV, int iHighV);

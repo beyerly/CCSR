@@ -54,6 +54,7 @@ char* fout[] = {NLP_FIFO_OUT,
 		};
 char dmpfile[]      = PROFILE_DUMP;
 char statecsvfile[] = STATE_CSV_DUMP;
+char fullstatecsvfile[] = FULL_STATE_CSV_DUMP;
 
 // FIFO file IDs
 int rfd[NUM_CMDIF];
@@ -81,12 +82,13 @@ char *cmd_lookup[] = {"set",             // followed by set_cmd_lookup[]
 		                         // measure magnitec fields and calibrate functions
 		      "reset",           // Unused st this time
 		      "dummy",           // dummy <int> <int> ... - Dummy command for debug.
-		      "analyzeobj",      // Extend arm, grab object offered, analyze and say color, and make object the 
-		                         // target object color that CCSR can track.
-		      "findobj",         // Find and pick up object of target color 
-		      "giveobj",         // Assuming CCSR is holding object, give it to user and fold arm 
-		      "move",            // move <1=fwd, 2=reverse> <time> - move fwd/reverse for specified amount of time 
-		      "turn",            // turn <0=RIGHT, 1=LEFT> <time> - turn left/right for specified amount of time 
+		      "move",            // move <0=stop, 1=fwd, 2=reverse, 3=driveToTargetHeading> <time> - 
+                                         // move 0 - stop
+                                         // move 1/2 <time> move fwd/reverse for specified amount of time 
+                                         // move 3 continuous drive forward to target heading, using evasive action
+                                         // move 4 continuous drive forward to target heading, stopping if obstacle is encountered
+		      "turn",            // turn <0=RIGHT, 1=LEFT, 2=degrees> <time>|<degrees> - turn left/right for specified amount of time 
+                                         // or turn <degrees> relative to current heading
 		      "facial",          // facial <expressionSetType> - Do facial expression using eyes and LED. For expressions see expressionset in facial.h
 		      "listen",          // listen - start continuous voice recognition
 		                         // listen 0 - stop continuous voice recognition
@@ -97,7 +99,8 @@ char *dump_cmd_lookup[] = {"all",        // dump all - Print selected ccsrState 
 			   "profile",    // dump profile - Dump the current captured values for sonar depth and ambien  
 			                 // light in a CSV file PROFILE_DUMP. These values must be populated first by
 					 // running a 'orient [fwd|full]' command
-			   "csv"         // dump csv - Dump selected ccsrState fields to CSV file for use by NLP python scripts  
+			   "csv",        // dump csv - Dump selected ccsrState fields to CSV file for use by NLP python scripts  
+			   "disk"        // dump disk - Dump full ccsrState fields to CSV file, and camera captures to disk, used by web interface for telemetry 
 			  };
 
 // sub-commands of 'orient'
@@ -419,6 +422,24 @@ void ccsrExecuteCmd(char **splitLine, int n, int wfd) {
 		 }
  		 close(dfd);
  		 sprintf(string, "Profile written in %s\n", dmpfile);
+		 write(wfd, string, strlen(string));
+ 		 write(wfd, eom, strlen(eom));
+	      break;
+	      case DUMPSUBCMD_DISK:
+	         // Tell *visual to save currently captured images to disk
+                 ccsrState.camCapture = 1;
+                 // Save full ccsrState to CSV filel on disk
+                 stateCSVfd = open(fullstatecsvfile, O_WRONLY | O_CREAT, S_IRWXO);
+		 if(stateCSVfd<0) {
+		    perror("can't open CCSR state csv file\n");
+		 }
+		 dumpCCSRState(stateCSVfd, CCSRStateTemplate);
+	         // Wait until images have been saved to disk
+ 		 close(stateCSVfd);
+                 while(ccsrState.camCapture) {
+                    usleep(100);
+                 }
+ 		 sprintf(string, "CAmera images written to disk, CCSR state written in %s\n", fullstatecsvfile);
 		 write(wfd, string, strlen(string));
  		 write(wfd, eom, strlen(eom));
 	      break;
@@ -876,35 +897,33 @@ void ccsrExecuteCmd(char **splitLine, int n, int wfd) {
  	    write(wfd, string, strlen(string));
  	    write(wfd, eom, strlen(eom));
 	 break;
-	 case CMD_ANALYZE_OBJ:
-	    analyzeObject();
-	    sprintf(string, "Command succesful\n");
- 	    write(wfd, string, strlen(string));
- 	    write(wfd, eom, strlen(eom));
-	 break;
-	 case CMD_FIND_OBJ:
-	    findAndPickupObject();
-	    sprintf(string, "Command succesful\n");
- 	    write(wfd, string, strlen(string));
- 	    write(wfd, eom, strlen(eom));
-	 break;
-	 case CMD_GIVE_OBJ:
-	    giveObjectAndFoldArm();
-	    sprintf(string, "Command succesful\n");
- 	    write(wfd, string, strlen(string));
- 	    write(wfd, eom, strlen(eom));
-	 break;
 	 case CMD_MOVE:
-	    if (n>2) {
+	    if (n>1) {
 	       value0 = atoi(splitLine[1]);
-	       value1 = atoi(splitLine[2]);
- 	       driveAtMinPower(value0, value1); 
-	       sprintf(string, "Command succesful\n");
+	       if(value0==0){
+                  // Stop
+                  ccsrState.driveToTargetHeading=0;
+               }
+               else if(value0 == 3){
+                  // Continuous drive to target heading, using evasive action
+                  ccsrState.evasiveAction=1;
+                  ccsrState.driveToTargetHeading=1;
+               }
+               else if(value0 == 4){
+                  // Continuous drive to target heading, stop if obstacle encountered
+                  ccsrState.driveToTargetHeading=1;
+               }
+               else{
+                  // Drive right/left for specified amount of time (in ms)
+                  value1 = atoi(splitLine[2]);
+                  driveAtMinPower(value0, value1); 
+               }
+               sprintf(string, "Command succesful\n");
  	       write(wfd, string, strlen(string));
  	       write(wfd, eom, strlen(eom));
 	    }
 	    else {
- 	       sprintf(string, "Expecting: move <1=fwd, 2=reverse> <time> \n", cmd);
+ 	       sprintf(string, "Expecting: move <0=stop, 1=fwd, 2=reverse, 3=driveToTargetHeading>  <time> \n", cmd);
  	       write(wfd, string, strlen(string));
  	       write(wfd, eom, strlen(eom));
 	    }
@@ -913,8 +932,17 @@ void ccsrExecuteCmd(char **splitLine, int n, int wfd) {
  	    if (n>2) {
 	       value0 = atoi(splitLine[1]);
 	       value1 = atoi(splitLine[2]);
- 	       turnAtMinPowerInPlace(value0, value1); 
-	       sprintf(string, "Command succesful\n");
+ 	       if (value0 < 2) {
+                  // Turn left or right for specified amount of time
+                  turnAtMinPowerInPlace(value0, value1); 
+               }
+               else
+                  // Turn amount of degrees relative to current compass heading
+	          ccsrState.targetHeading = addAngleToHeading(value1);
+
+     	          turnToTargetHeading(NOSCAN);
+               }
+               sprintf(string, "Command succesful\n");
  	       write(wfd, string, strlen(string));
  	       write(wfd, eom, strlen(eom));
 	    }

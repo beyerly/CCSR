@@ -231,7 +231,7 @@ int ccsrSpeedDelta(int targetHeading) {
    
    delta = abs(targetHeading - ccsrState.heading);
    if(delta > 180) {
-      delta = 360 - delta;
+      delta = 360 - delta; 
    }
    
    if(delta < SLOW_TURNSPEED_THRESHOLD) {
@@ -557,4 +557,25 @@ int addAngleToHeading(int angle) {
       heading = heading + 360;
    }
    return heading;
+}
+
+// Return the pan-heading [-90, 90] towards targetHeading. 
+// So if current heading is 90, and targetHeading is 100, the pan to turn head towards target heading is 10 degrees
+// This clips at max/min pan
+int getPanToHeading(int targetHeading){
+   int delta;
+   delta = targetHeading - ccsrState.heading;
+   if(delta > 180) {
+      delta = 360 - delta;
+   }
+   else if(delta < 180) {
+      delta = 360 + delta;
+   }
+   if(delta>90){
+      delta=90;
+   }
+   else if(delta<-90){
+      delta=-90;
+   }
+   return delta;
 }

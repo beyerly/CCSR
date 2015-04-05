@@ -52,6 +52,7 @@ void *sonarSensors();
 #define QUANT_STEP 32 
 #define IR_DIST_BOTTOM_THRESHOLD 1300     // If smaller than this, there's a drop in front
 #define SONAR_DIST_FRONT_THRESHOLD 30
+#define MIN_SONAR_DIST_FRONT_TO_DRIVE 500  // If larger than this, we consider it obstacle free
 #define MAX_SONAR_RANGE 1536
 #define MIN_SONAR_RANGE 30
 

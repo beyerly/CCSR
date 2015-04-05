@@ -133,6 +133,28 @@ void *visual () {
        //Calculate the moments of the thresholded image
        oMoments = moments(imgThresholded);
 
+       // If requested, save analysed images to disk, for display on web interfacee
+       // This is a one-shot operation. telemetry.c sets ccsrState.camCapture to 1, and
+       // visual handshakes by resetting.
+       if (ccsrState.camCapture) {
+          rectangle( imgOriginal,
+ 		 Point(roiX, roiY),                           // upper left edge
+ 		 Point(roiX + roiWidth, roiY + roiHeight),    // lower right edge
+ 		 Scalar( 0, 255, 255 ),                       // yellow
+ 		 1,                                           // thickness 1 pow of pixels
+ 		 8 ); 
+          rectangle( imgThresholded,
+ 		 Point(roiX, roiY),                           // upper left edge
+ 		 Point(roiX + roiWidth, roiY + roiHeight),    // lower right edge
+ 		 Scalar( 0, 255, 255 ),                       // yellow
+ 		 1,                                           // thickness 1 pow of pixels
+ 		 8 ); 
+          imwrite(CAM_CAPTURE_RAW, imgOriginal);
+          imwrite(CAM_CAPTURE_THRESHOLD, imgThresholded);
+          ccsrState.camCapture = 0;
+       }
+
+
        double dM01 = oMoments.m01;
        double dM10 = oMoments.m10;
        double dArea = oMoments.m00;

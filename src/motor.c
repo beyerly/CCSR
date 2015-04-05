@@ -21,6 +21,7 @@
 #include "utils.h"
 #include "actions.h"
 #include "irSensors.h"
+#include "servoCtrl.h"
 #include <linux/i2c-dev.h>
 
 
@@ -276,3 +277,134 @@ int speedFiltered(int targetSpeed, int delta) {
 
 
 
+// Pthread process that will continuously attempt to drive towards target heading if ccsrStte.driveToTargetHeading=1. 
+// If ccstState.evasiveAction = 1, it will take evasive actions around objects encountered if necessary. To do this, it will
+// turn away from the object untill a clear path is found, then push the current heading onto a 'heading-stack', and continue
+// onto 'deviated' heading untill blockage is resolved. It will turn the sonar to previous heading, and scan to see if that
+// direction is clear. Everytime we encounter another blockage, we will push further down the heading stack, everytime a blockage
+// is resolve, we pop one level up. If we are deeper than HEADING_QUEUE_DEPTH, we give up, and assume we have been 'enclosed'
+//
+// It is the responsibility of other processes to 
+//    - suspend by setting ccsrStte.driveToTargetHeading=0 if a target has been reached
+//    - Continuously update ccstState.targetHeading if target changes.
+// 
+// Enables navigation, sonar and proximity sensors if nescessary
+void *driveToTargetHeading() {
+   char navigationOnPrev;
+   char proximitySensorsOnPrev;
+   char sonarSensorsOnPrev;
+   char trackTargetColorOnPrev;
+   char active;
+   int delta;
+   int headingQueue[HEADING_QUEUE_DEPTH];
+   char hQPtr;
+
+   active = 0;
+   hQPtr = 0;
+         // process is active
+
+   while(1) {
+      if (ccsrState.driveToTargetHeading){
+         if(!active){
+            // Was not active before, prepare for driving
+            active = 1;
+            navigationOnPrev = ccsrState.navigationOn;
+            proximitySensorsOnPrev = ccsrState.proximitySensorsOn;
+            // Turn on compass and proximity sensors if necessary
+            ccsrState.navigationOn = 1;
+            ccsrState.proximitySensorsOn = 1;
+         }
+         // Calculate if we are on track
+         delta = abs(ccsrState.heading - ccsrState.targetHeading);
+         if(delta > 180) {
+            delta = 360 - delta;
+         }
+         if(delta < TARGET_HEADING_HYSTERESIS) {
+            // We are heading in target direction, drive ahead if possible
+            speedFiltered(ccsrSpeed(), 0);
+            if(ccsrStateRest()) {
+               // Ran into object and are stopped. 
+               if(ccsrState.evasiveAction) {
+                  // We do not expect this object, so do evasive action. First turn away from object
+                  evasiveActionSimple();
+                  // Turn target object trqacking off: we need to control the had ourselves for sonar:
+                  trackTargetColorOnPrev = ccsrState.trackTargetColorOn;
+                  ccsrState.trackTargetColorOn = 0;
+                  // Turn Sonar on
+                  sonarSensorsOnPrev = ccsrState.sonarSensorsOn;
+                  ccsrState.sonarSensorsOn = 1;
+                  // Turn sonar (head) back into target direction so we can track obstace at 90 deg (max for pan)
+                  setPanTilt(getPanToHeading(ccsrState.targetHeading),0,80);
+                  // Push target heading into heading Q
+                  headingQueue[hQPtr] = ccsrState.targetHeading;
+                  hQPtr=hQPtr+1;
+                  if(hQPtr>=HEADING_QUEUE_DEPTH){
+                     // Heading stack overflow: we give up and go back to original target heading to try again
+                     // If we are enclosed, this may be infinite loop.  
+                     hQPtr=0;
+                     ccsrState.targetHeading = headingQueue[hQPtr];
+                  }
+                  // Set target heading to current heading. So we will now continue along deviated heading untill blockage is resolved
+                  ccsrState.targetHeading = ccsrState.heading;
+               }
+               else {
+                  // We are not doing evasive action, so hitting an object means we assume we've arrived at target.
+                  // Stop driving to target
+                  ccsrState.driveToTargetHeading = 0;
+                  ccsrState.targetReached = 1;
+               }
+            }
+            else if(hQPtr>0){
+               // We are driving to target heading, but we have another target heading in the queue, 
+               // which means we are on a deviated heading due to an obstacle.
+               // Check if blockage is resolved, return to previous heading if so
+               if (ccsrState.sonarDistFront > MIN_SONAR_DIST_FRONT_TO_DRIVE) {
+                  // We have driven on deviated heading far enough, blockage is removed,  
+                  // Stop
+                  while(!speedFiltered(0, 0)) {
+                    brainCycle();
+                  }
+                  // Pop previous target heading form Q
+                  hQPtr = hQPtr - 1; // No clipping necessary, hQPtr is always > 0 here
+                  ccsrState.targetHeading = headingQueue[hQPtr];
+                  // Turn back to previous target heading
+                  turnToTargetHeading(NOSCAN);
+                  if(hQPtr>0) {
+                     // We are not at the top of the stack yet, the current heading is another deviated heading, so turn sonar to
+                     // next target heading on the stack and continue finding way around object 
+                     setPanTilt(getPanToHeading(headingQueue[hQPtr-1]),0,80);
+                  }
+                  else{
+                     // We reached top of the stack, so we are heading towards original target again: Done
+                     // Pan back dead ahead
+                     setPanTilt(0, 0, 80);
+                     // Turn target object tracking and sonar back to original states
+                     ccsrState.trackTargetColorOn = trackTargetColorOnPrev;
+                     ccsrState.sonarSensorsOn = sonarSensorsOnPrev;
+                  }
+               }
+            }
+         }
+         else{
+            // We are off-target, stop forward motion and turn back into target heading
+            while(!speedFiltered(0, 0)) {
+               brainCycle();
+            }
+            turnToTargetHeading(NOSCAN);
+         }
+      }
+      // Process is not active
+      if(!ccsrState.driveToTargetHeading && active) {
+         // Driving to target mode was just switched off, stop forward motion and set nav and proximity back to previous states
+         while(!speedFiltered(0, 0)) {
+            brainCycle();
+         }
+         ccsrState.navigationOn       = navigationOnPrev;
+         ccsrState.proximitySensorsOn = proximitySensorsOnPrev;
+         active = 0;
+      }
+      // Process is not active, and was not just switched off either (!driveToTargetHeading || !active):
+      // Do nothing until driveToTargetHeading is turned on
+      usleep(BRAIN_LOOP_INTERVAL);
+   }
+}

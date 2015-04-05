@@ -24,6 +24,12 @@
 #define SAVEADDR 'S' 
 #define NOTSAVEADDR 'N' 
  
+
+#define TARGET_HEADING_HYSTERESIS 10 // If we are driving within 10 degrees of target heading, we consider it on track
+                                     // May need to lower hysteresis for accuracy
+
+#define HEADING_QUEUE_DEPTH 4
+
 enum motorDir {STATIONARY, FORWARD, REVERSE};
 
 void setMotorspeed(int speed, unsigned char motor);
@@ -33,4 +39,4 @@ int speedFiltered(int targetSpeed, int delta);
 void setMotorPrescalerFrequency(int freq);
 void setMotorPWM(int speedA, int speedB);
 int initMotors();
-
+void *driveToTargetHeading();

@@ -107,10 +107,6 @@ typedef struct ccsrStateType {
    int   currentLimit;
    int   maxOperatingCurrent;
 
-   // Navigation
-   int	 locationX;
-   int	 locationY;
-
    // User interface
    char  button0Pressed; // big red one
    char  button1Pressed; // Pad #1
@@ -166,12 +162,18 @@ typedef struct ccsrStateType {
    int   compassCalibrationOffsetY;
    int   compassRawFieldX;
    int   compassRawFieldY;
+   char  evasiveAction;                     // If set, the function *driveToTargetHeading() will take evasive actions when blocked by object
+                                            // if not, it will just wait and report target is reached.
    int   evasiveActionCompensation;
    int   evasiveActionDepth;
    int   gyroAngMoment_X;   // Pitch
    int   gyroAngMoment_Y;   // Yaw (Turn)
    int   gyroAngMoment_Z;   // Roll
    int	 timeAtRest;
+   int	 locationX;
+   int	 locationY;
+   char  driveToTargetHeading;  // If set, *driveToTargetHeading pthread will be active, and continuously try to drive towards
+                                // ccsrState.targetHeading
 
 
    // 360 degree profiles of sonar depth and ambient light, dead-ahead
@@ -233,11 +235,13 @@ typedef struct ccsrStateType {
    double targetVisualObject_Vol;  
 
    // Object analysis
-   char analyzeObject;  // *visual thread will analyse object once if set to '1', and populate following 3 color values
+   char analyzeObject;  // *visual thread will analyse object once if set to '1', populate following 3 color values, then resets it (one-shot)
    // Captured HSV values after analysis
    int analyzedObjectH;  
    int analyzedObjectS;  
    int analyzedObjectV;  
+
+   char camCapture;     // *visual thread will save currently captured images to disk once if set to '1', then resets it (one-shot)
 
 
    // Mood/Emotions

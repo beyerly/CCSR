@@ -62,7 +62,8 @@ pthread_t   threadSonar,
 	    threadTelemetry,
 	    threadNLP,
 	    threadPowerMonitor,
-	    threadFacialExpressions;
+	    threadFacialExpressions,
+            threadDriveToTargetHeading;
 
 
 int  pipeSoundGen[2];
@@ -170,6 +171,9 @@ int main () {
      logMsg(logFile, "Pthread can't be created", ERROR);
    }
    if(pthread_create( &threadFacialExpressions, NULL, facialExpressions, NULL )) {
+     logMsg(logFile, "Pthread can't be created", ERROR);
+   }
+   if(pthread_create( &threadDriveToTargetHeading, NULL, driveToTargetHeading, NULL )) {
      logMsg(logFile, "Pthread can't be created", ERROR);
    }
 
@@ -436,6 +440,7 @@ void stateChange(char state) {
 	 ccsrState.navigationOn 	  = 0;
 	 ccsrState.pidMotionDetectOn	  = 1;
 	 ccsrState.noiseDetectOn	  = 1;
+         ccsrState.remoteControlled      = 0;
 	 write(pipeSoundGen[IN], &sound[observeSnd], sizeof(sound[observeSnd]));
       break;
       case SM_DRIVE_TO_TARGET:
@@ -445,6 +450,7 @@ void stateChange(char state) {
 	 ccsrState.navigationOn 	  = 1;
 	 ccsrState.pidMotionDetectOn	  = 0;
 	 ccsrState.noiseDetectOn	  = 0;
+         ccsrState.remoteControlled      = 0;
       break;
       case SM_ORIENTATION:
 	 ccsrState.proximitySensorsOn	  = 0;
@@ -454,10 +460,12 @@ void stateChange(char state) {
 	 ccsrState.pidMotionDetectOn	  = 0;
 	 ccsrState.noiseDetectOn	  = 0;
 	 ccsrState.trackTargetColorOn     = 0;
+         ccsrState.remoteControlled      = 0;
       break;
 
        case SM_EXPLORE:
-	 ccsrState.proximitySensorsOn	  = 1;
+	  ccsrState.proximitySensorsOn	  = 1;
+          ccsrState.remoteControlled      = 0;
        break;
        case SM_REMOTE_CONTROLLED:
           ccsrState.remoteControlled      = 1;

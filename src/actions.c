@@ -78,6 +78,30 @@ char* lookupColor(int H, int S, int V){
   return 0;
 }
 
+// Simply turn in place until IR-sensors no longer detect obstacle.
+void evasiveActionSimple() {
+   int motorSpeed, motorSpeedDelta;
+
+   motorSpeed = 0;
+
+   // Determine direction or turn: towards most space
+   if (ccsrState.irDistFrontLeft > ccsrState.irDistFrontRight) {
+      motorSpeedDelta = MAX_MOTOR_TURNSPEED;
+   }
+   else {
+      motorSpeedDelta = -MAX_MOTOR_TURNSPEED;
+   }
+
+   while ( max(ccsrState.irDistFrontLeft, ccsrState.irDistFrontRight) > MAX_IR_DIST_TO_DRIVE) {
+      speedFiltered(motorSpeed, motorSpeedDelta);
+      brainCycle();
+   }
+   // Stop
+   while(!speedFiltered(0, 0)) {
+      brainCycle();
+   }
+}
+
 
 int evasiveAction() {
    int motorSpeed, motorSpeedDelta;

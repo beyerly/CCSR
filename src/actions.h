@@ -19,6 +19,7 @@ enum orientationModeType {FULL,
 
 
 int evasiveAction();
+void evasiveActionSimple();
 int orientation(int angle);
 void actionPause();
 void turnToTargetHeading(int scan);

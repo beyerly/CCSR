@@ -17,7 +17,7 @@ int minLightHeading();
 int maxLightHeading();
 int addAngle(int angle, int hdng);
 int addAngleToHeading(int angle);
-
+int getPanToHeading(int targetHeading);
 
 
 
