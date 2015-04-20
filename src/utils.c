@@ -146,6 +146,7 @@ int ccsrStateRest() {
       ccsrState.timeAtRest=0;
    }
    if(ccsrState.timeAtRest >= EVASIVE_ACTION_DELAY) {
+//      ccsrState.timeAtRest=0;
       return 1;
    }
    else {
@@ -218,7 +219,7 @@ int ccsrSpeed() {
       x = 0;
    }
    
-   printf("ccsrSpeed %d %d %d %d %d\n", x, ccsrState.irDistFrontLeft, ccsrState.irDistFrontRight, ccsrState.irDistBelow, ccsrState.sonarDistFront, x);
+//   printf("ccsrSpeed %d %d %d %d %d\n", x, ccsrState.irDistFrontLeft, ccsrState.irDistFrontRight, ccsrState.irDistBelow, ccsrState.sonarDistFront, x);
    
    return x;
 }
@@ -566,9 +567,9 @@ int getPanToHeading(int targetHeading){
    int delta;
    delta = targetHeading - ccsrState.heading;
    if(delta > 180) {
-      delta = 360 - delta;
+      delta = delta - 360;
    }
-   else if(delta < 180) {
+   else if(delta < -180) {
       delta = 360 + delta;
    }
    if(delta>90){

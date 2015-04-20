@@ -222,7 +222,7 @@ int getProximity() {
    pthread_mutex_unlock(&semI2c);
 
    result = (int) (( conv[0] << 8 ) | conv[1]);
-//   printf("proximity %d %d %d\n", conv[0], conv[1], result);
+   printf("proximity %d %d %d\n", conv[0], conv[1], result);
 #endif   
    return result;
 } 
@@ -230,13 +230,13 @@ int getProximity() {
 
 void *proximitySensors() {
 
+   ccsrState.proximitySensorsOn_active = 0;
    logMsg(logFile, "Starting IR distance sensors", LOG); 
-
    while(1) {
       if(ccsrState.proximitySensorsOn) {
- 	 configADC(MUX_AIN0);
+	 configADC(MUX_AIN0);
          usleep(IR_SENSE_PERIOD);
- 	 ccsrState.irDistFrontLeft = getIrDistance(MUX_AIN0);
+	 ccsrState.irDistFrontLeft = getIrDistance(MUX_AIN0);
 
  	 configADC(MUX_AIN1);
          usleep(IR_SENSE_PERIOD);
@@ -250,12 +250,16 @@ void *proximitySensors() {
 
 //         ccsrState.proximity = getProximity();
 //         printf("irLeft %d irRight %d below %d\n", ccsrState.irDistFrontLeft, ccsrState.irDistFrontRight, ccsrState.irDistBelow);
+         ccsrState.proximitySensorsOn_active = 1;
+      }
+      else {
+         ccsrState.proximitySensorsOn_active = 0;
       }
       if(ccsrState.sonarSensorsOn) {
  	 configADC(MUX_AIN2);
          usleep(IR_SENSE_PERIOD);
  	 ccsrState.sonarDistFront = getSonarDistance(MUX_AIN2);
-         //printf("sonar %d\n", ccsrState.sonarDistFront);
+         printf("sonar %d\n", ccsrState.sonarDistFront);
       }
    }
 }

@@ -167,35 +167,35 @@ char *obj_cmd_lookup[] =  {"pickup",   // Pick up object from fixed location on 
 
 
 // List of selected fields in ccsrState. This is used by dump commands, to generate CSV file or pass on to telCCSR temeletry.
-char *CCSRStateTemplate[] = {"state,  		      %4d, \n",   // 0
-                             "proximitySensorsOn,     %4d, \n",   // 1
-                             "sonarSensorsOn,	      %4d, \n",   // 2
-                             "environmantalSensorsOn, %4d, \n",   // 3
-                             "navigationOn,	      %4d, \n",   // 4
-                             "pidMotionDetectOn,      %4d, \n",   // 5
-                             "gyroOn,		      %4d, \n",	// 6
-                             "noiseDetectOn,	      %4d, \n",	// 7
-                             "arousal,		      %4d, \n",	// 8
-                             "happiness,	      %4d, \n",	// 9
+char *CCSRStateTemplate[] = {"state,  		      %4d, - \n",   // 0
+                             "proximitySensorsOn,     %4d, - \n",   // 1
+                             "sonarSensorsOn,	      %4d, - \n",   // 2
+                             "environmantalSensorsOn, %4d, - \n",   // 3
+                             "navigationOn,	      %4d, - \n",   // 4
+                             "pidMotionDetectOn,      %4d, - \n",   // 5
+                             "gyroOn,		      %4d, - \n",	// 6
+                             "noiseDetectOn,	      %4d, - \n",	// 7
+                             "arousal,		      %4d, - \n",	// 8
+                             "happiness,	      %4d, - \n",	// 9
                              "light,                  %4d, lumen \n",	// 10
-                             "irDistFrontLeft,	      %4d, \n",	// 11
-                             "irDistFrontRight,       %4d, \n",	// 12
-                             "irDistBelow,	      %4d, \n",	// 13
+                             "irDistFrontLeft,	      %4d, - \n",	// 11
+                             "irDistFrontRight,       %4d, - \n",	// 12
+                             "irDistBelow,	      %4d, - \n",	// 13
                              "temperature,            %4d, degrees\n",	// 14
-                             "proximity,              %4d, \n",	// 15
-                             "sonarDistFront,	      %4d, \n",	// 16
-                             "sonarDistDownFront,     %4d, \n",	// 17
+                             "proximity,              %4d, - \n",	// 15
+                             "sonarDistFront,	      %4d, - \n",	// 16
+                             "sonarDistDownFront,     %4d, - \n",	// 17
                              "compass,	              %4d, degrees\n",	// 18
                              "target,                 %4d, degrees\n",	// 19
-                             "TrackObject,            %4d, \n",	// 20
-                             "Pan,                    %4d, \n",	// 21
-                             "Tilt,                   %4d, \n",	// 22
-                             "RC,                     %4d, \n",	// 23
+                             "TrackObject,            %4d, - \n",	// 20
+                             "Pan,                    %4d, - \n",	// 21
+                             "Tilt,                   %4d, - \n",	// 22
+                             "RC,                     %4d, - \n",	// 23
                              "batteryVoltage,         %4d, millivolt\n",	// 24
                              "battery,                %4d, percent\n",	// 25
                              "MaxOperatingCurr,       %4d, ampere\n",	// 26
-                             "CurrentLimited,         %4d, \n",	// 27
-                             "power,                  %4d, milliwatt\n",	// 28
+                             "CurrentLimited,         %4d, - \n",	// 27
+                             "power,                  %4d, milliwatt",	// 28
                              };
 			     
 
@@ -911,6 +911,7 @@ void ccsrExecuteCmd(char **splitLine, int n, int wfd) {
                }
                else if(value0 == 4){
                   // Continuous drive to target heading, stop if obstacle encountered
+                  ccsrState.evasiveAction=0;
                   ccsrState.driveToTargetHeading=1;
                }
                else{
@@ -936,7 +937,7 @@ void ccsrExecuteCmd(char **splitLine, int n, int wfd) {
                   // Turn left or right for specified amount of time
                   turnAtMinPowerInPlace(value0, value1); 
                }
-               else
+               else {
                   // Turn amount of degrees relative to current compass heading
 	          ccsrState.targetHeading = addAngleToHeading(value1);
 

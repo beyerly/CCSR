@@ -185,6 +185,7 @@ typedef struct ccsrStateType {
    // Sensory input enables
    char continuousLCDRefresh;
    char proximitySensorsOn;
+   char proximitySensorsOn_active;
    char sonarSensorsOn;
    char environmantalSensorsOn;
    char navigationOn;

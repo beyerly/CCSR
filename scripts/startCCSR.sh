@@ -5,5 +5,7 @@
 cd scripts
 ./googleVoice2Text.sh > voice2text.log & 
 python ./nlpxCCSR.py &
-cd ../
+cd webIFCCSR
+python ./webIFCCSR.py &
+cd ../../
 ./ccsr

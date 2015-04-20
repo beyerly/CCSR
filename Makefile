@@ -11,8 +11,11 @@ CPP = /home/robert/minnowBuild3/setup-scripts/build/tmp-angstrom_v2013_12-eglibc
 OPENCV_LINK_FLAGS = -lopencv_core -lopencv_imgproc -lopencv_highgui -lopencv_ml -lopencv_video -lopencv_features2d \
                     -lopencv_calib3d -lopencv_objdetect -lopencv_contrib -lopencv_legacy -lopencv_flann
 
+
+COMPILE_FLAGS = -I/home/robert/minnowBuild3/setup-scripts/build/tmp-angstrom_v2013_12-eglibc/sysroots/x86_64-linux/usr/include/libxml2 
+
 ccsr_obj = ccsr.o utils.o motor.o irSensors.o sound.o mood.o vocal.o powerMonitor.o navigation.o lcdDisp.o \
-          actions.o  telemetry.o servoCtrl.o  gpio.o visual.o  facial.o
+          actions.o  telemetry.o servoCtrl.o  gpio.o visual.o  facial.o mapping.o
 	  
 	  
 telccsr_obj = telccsr.o
@@ -24,8 +27,8 @@ headers = src/ccsr.h src/utils.h src/motor.h src/irSensors.h \
 all: ccsr telccsr 
 
 %.o : src/%.c $(headers)
-	$(CC)   -O3 -DCCSR_PLATFORM -c -pthread  $< -o $@ 
-#	$(CC)  -g -I /nfs/fm/disks/fm_cse_00820/rdegruij/personal/include -DCCSR_PLATFORM -c -pthread  $< -o $@ 
+	$(CC)   -O3 -DCCSR_PLATFORM $(COMPILE_FLAGS) -c -pthread  $< -o $@ 
+#	$(CC)  -g  -I /nfs/fm/disks/fm_cse_00820/rdegruij/personal/include -DCCSR_PLATFORM -c -pthread  $< -o $@ 
 #	$(CC) -DDEBUG -c -pthread  $< -o $@ 
 
 %.o : src/%.cpp $(headers)
@@ -33,7 +36,7 @@ all: ccsr telccsr
 
 
 ccsr: $(ccsr_obj) $(headers) 
-	$(CPP) $(ccsr_obj) $(LDFLAGS) $(OPENCV_LINK_FLAGS) -O3 -lsndfile -lasound -lm -ldl -o ccsr -pthread -lportaudio -lespeak
+	$(CPP) $(ccsr_obj) $(LDFLAGS) $(OPENCV_LINK_FLAGS) -O3 -lxml2 -lsndfile -lasound -lm -ldl -o ccsr -pthread -lportaudio -lespeak
 
 telccsr: $(telccsr_obj) $(headers) 
 	$(CC) $(telccsr_obj) $(LDFLAGS) -g -lreadline -o telccsr 
@@ -42,3 +45,5 @@ clean:
 	rm $(ccsr_obj); rm $(telccsr_obj); rm ccsr; rm telccsr; 
 
 
+map : 
+	$(CC)   src/mapping.c -o example -lxml2 

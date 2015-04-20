@@ -11,6 +11,14 @@ fifo = './text2nlpFifo'
 logfile = './nlpxCCSR.log'
 
 loop = True
+#brain = 'nlpxCCSR'  # By default, use nlpxCCSR python module as NLP brain. We can
+                    # set this to 'ANNA' to use the remote brain API at
+                    # http://droids.homeip.net/RoboticsWeb/
+#debug = True
+debug = False
+brain = 'ANNA'
+#mode = 'poll'
+mode = 'audioCapture'
 
 def main(argv):
    global loop
@@ -32,7 +40,9 @@ if __name__ == "__main__":
 
 appID = 'T3H9JX-RQQ2273TJ9'        # Fill in yur own Wolfram AppID here
 useFifos = True                    # Only set True if integrated with CCSR robot platform
-s = ccsrNlpClass(useFifos, appID)
+robotKey = '59742'
+
+s = ccsrNlpClass(useFifos, appID, robotKey, debug)
 
 log = open(logfile, 'w')
 print log
@@ -47,7 +57,10 @@ while (1):
 #   print line
    log.write('parsing: ' + line + '\n')
    log.flush()
-   s.nlpParse(line)
+   if brain == 'nlpxCCSR':
+      s.nlpParse(line)
+   elif brain == 'ANNA':
+      s.remoteBrain(line)
    f.close()
    if not loop:
       break

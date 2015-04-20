@@ -22,6 +22,7 @@
 #include "actions.h"
 #include "irSensors.h"
 #include "servoCtrl.h"
+#include "sound.h"
 #include <linux/i2c-dev.h>
 
 
@@ -33,10 +34,14 @@ extern FILE *logFile;
 extern int i2cbus;
 extern pthread_mutex_t semI2c;
 extern ccsrStateType ccsrState;
+extern int pipeSoundGen[2];
+extern soundType sound[standardSoundsCount];
 
 // This gets called whenever CCSR process is started
 int initMotors() {
    setMotorPrescalerFrequency(0);
+   setMotorspeed(0, MOTOR1);
+   setMotorspeed(0, MOTOR2);
 }
 
 // Motor diagnostics
@@ -313,7 +318,10 @@ void *driveToTargetHeading() {
             // Turn on compass and proximity sensors if necessary
             ccsrState.navigationOn = 1;
             ccsrState.proximitySensorsOn = 1;
-         }
+	    while(!ccsrState.proximitySensorsOn_active){
+	       brainCycle();  // wait until prox sensors are active
+            }
+	 }
          // Calculate if we are on track
          delta = abs(ccsrState.heading - ccsrState.targetHeading);
          if(delta > 180) {
@@ -321,7 +329,9 @@ void *driveToTargetHeading() {
          }
          if(delta < TARGET_HEADING_HYSTERESIS) {
             // We are heading in target direction, drive ahead if possible
-            speedFiltered(ccsrSpeed(), 0);
+	    while(!speedFiltered(ccsrSpeed(), 0)) {
+	       brainCycle();
+	    }
             if(ccsrStateRest()) {
                // Ran into object and are stopped. 
                if(ccsrState.evasiveAction) {
@@ -334,7 +344,8 @@ void *driveToTargetHeading() {
                   sonarSensorsOnPrev = ccsrState.sonarSensorsOn;
                   ccsrState.sonarSensorsOn = 1;
                   // Turn sonar (head) back into target direction so we can track obstace at 90 deg (max for pan)
-                  setPanTilt(getPanToHeading(ccsrState.targetHeading),0,80);
+                  printf("aaa  %d %d \n", ccsrState.targetHeading, getPanToHeading(ccsrState.targetHeading));
+		  setPanTilt(getPanToHeading(ccsrState.targetHeading),0,80);
                   // Push target heading into heading Q
                   headingQueue[hQPtr] = ccsrState.targetHeading;
                   hQPtr=hQPtr+1;
@@ -352,6 +363,8 @@ void *driveToTargetHeading() {
                   // Stop driving to target
                   ccsrState.driveToTargetHeading = 0;
                   ccsrState.targetReached = 1;
+		  write(pipeSoundGen[IN], &sound[singleA], sizeof(sound[singleA]));
+
                }
             }
             else if(hQPtr>0){
@@ -388,7 +401,7 @@ void *driveToTargetHeading() {
          else{
             // We are off-target, stop forward motion and turn back into target heading
             while(!speedFiltered(0, 0)) {
-               brainCycle();
+              brainCycle();
             }
             turnToTargetHeading(NOSCAN);
          }
