@@ -33,6 +33,8 @@ extern "C" {
 #define CAM_CAPTURE_RAW        "data/ccsr_camera_cap_raw.jpg"
 #define CAM_CAPTURE_THRESHOLD  "data/ccsr_camera_cap_proc.jpg"
 
+#define MAX_DISP_STRING_LEN 16
+#define NUM_DISPLAY_STRINGS 6
 
 void *visual ();
 void setTargetColorRange(int iLowH, int iHighH, int iLowS, int iHighS, int iLowV, int iHighV);

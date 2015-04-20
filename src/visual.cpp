@@ -39,11 +39,22 @@ void setTargetColorVolume(int vol) {
 void *visual () {
 
    VideoCapture cap(0); //capture the video from webcam
+   int fontFace = FONT_HERSHEY_SCRIPT_SIMPLEX;
+   double fontScale = 2;
+   int thickness = 3;
+   char* textList[NUM_DISPLAY_STRINGS];
+   int i;
 
+   
+   
    // We capture 640x480 image by default
    if ( !cap.isOpened() )  // if not success, exit program
    {
          cout << "Cannot open the web cam" << endl;
+   }
+
+   for(i=0;i<NUM_DISPLAY_STRINGS;i++) {
+      textList[i] = malloc(MAX_DISP_STRING_LEN*sizeof(char));
    }
 
    int roiHeight = ROI_HEIGHT;
@@ -133,28 +144,6 @@ void *visual () {
        //Calculate the moments of the thresholded image
        oMoments = moments(imgThresholded);
 
-       // If requested, save analysed images to disk, for display on web interfacee
-       // This is a one-shot operation. telemetry.c sets ccsrState.camCapture to 1, and
-       // visual handshakes by resetting.
-       if (ccsrState.camCapture) {
-          rectangle( imgOriginal,
- 		 Point(roiX, roiY),                           // upper left edge
- 		 Point(roiX + roiWidth, roiY + roiHeight),    // lower right edge
- 		 Scalar( 0, 255, 255 ),                       // yellow
- 		 1,                                           // thickness 1 pow of pixels
- 		 8 ); 
-          rectangle( imgThresholded,
- 		 Point(roiX, roiY),                           // upper left edge
- 		 Point(roiX + roiWidth, roiY + roiHeight),    // lower right edge
- 		 Scalar( 0, 255, 255 ),                       // yellow
- 		 1,                                           // thickness 1 pow of pixels
- 		 8 ); 
-          imwrite(CAM_CAPTURE_RAW, imgOriginal);
-          imwrite(CAM_CAPTURE_THRESHOLD, imgThresholded);
-          ccsrState.camCapture = 0;
-       }
-
-
        double dM01 = oMoments.m01;
        double dM10 = oMoments.m10;
        double dArea = oMoments.m00;
@@ -180,9 +169,43 @@ void *visual () {
 	else {
           ccsrState.objectTracked = 0;
 	}
-//      usleep(10000);
+       // If requested, save analysed images to disk, for display on web interfacee
+       // This is a one-shot operation. telemetry.c sets ccsrState.camCapture to 1, and
+       // visual handshakes by resetting.
+       if (ccsrState.camCapture) {
+          // Draw ROI rectangles
+          rectangle( imgOriginal,
+             Point(roiX, roiY),                           // upper left edge
+             Point(roiX + roiWidth, roiY + roiHeight),    // lower right edge
+             Scalar( 0, 255, 255 ),                       // yellow
+             1,                                           // thickness 1 pow of pixels
+             8 ); 
+          rectangle( imgThresholded,
+             Point(roiX, roiY),                           // upper left edge
+             Point(roiX + roiWidth, roiY + roiHeight),    // lower right edge
+             Scalar( 0, 255, 255 ),                       // yellow
+             1,                                           // thickness 1 pow of pixels
+             8 ); 
+          // Create and draw In-picture telemetry data
+          // Draw text list as column on left side of picture
+          sprintf(textList[0], "hdng %d",ccsrState.heading);
+          sprintf(textList[1], "batt %d",ccsrState.batteryPercent);
+          sprintf(textList[2], "tgtX %d",ccsrState.ccsrState.targetVisualObject_X);
+          sprintf(textList[3], "tgtY %d",ccsrState.ccsrState.targetVisualObject_Y);
+          sprintf(textList[4], "tgtV %d",ccsrState.ccsrState.targetVisualObject_Vol);
+          sprintf(textList[5], "trck %d",ccsrState.trackTargetColorOn);
+          Point textOrg(10, 10);
+          for(i=0;i<NUM_DISPLAY_STRINGS;i++) {
+             putText(imgThresholded, textList[i], textOrg, fontFace, fontScale,
+                Scalar::all(255), thickness, 8);
+             textOrg.y += 10;
+          }
+          // Write images to disk, will be read by web interface
+          imwrite(CAM_CAPTURE_RAW, imgOriginal);
+          imwrite(CAM_CAPTURE_THRESHOLD, imgThresholded);
+          ccsrState.camCapture = 0;  // Handshake back to tememetry.c
+       }
     }
-
 }
 
 }  // extern 'C'

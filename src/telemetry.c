@@ -30,6 +30,7 @@
 #include "motor.h"
 #include "facial.h"
 #include "mood.h"
+#include "graph.h"
 
 extern FILE *logFile;
 extern ccsrStateType ccsrState;
@@ -439,7 +440,8 @@ void ccsrExecuteCmd(char **splitLine, int n, int wfd) {
                  while(ccsrState.camCapture) {
                     usleep(100);
                  }
- 		 sprintf(string, "CAmera images written to disk, CCSR state written in %s\n", fullstatecsvfile);
+                 drawSonarProfileGraph();
+                 sprintf(string, "CAmera images written to disk, CCSR state written in %s\n", fullstatecsvfile);
 		 write(wfd, string, strlen(string));
  		 write(wfd, eom, strlen(eom));
 	      break;

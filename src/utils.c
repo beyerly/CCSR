@@ -580,3 +580,56 @@ int getPanToHeading(int targetHeading){
    }
    return delta;
 }
+
+
+// Triangulate using 2 beacon observations. Derive linear equations representing 2 lines of sight, then
+// find position in intersection of 2 lines
+// beaconA/B are indices into a beacon array. headingA and B are heading observations in degrees
+// The function will update X and Y with current location
+void triangulate(char beaconA, char beaconB, int headingA, int headingB, int* X, int* Y){
+
+   float pi;
+   float hA,hB;
+   float a,b,c,d;
+
+   // List of X,Y coordinates of beacons
+   int beaconListX[NUM_BEACONS];
+   int beaconListY[NUM_BEACONS];
+
+   // Placeholder beacons: beacon_0 = (-6, -1), beacon_1 = (4, 4), 
+   beaconListX[0] = -6;
+   beaconListY[0] = -1;
+   beaconListX[1] = 4;
+   beaconListY[1] = 4;
+
+   pi = 3.14159265;
+
+   // Create:
+   //    YA=aX+b
+   //    YB=bX+c
+   // To find X,Y, solve YA=YB 
+
+   // Bring heading (degrees) to 1st or 2nd quadrant
+   if(headingA>180){
+      hA=(float) headingA-180;
+   }
+   hA = 90 - hA;       // Calculate angle with respect to x-axis
+   hA = pi*(hA/180);   // Convert to radians
+   a = tan(hA);        // Calculate X/Y ratio of angle
+   b = beaconListY[beaconA] - a*beaconListX[beaconA]; // Calculate required Y-shift for linear equation to intercept the beacon
+
+   // Bring heading (degrees) to 1st or 2nd quadrant
+   if(headingB>180){
+      hB=(float) headingB-180;
+   }
+   hB = 90 - hB;       // Calculate angle with respect to x-axis
+   hB = pi*(hB/180);   // Convert to radians
+   c = tan(hB);        // Calculate X/Y ratio of angle
+   d = beaconListY[beaconB] - a*beaconListX[beaconB]; // Calculate required Y-shift for linear equation to intercept the beacon
+
+   // Solve equation YA=YB
+   *X=(int) (d-b)/(a-c);
+   *Y=(int) a**X+B;
+
+}
+
