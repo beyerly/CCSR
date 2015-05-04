@@ -93,7 +93,8 @@ char *cmd_lookup[] = {"set",             // followed by set_cmd_lookup[]
 		      "facial",          // facial <expressionSetType> - Do facial expression using eyes and LED. For expressions see expressionset in facial.h
 		      "listen",          // listen - start continuous voice recognition
 		                         // listen 0 - stop continuous voice recognition
-                      "obj"              // followed by obj_cmd_lookup[] - object manipulation
+                      "obj",             // followed by obj_cmd_lookup[] - object manipulation
+                      "triangulate"      // Triangulate position based on visual beacons
 		      };
 // sub-commands of 'dump'
 char *dump_cmd_lookup[] = {"all",        // dump all - Print selected ccsrState fields to return-fifo
@@ -126,7 +127,7 @@ char *set_cmd_lookup[] = {"rc",          // set rc <0,1> - turn off/on Remote co
 			  "pantilt",     // set pantilt <pan [-90..90]> <tilt [-45..45]> <speed [0..100]>- Set head (pantilt servos)
                                          // set pantilt <0=off, 1=on> - Turn on/off pantilt servo's
 			                 // in specific position. Value sare degrees, 0,0 is dead ahead. 
-			  "track",       // set track <0,1> - turn off/on opencv object tracking 
+			  "track",       // set track <0,1,2> - turn off/on opencv object tracking 0=off, 1=color thresholding, 2=shape detection 
 			  "state",       // set state <int> - set ccsrState.state to state <int> 
 			  "gyro",        // set gyro <0,1> - turn off/on gyro
 			  "minturnspeed",// set minturnspeed - Determine minimal DC motor power needed to make CCSR
@@ -355,6 +356,8 @@ void dumpCCSRState(int wfd, char** template) {
    sprintf(string, template[26],ccsrState.maxOperatingCurrent);write(wfd, string, strlen(string));
    sprintf(string, template[27],ccsrState.currentLimit);write(wfd, string, strlen(string));
    sprintf(string, template[28],ccsrState.operatingCurrent*ccsrState.batteryVoltage/1000); write(wfd, string, strlen(string));
+   sprintf(string, template[29],ccsrState.locationX); write(wfd, string, strlen(string));
+   sprintf(string, template[30],ccsrState.locationY); write(wfd, string, strlen(string));
 }
 
 void dumpCCSRStateShort(int wfd, char** template) {
@@ -602,7 +605,19 @@ void ccsrExecuteCmd(char **splitLine, int n, int wfd) {
 	      break;
               case TRACK_COLOR:
                  subSubCmd = tokenLookup(splitLine[2], onoff_cmd_lookup, NUM_ONOFFSUBCMD, (n>2), wfd);
-                 ccsrState.trackTargetColorOn = subSubCmd;
+                 switch(subSubCmd){
+                    case 0 :
+                       ccsrState.trackTargetColorOn = 0;
+                    break;
+                    case 1 :
+                       ccsrState.trackTargetColorOn = 1;
+                       ccsrState.objectRecognitionMode = OBJREC_COLORTHRESHOLD
+                    break;
+                    case 2 :
+                       ccsrState.trackTargetColorOn = 1;
+                       ccsrState.objectRecognitionMode = OBJREC_SHAPEDETECTION
+                    break;
+                 }
                  sprintf(string, "Command succesful\n");
                  write(wfd, string, strlen(string));
                  write(wfd, eom, strlen(eom));
@@ -814,7 +829,17 @@ void ccsrExecuteCmd(char **splitLine, int n, int wfd) {
  	       write(wfd, eom, strlen(eom));
 	    }
 	 break;
-	 case CMD_CALIBRATE_COMPASS:
+         case CMD_TRIANGULATE:
+            if(triangulatePosition()){
+               sprintf(string, "Command succesful\n");
+            }
+            else{
+               sprintf(string, "Command unsuccesful\n");
+            }
+            write(wfd, string, strlen(string));
+            write(wfd, eom, strlen(eom));
+            break;
+         case CMD_CALIBRATE_COMPASS:
 	       calibrateCompass();
 	       sprintf(string, "Command succesful\n");
  	       write(wfd, string, strlen(string));

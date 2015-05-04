@@ -36,9 +36,14 @@ extern "C" {
 #define MAX_DISP_STRING_LEN 16
 #define NUM_DISPLAY_STRINGS 6
 
+#define COLORPROBE_ROI_HEIGHT 10
+#define COLORPROBE_ROI_WIDTH 10
+
 void *visual ();
 void setTargetColorRange(int iLowH, int iHighH, int iLowS, int iHighS, int iLowV, int iHighV);
 void setTargetColorVolume(int vol);
+int objRecogColorThreshold(Mat imgHSV, Mat imgThresholded);
+int objRecogShapeDetection(Mat src, Mat imgHSV, Mat bw);
 
 #ifdef __cplusplus
 }

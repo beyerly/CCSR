@@ -581,6 +581,21 @@ int getPanToHeading(int targetHeading){
    return delta;
 }
 
+// Should never be called: we should read beacons from map.svg!
+void initBeacons(){
+
+   // Placeholder beacons: beacon_0 = (-6, -1), beacon_1 = (4, 4), 
+   ccsrState.beaconListX[0] = -6;
+   ccsrState.beaconListY[0] = -1;
+   ccsrState.beaconListName[0] =  (char*) malloc(10*sizeof(char));
+   strcpy(ccsrState.beaconListName[0], "BCNblue");
+
+   ccsrState.beaconListX[1] = 4;
+   ccsrState.beaconListY[1] = 4;
+   ccsrState.beaconListName[1] =  (char*) malloc(10*sizeof(char));
+   strcpy(ccsrState.beaconListName[0], "BCNgreen");
+}
+
 
 // Triangulate using 2 beacon observations. Derive linear equations representing 2 lines of sight, then
 // find position in intersection of 2 lines
@@ -592,15 +607,12 @@ void triangulate(char beaconA, char beaconB, int headingA, int headingB, int* X,
    float hA,hB;
    float a,b,c,d;
 
-   // List of X,Y coordinates of beacons
-   int beaconListX[NUM_BEACONS];
-   int beaconListY[NUM_BEACONS];
 
    // Placeholder beacons: beacon_0 = (-6, -1), beacon_1 = (4, 4), 
-   beaconListX[0] = -6;
-   beaconListY[0] = -1;
-   beaconListX[1] = 4;
-   beaconListY[1] = 4;
+   ccsrState.beaconListX[0] = -6;
+   ccsrState.beaconListY[0] = -1;
+   ccsrState.beaconListX[1] = 4;
+   ccsrState.beaconListY[1] = 4;
 
    pi = 3.14159265;
 
@@ -616,7 +628,7 @@ void triangulate(char beaconA, char beaconB, int headingA, int headingB, int* X,
    hA = 90 - hA;       // Calculate angle with respect to x-axis
    hA = pi*(hA/180);   // Convert to radians
    a = tan(hA);        // Calculate X/Y ratio of angle
-   b = beaconListY[beaconA] - a*beaconListX[beaconA]; // Calculate required Y-shift for linear equation to intercept the beacon
+   b = ccsrState.beaconListY[beaconA] - a*ccsrState.beaconListX[beaconA]; // Calculate required Y-shift for linear equation to intercept the beacon
 
    // Bring heading (degrees) to 1st or 2nd quadrant
    if(headingB>180){
@@ -625,11 +637,12 @@ void triangulate(char beaconA, char beaconB, int headingA, int headingB, int* X,
    hB = 90 - hB;       // Calculate angle with respect to x-axis
    hB = pi*(hB/180);   // Convert to radians
    c = tan(hB);        // Calculate X/Y ratio of angle
-   d = beaconListY[beaconB] - a*beaconListX[beaconB]; // Calculate required Y-shift for linear equation to intercept the beacon
+   d = ccsrState.beaconListY[beaconB] - a*ccsrState.beaconListX[beaconB]; // Calculate required Y-shift for linear equation to intercept the beacon
 
    // Solve equation YA=YB
    *X=(int) (d-b)/(a-c);
    *Y=(int) a**X+B;
 
+   // Check if we are on the map?
 }
 

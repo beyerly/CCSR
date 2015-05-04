@@ -35,6 +35,7 @@ void findAndPickupObject();
 void giveObjectAndFoldArm();
 
 void initColors();
+char isTargetColor(int H, int S, int V);
 void extendArm();
 void dropAndFoldArm();
 void grabObjectFromFixedGroundLocation();
@@ -47,6 +48,7 @@ void nodYes();
 
 void grab0();
 void drop0();
+int  triangulatePosition();
 
 #define SONAR_SCAN_DELAY 40000
 #define NUM_COLORS 16

@@ -397,13 +397,38 @@ void *driveToTargetHeading() {
                   }
                }
             }
+            // Check for conditions that would end diving to target operation:
+            if (ccsrState.objectTracked & ccsrState.trackTargetColorOn){
+               if(ccsrState.targetVisualObject_Vol > ccsrState.targetColorVolume) {
+                  // Object is big enough, it must be very close, consider target is reached: stop
+                  // We may need to fine-tune position later if we want to pick up tracked object with arm
+                  while(!speedFiltered(0, 0)) {
+                     brainCycle();
+                  }
+                  usleep(3000000);
+                  say("Arrived at target, what can I do for you?");
+                  ccsrState.driveToTargetHeading = 0;
+               }
+            }
          }
          else{
             // We are off-target, stop forward motion and turn back into target heading
             while(!speedFiltered(0, 0)) {
               brainCycle();
             }
+            // If we are tracking object with camera, Wait until cam centers on object
+            if (ccsrState.objectTracked & ccsrState.trackTargetColorOn){
+               while(!ccsrState.trackedObjectCentered) {
+                  brainCycle();
+               }
+            }
             turnToTargetHeading(NOSCAN);
+            // If we are tracking object with camera, Wait until cam centers on object
+            if (ccsrState.objectTracked & ccsrState.trackTargetColorOn){
+               while(!ccsrState.trackedObjectCentered) {
+                  brainCycle();
+               }
+            }
          }
       }
       // Process is not active

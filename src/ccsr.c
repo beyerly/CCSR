@@ -35,6 +35,7 @@
 #include "gpio.h"
 #include "visual.h"
 #include "facial.h"
+#include "mapping.h:
 
 FILE *logFile;
 int i2cbus, devRandom;
@@ -79,6 +80,8 @@ int main () {
    initGpio();
    initSounds();
    initColors();
+   initBeacons();
+   parseSVGMap();
    initEspeak();
 // initCamera();  // mjpg_streamer, obsolete because Im running it separately
    ccsrState.remoteControlled	       = 1;

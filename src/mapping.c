@@ -10,82 +10,93 @@
  * copy: see Copyright for the status of this software.
  */
 #include <stdio.h>
+#include <string.h>
 #include <libxml/parser.h>
 #include <libxml/tree.h>
+#include "ccsr.h"
+#include "mapping.h"
 
-#ifdef LIBXML_TREE_ENABLED
+extern ccsrStateType ccsrState;
 
-/*
- *To compile this file using gcc you can type
- *gcc `xml2-config --cflags --libs` -o xmlexample libxml2-example.c
- */
+xmlDoc *doc = NULL;
+xmlNode *root_element = NULL;
 
-/**
- * print_element_names:
- * @a_node: the initial xml node to consider.
- *
- * Prints the names of the all the xml elements
- * that are siblings or children of a given xml node.
- */
-static void
-print_element_names(xmlNode * a_node)
+
+// Parse through map.svg file and extract all visual beacon names and locations, store in ccsrState.
+void parseSVGBeacons(xmlNode * a_node)
 {
-    xmlNode *cur_node = NULL;
+   xmlNode *cur_node = NULL;
+   xmlChar *id;
+   xmlChar *name;
+   xmlChar *bcnX;
+   xmlChar *bcnY;
+   int beaconID;
 
-    for (cur_node = a_node; cur_node; cur_node = cur_node->next) {
-        if (cur_node->type == XML_ELEMENT_NODE) {
-            printf("node type: Element, name: %s\n", cur_node->name);
-        }
-        printf("%s\n", cur_node->properties->name);
-        print_element_names(cur_node->children);
-    }
+   beaconID = 0;
+   for (cur_node = a_node; cur_node; cur_node = cur_node->next) {
+      if (cur_node->type == XML_ELEMENT_NODE) {
+         id = xmlGetProp(cur_node, "id");
+         if(xmlStrcmp(id, (const xmlChar *)"bcn")){
+            name = xmlGetProp(cur_node, "name");
+            bcnX = xmlGetProp(cur_node, "bcnX");
+            bcnY = xmlGetProp(cur_node, "bcnY");
+            ccsrState.beaconListName[beaconID] =  (char*) malloc(10*sizeof(char));
+            strcpy(ccsrState.beaconListName[beaconID], (char*) name);
+            ccsrState.beaconListX[beaconID]=atoi((char *) bcnX);
+            ccsrState.beaconListY[beaconID]=atoi((char *) bcnY);
+            printf("parseSVGBeacons: found beacon %s\n", (char*) name);
+
+         }
+         beaconID = beaconID+1;
+         if(beaconID>NUM_BEACONS){
+            printf("parseSVGBeacons: exceeding max numner of beacons in SVG file\n");
+            exit(0);
+         }
+      }
+   }
+   xmlFree(id);
+   xmlFree(name);
+   xmlFree(bcnX);
+   xmlFree(bcnY);
 }
 
 
-/**
- * Simple example to parse a file called "file.xml", 
- * walk down the DOM, and print the name of the 
- * xml elements nodes.
- */
-int
-parse(int argc, char **argv)
+// Parse SVG map
+// Create an XML root node, to which we can add object such as CCSR location, triangulation lines and SLAM-discovered obstacles.
+// Also parse SVG for visual beacons, and populate the beaconlist with names and locations.
+int parseSVGMap()
 {
-    xmlDoc *doc = NULL;
-    xmlNode *root_element = NULL;
-    printf("test\n");
-
-    if (argc != 2)
-        return(1);
+    printf("parsing SVG map %s\n", SVG_MAP_NAME);
 
     /*
      * this initialize the library and check potential ABI mismatches
      * between the version it was compiled for and the actual shared
      * library used.
      */
-    LIBXML_TEST_VERSION
+//     LIBXML_TEST_VERSION
 
     /*parse the file and get the DOM */
-    doc = xmlReadFile(argv[1], NULL, 0);
+    doc = xmlReadFile(SVG_MAP_NAME, NULL, 0);
 
     if (doc == NULL) {
-        printf("error: could not parse file %s\n", argv[1]);
+        printf("error: could not parse file %s\n", SVG_MAP_NAME);
     }
 
     /*Get the root element node */
     root_element = xmlDocGetRootElement(doc);
 
-    print_element_names(root_element);
+    parseSVGBeacons(root_element);
 
     /*free the document */
-    xmlFreeDoc(doc);
+    // xmlFreeDoc(doc);
 
     /*
      *Free the global variables that may
      *have been allocated by the parser.
      */
-    xmlCleanupParser();
+    // xmlCleanupParser();
 
     return 0;
 }
-#else
-#endif
+// #else
+// #endif

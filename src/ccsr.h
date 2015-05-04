@@ -57,8 +57,6 @@
 
 #define NUM_AUDIO_SAMPLES 3
 
-
-
 void ccsrTerminate();
 void stateChange(char state);
 
@@ -68,6 +66,7 @@ enum turnDirType {RIGHT, LEFT};
 enum turnType {NOSCAN, SCAN};
 enum msgType {LOG, ERROR};
 enum pipeDir {OUT, IN};
+enum objectRecogType {OBJREC_COLORTHRESHOLD, OBJREC_SHAPEDETECTION};
 enum ccsrSMType {SM_RESET,                
                  SM_DIAGNOSTICS,
 		 SM_ORIENTATION,
@@ -175,6 +174,10 @@ typedef struct ccsrStateType {
    char  driveToTargetHeading;  // If set, *driveToTargetHeading pthread will be active, and continuously try to drive towards
                                 // ccsrState.targetHeading
 
+      // List of X,Y coordinates of beacons
+   int beaconListX[NUM_BEACONS];
+   int beaconListY[NUM_BEACONS];
+   char* beaconListName[NUM_BEACONS];
 
    // 360 degree profiles of sonar depth and ambient light, dead-ahead
    int profileValid[361];
@@ -185,7 +188,7 @@ typedef struct ccsrStateType {
    // Sensory input enables
    char continuousLCDRefresh;
    char proximitySensorsOn;
-   char proximitySensorsOn_active;
+   char proximitySensorsOn_active; // Acknowledge that proximitySensorsOn request was received
    char sonarSensorsOn;
    char environmantalSensorsOn;
    char navigationOn;
@@ -215,6 +218,9 @@ typedef struct ccsrStateType {
 
    // Opencv visual
    
+   char visual_req;  // Handshake: any process that alters parameters for visual process can req, and will get ack if visual has seen it 
+   char visual_ack;
+
    // Define target object CCSR is tracking in terms of HSV color range and volume (size)
    int targetColor_iLowH;  
    int targetColor_iHighH; 
@@ -225,8 +231,8 @@ typedef struct ccsrStateType {
    int targetColorVolume;
    char targetColorName[60];
 
-   char visualProcessingOn;     // if 1, camera is used by visual.cpp, and capturing images
-   char trackTargetColorOn;     // if set to 1 by user, CCSR tracks target object. 
+   char trackTargetColorOn;     // if set to 1 by user or process, CCSR tracks target object. Object is identified by method specified by objectRecognitionMode
+   char objectRecognitionMode;  // Method by which objects are recognized: objectRecogType
    int  objectTracked;          // Set to 1 by *visual if target object is being tracked
    int  trackedObjectCentered;  // Set to 1 by *camtrack if tracked object is in the center of the captured image
   

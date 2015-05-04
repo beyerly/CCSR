@@ -26,6 +26,7 @@ enum telccsrcmd  {CMD_SET,
 		  CMD_FACIAL,
 		  CMD_LISTEN,
                   CMD_OBJ,
+                  CMD_TRIANGULATE,
 		  NUM_CMD
 		  };
 

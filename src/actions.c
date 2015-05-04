@@ -78,6 +78,41 @@ char* lookupColor(int H, int S, int V){
   return 0;
 }
 
+// Set target color to 'name', return 1 if successful, 0 if not found.
+void setTargetColorRangeByName(char* name) {
+  int i;
+  
+  for (i=0;i<NUM_COLORS;i++) {
+    if(strcmp(name, colors[i].name)){
+       ccsrState.targetColor_iLowH = colors[i].iLowH;
+       ccsrState.targetColor_iHighH = colors[i].iHighH;
+       ccsrState.targetColor_iLowS =colors[i].iLowS;
+       ccsrState.targetColor_iHighS =colors[i].iHighS;
+       ccsrState.targetColor_iLowV =colors[i].iLowV;
+       ccsrState.targetColor_iHighV =colors[i].iHighV;
+       return 1;
+    }
+  }
+  return 0;
+}
+
+// Return '1' if HSV color is withing the range tof the current (tracked) target color, '0' otherwise.
+char isTargetColor(int H, int S, int V){
+
+   if((H>=ccsrState.targetColor_iLowH)  &&
+      (H<=ccsrState.targetColor_iHighH) &&
+      (S>=ccsrState.targetColor_iLowS)  &&
+      (S<=ccsrState.targetColor_iHighS) &&
+      (V>=ccsrState.targetColor_iLowV)  &&
+      (V<=ccsrState.targetColor_iHighV)){
+         return 1;
+   }
+   else{
+      return 0;
+   }
+}
+
+
 // Simply turn in place until IR-sensors no longer detect obstacle.
 void evasiveActionSimple() {
    int motorSpeed, motorSpeedDelta;
@@ -1064,4 +1099,77 @@ void nodYes(){
    usleep(NOD_SHAKE_DELAY);
 
    ccsrState.trackTargetColorOn = trackTargetColorOnPrev;
+}
+
+// From rest position, find at least 2 beacons, and calculate position based on trangulation of angles of observation
+// ccsrState.location_X/Y are updated if '1' is returned. Otherwise (if less that 2 beacons were found), return '0'
+// Beacon positions are assumed to be read from provided SVG map.
+int triangulatePosition(){
+   
+   int i;
+   char success;
+   char numBeaconsFound;
+   char trackTargetColorOnPrev;
+   char navigationOnPrev;
+   int heading[2];
+   int beacon[2];
+
+   // make sure we're at rest, otherwise stop.
+
+   navigationOnPrev = ccsrState.navigationOn;
+   trackTargetColorOnPrev = ccsrState.trackTargetColorOn;
+   // Turn on compass 
+   ccsrState.navigationOn = 1;
+   // track by recognizing shapes: beacons are colored triangles
+   ccsrState.objectRecognitionMode = OBJREC_SHAPEDETECTION
+   // Turn on tracking
+   ccsrState.trackTargetColorOn = 1;
+
+   numBeaconsFound = 0;
+
+   // Go through list of known beacons (provided by SVG map). If we find 2, triangulate position.
+   for(i=0;i<NUM_BEACONS){
+
+      // Set target color to color of currently searched beacon     
+      setTargetColorRangeByName(ccsrState.beaconListName[i]);
+      // Handshake with visual process, make sure he's seen new color.
+      ccsrState.visual_req = 1;
+      while(!ccsrState.visual_ack){
+         brainCycle();
+      }
+      ccsrState.visual_req = 0;
+      if(!ccsrState.objectTracked) {
+         // We don't see the beacon yet, look around for it
+         orientation(FULL);
+      }
+      if(ccsrState.objectTracked) {
+         // We were already tracking, or orientation found beacon
+         // Wait until cam centers
+         while(!ccsrState.trackedObjectCentered) {
+            brainCycle();
+         }
+         heading[numBeaconsFound] = addAngleToHeading(ccsrState.pan); 
+         beacon[numBeaconsFound]=i;
+         numBeaconsFound = numBeaconsFound+1;
+         if(numBeaconsFound==2){
+            // We have 2 beacons, we can triangulate
+            break;
+         }
+      }
+      else{
+         printf("Actions.triangulatePosition: beacon %d not found\n", i); 
+      }
+   }
+   if(numBeaconsFound==2){
+      triangulate(beacon[0], beacon[1], heading[0], heading[1], &ccsrState.locationX, &ccsrState.locationY);
+      printf("Actions.triangulatePosition: result X:%d Y:%d\n", ccsrState.locationX, ccsrState.locationY); 
+      success=1;
+   }
+   else{
+      // Did not find at least 2 beacons
+      printf("Actions.triangulatePosition: found only %d beacon(s)\n", numBeaconsFound); 
+   }
+   ccsrState.trackTargetColorOn = trackTargetColorOnPrev;
+   ccsrState.navigationOn = navigationOnPrev;
+   return success;
 }
