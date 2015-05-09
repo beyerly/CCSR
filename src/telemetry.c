@@ -31,6 +31,7 @@
 #include "facial.h"
 #include "mood.h"
 #include "graph.h"
+#include "mapping.h"
 
 extern FILE *logFile;
 extern ccsrStateType ccsrState;
@@ -432,7 +433,7 @@ void ccsrExecuteCmd(char **splitLine, int n, int wfd) {
 	      case DUMPSUBCMD_DISK:
 	         // Tell *visual to save currently captured images to disk
                  ccsrState.camCapture = 1;
-                 // Save full ccsrState to CSV filel on disk
+                 // Save full ccsrState to CSV file on disk
                  stateCSVfd = open(fullstatecsvfile, O_WRONLY | O_CREAT, S_IRWXO);
 		 if(stateCSVfd<0) {
 		    perror("can't open CCSR state csv file\n");
@@ -443,8 +444,12 @@ void ccsrExecuteCmd(char **splitLine, int n, int wfd) {
                  while(ccsrState.camCapture) {
                     usleep(100);
                  }
+                 // Create sonar profile image
                  drawSonarProfileGraph();
-                 sprintf(string, "CAmera images written to disk, CCSR state written in %s\n", fullstatecsvfile);
+                 // Draw current location on SVG map if known, and save map to disk
+                 drawLocationInSVGMap();
+                 writeSVGMap();
+                 sprintf(string, "Camera images written to disk, CCSR state written in %s, SVG map written to %s\n", fullstatecsvfile, SVG_MAP_SLAM_NAME);
 		 write(wfd, string, strlen(string));
  		 write(wfd, eom, strlen(eom));
 	      break;
@@ -1029,9 +1034,8 @@ void ccsrExecuteCmd(char **splitLine, int n, int wfd) {
 	 case CMD_DUMMY:
 	    if (n>1) {
 	       value0 = atoi(splitLine[1]);
-
-   ccsrState.randomEyeMovements = value0;
-   ccsrState.showEmotion = value0;
+               ccsrState.randomEyeMovements = value0;
+               ccsrState.showEmotion = value0;
 	       sprintf(string, "Command succesful\n");
  	       write(wfd, string, strlen(string));
  	       write(wfd, eom, strlen(eom));

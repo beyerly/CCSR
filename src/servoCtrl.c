@@ -26,6 +26,7 @@
 #include "sound.h"
 #include "lcdDisp.h"
 #include "servoCtrl.h"
+#include "utils.h"
 
 #ifndef I2C_SLAVE
 #define I2C_SLAVE 0
@@ -679,22 +680,14 @@ void *camtrack() {
 
          if(xDeltaQ == 0){  // only pan for now
             // We consider ourselves locked on target if camera pan is less than 20 deg off.
-	    // We don't consider tilt value (yet), because only pan is important to turn CCSR in the right direction
-	    if(ccsrState.trackedObjectCentered == 0) {
-   	       //If we weren't previously centered before, sound happy alarm that now we do.
-//	       write(pipeSoundGen[IN], &sound[singleA], sizeof(sound[singleA]));
-	       lcdEvent = EVENT_TARGET_LOCKED;
- 	       write(pipeLCDMsg[IN], &lcdEvent, sizeof(lcdEvent));
+            // We don't consider tilt value (yet), because only pan is important to turn CCSR in the right direction
+            if(ccsrState.trackedObjectCentered == 0) {
+               //If we weren't previously centered before, sound happy alarm that now we do.
+               write(pipeSoundGen[IN], &sound[tracked], sizeof(sound[tracked]));
+               lcdEvent = EVENT_TARGET_LOCKED;
+               write(pipeLCDMsg[IN], &lcdEvent, sizeof(lcdEvent));
             }
 	    ccsrState.trackedObjectCentered = 1;
-	    // Key activity here:
-            // If we are centered on target, we want to drive toward this target. THerefor continuously set
-            // target heading to where the camera is pointed. The process *drivetoTarget in motors.c will continuously
-            // adjust heading to target heading if enabled. Note this means that if we manually want to set a target
-            // heading, trackTargetColorOn must be off.
-            // Open: targetHeading only gets updated if cam is centered, what if we drive too fast and cam can;t keep up: target heading will never
-            // be updated? Should driveToTarget also check pan?
-            ccsrState.targetHeading = addAngleToHeading(ccsrState.pan);
 	 }
 	 else {
 	    ccsrState.trackedObjectCentered = 0;
@@ -719,7 +712,15 @@ void *camtrack() {
  	 }
  
    	 // Set head, use 70% of speed.
-	 setPanTilt(pan, tilt, 70);
+         setPanTilt(pan, tilt, 70);
+
+         // Key activity here:
+         // continuously set
+         // target heading to where the camera is pointed. The process *drivetoTarget in motors.c will continuously
+         // adjust heading to target heading if enabled. Note this means that if we manually want to set a target
+         // heading, trackTargetColorOn must be off.
+         ccsrState.targetHeading = addAngleToHeading(ccsrState.pan);
+
       }
       else {
          tracking = 0;

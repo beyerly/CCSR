@@ -301,6 +301,12 @@ void initSounds(){
    sound[singleA].style = sine;
    sound[singleA].notes = 1;
 
+   sound[tracked].freq[0] = 880;
+   sound[tracked].length[0] = 100;
+   sound[tracked].vol[0] = 1000;
+   sound[tracked].style = sine;
+   sound[tracked].notes = 1;
+
    sound[doubleA].freq[0] = 440;
    sound[doubleA].length[0] = 200;
    sound[doubleA].vol[0] = 1000;

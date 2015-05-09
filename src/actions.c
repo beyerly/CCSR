@@ -1126,6 +1126,7 @@ int triangulatePosition(){
    ccsrState.trackTargetColorOn = 1;
 
    numBeaconsFound = 0;
+   success=0;
 
    // Go through list of known beacons (provided by SVG map). If we find 2, triangulate position.
    for(i=0;i<NUM_BEACONS){
@@ -1161,9 +1162,8 @@ int triangulatePosition(){
       }
    }
    if(numBeaconsFound==2){
-      triangulate(beacon[0], beacon[1], heading[0], heading[1], &ccsrState.locationX, &ccsrState.locationY);
+      success=triangulate(beacon[0], beacon[1], heading[0], heading[1], &ccsrState.locationX, &ccsrState.locationY);
       printf("Actions.triangulatePosition: result X:%d Y:%d\n", ccsrState.locationX, ccsrState.locationY); 
-      success=1;
    }
    else{
       // Did not find at least 2 beacons
@@ -1171,5 +1171,6 @@ int triangulatePosition(){
    }
    ccsrState.trackTargetColorOn = trackTargetColorOnPrev;
    ccsrState.navigationOn = navigationOnPrev;
+   ccsrState.locationAccurate = success;
    return success;
 }

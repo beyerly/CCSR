@@ -51,6 +51,7 @@ enum standardSounds {keyPressed,
 		     observeSnd, 
 		     orientationSnd, 
 		     evasiveActionSnd,
+                     tracked,
 		     standardSoundsCount};
 
 typedef struct soundType {

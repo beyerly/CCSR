@@ -171,6 +171,7 @@ typedef struct ccsrStateType {
    int	 timeAtRest;
    int	 locationX;
    int	 locationY;
+   char  locationAccurate;      // If set, location[X, Y] is accurate.
    char  driveToTargetHeading;  // If set, *driveToTargetHeading pthread will be active, and continuously try to drive towards
                                 // ccsrState.targetHeading
 

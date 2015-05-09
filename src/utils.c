@@ -601,12 +601,12 @@ void initBeacons(){
 // find position in intersection of 2 lines
 // beaconA/B are indices into a beacon array. headingA and B are heading observations in degrees
 // The function will update X and Y with current location
-void triangulate(char beaconA, char beaconB, int headingA, int headingB, int* X, int* Y){
+int triangulate(char beaconA, char beaconB, int headingA, int headingB, int* X, int* Y){
 
-   float pi;
-   float hA,hB;
-   float a,b,c,d;
-
+   double pi;
+   double hA,hB;
+   double a,b,c,d, x, y;
+   char success;
 
    // Placeholder beacons: beacon_0 = (-6, -1), beacon_1 = (4, 4), 
    ccsrState.beaconListX[0] = -6;
@@ -615,7 +615,8 @@ void triangulate(char beaconA, char beaconB, int headingA, int headingB, int* X,
    ccsrState.beaconListY[1] = 4;
 
    pi = 3.14159265;
-
+   success=1;
+   
    // Create:
    //    YA=aX+b
    //    YB=bX+c
@@ -623,8 +624,11 @@ void triangulate(char beaconA, char beaconB, int headingA, int headingB, int* X,
 
    // Bring heading (degrees) to 1st or 2nd quadrant
    if(headingA>180){
-      hA=(float) headingA-180;
+      hA=(double) headingA-180;
    }
+   else {
+      hA=(double) headingA;
+   }   
    hA = 90 - hA;       // Calculate angle with respect to x-axis
    hA = pi*(hA/180);   // Convert to radians
    a = tan(hA);        // Calculate X/Y ratio of angle
@@ -632,17 +636,47 @@ void triangulate(char beaconA, char beaconB, int headingA, int headingB, int* X,
 
    // Bring heading (degrees) to 1st or 2nd quadrant
    if(headingB>180){
-      hB=(float) headingB-180;
+      hB=(double) headingB-180;
    }
+   else {
+      hB=(double) headingB;
+   }   
    hB = 90 - hB;       // Calculate angle with respect to x-axis
    hB = pi*(hB/180);   // Convert to radians
    c = tan(hB);        // Calculate X/Y ratio of angle
-   d = ccsrState.beaconListY[beaconB] - a*ccsrState.beaconListX[beaconB]; // Calculate required Y-shift for linear equation to intercept the beacon
+   d = ccsrState.beaconListY[beaconB] - c*ccsrState.beaconListX[beaconB]; // Calculate required Y-shift for linear equation to intercept the beacon
 
+    x=(d-b)/(a-c);
+    y=a*x+b;
+
+    x = round(x);
+    y = round(y);
+
+   //printf("%f %f %f %f\n", a, b, c, d);
+    
    // Solve equation YA=YB
-   *X=(int) (d-b)/(a-c);
-   *Y=(int) a**X+B;
+   *X=(int) x;
+   *Y=(int) y;
 
-   // Check if we are on the map?
+   // Clip coordinates to SVG map-size. If we clip, we're off the map and triangulation is inaccurate and unsuccessful.
+   if(*X>MAP_WIDTH){
+      *X=MAP_WIDTH;
+      success=0;
+   }
+   else if (*X<0){
+      *X=0;
+      success=0;
+   } 
+   if(*Y>MAP_HEIGHT){
+      *Y=MAP_HEIGHT;
+      success=0;
+   }
+   else if (*Y<0){
+      *Y=0;
+      success=0;
+   } 
+   return success;
 }
+
+
 
