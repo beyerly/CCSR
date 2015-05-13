@@ -26,8 +26,8 @@ void fitToMap(int* X, int* Y){
    if(*X<0){
       *X=0;
    }
-   else if (X>MAP_WIDTH) {
-      X=MAP_WIDTH;
+   else if (*X>MAP_WIDTH) {
+      *X=MAP_WIDTH;
    }
    if(*Y<0){
       *Y=0;
@@ -51,7 +51,10 @@ void drawLocationInSVGMap()
    int i;
    int tX[3], tY[3];
    int X, Y;
-
+   
+   strcpy(point, "");
+    strcpy(locator, "");
+  
    // Translate cartesian to image X,Y:
    X = ccsrState.locationX;
    Y = MAP_HEIGHT - ccsrState.locationY;
@@ -70,9 +73,9 @@ void drawLocationInSVGMap()
    tX[2] = X + LOCATOR_SIZE/2;
    tY[2] = Y + LOCATOR_SIZE/2;
    
-   if(i=0;i<3;i++){
+   for(i=0;i<3;i++){
       fitToMap(&tX[i], &tY[i]);
-      sprintf(point, " %d %d", &tX[i], &tY[i])  
+      sprintf(point, " %d %d", tX[i], tY[i]);  // @@@
       strcat(locator, point);
    }
    
@@ -81,7 +84,7 @@ void drawLocationInSVGMap()
    newattr = xmlNewProp (newnode, "stroke", color);
    newattr = xmlNewProp (newnode, "fill", color);
    newattr = xmlNewProp (newnode, "stroke-width", "0");
-   sprintf(pivot, "%d %d %d", ccsrState.heading, X, Y);  
+   sprintf(pivot, "rotate(%d %d %d)", ccsrState.heading, X, Y);  
    newattr = xmlNewProp (newnode, "transform", pivot);
    sprintf(pivot, "h:%d,(%d, %d)", ccsrState.heading, ccsrState.locationX, ccsrState.locationY);  
    newnode = xmlNewTextChild (root_element, NULL, "text", pivot);
@@ -95,11 +98,13 @@ void drawLocationInSVGMap()
 }
 
 
+
 // Draw a locator at the current CCSR position in the CCSR map 
 void writeSVGMap()
 {
    xmlSaveFormatFileEnc(SVG_MAP_SLAM_NAME , doc, "UTF-8", 1);
 }
+
 
 // Parse through map.svg file and extract all visual beacon names and locations, store in ccsrState.
 void parseSVGBeacons(xmlNode * a_node)
@@ -110,23 +115,26 @@ void parseSVGBeacons(xmlNode * a_node)
    xmlChar *bcnX;
    xmlChar *bcnY;
    int beaconID;
-
    beaconID = 0;
-   for (cur_node = a_node; cur_node; cur_node = cur_node->next) {
+   for (cur_node = a_node->xmlChildrenNode; cur_node; cur_node = cur_node->next) {
       if (cur_node->type == XML_ELEMENT_NODE) {
-         id = xmlGetProp(cur_node, "id");
-         if(xmlStrcmp(id, (const xmlChar *)"bcn")){
+	 id = xmlGetProp(cur_node, "id");
+         if(!xmlStrcmp(id, (const xmlChar *)"bcn")){
             name = xmlGetProp(cur_node, "name");
-            bcnX = xmlGetProp(cur_node, "bcnX");
-            bcnY = xmlGetProp(cur_node, "bcnY");
-            ccsrState.beaconListName[beaconID] =  (char*) malloc(10*sizeof(char));
+            bcnX = xmlGetProp(cur_node, "x");
+            bcnY = xmlGetProp(cur_node, "y");
+            if(name && bcnX && bcnY){
+	    ccsrState.beaconListName[beaconID] =  (char*) malloc(10*sizeof(char));
             strcpy(ccsrState.beaconListName[beaconID], (char*) name);
-            ccsrState.beaconListX[beaconID] = atoi((char *) bcnX);
+	    ccsrState.beaconListX[beaconID] = atoi((char *) bcnX);
             ccsrState.beaconListY[beaconID] = MAP_HEIGHT - atoi((char *) bcnY);
-            printf("parseSVGBeacons: found beacon %s\n", (char*) name);
-
+            printf("parseSVGBeacons: found beacon %s at x:%d y:%d\n", (char*) name, ccsrState.beaconListX[beaconID], ccsrState.beaconListY[beaconID]);
+            beaconID = beaconID+1;
+	    }
+	    else{
+	       printf("parseSVGBeacons: SVG beacon formatting error\n");
+	    }
          }
-         beaconID = beaconID+1;
          if(beaconID>NUM_BEACONS){
             printf("parseSVGBeacons: exceeding max numner of beacons in SVG file\n");
             exit(0);

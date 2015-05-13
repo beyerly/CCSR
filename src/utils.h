@@ -18,9 +18,7 @@ int maxLightHeading();
 int addAngle(int angle, int hdng);
 int addAngleToHeading(int angle);
 int getPanToHeading(int targetHeading);
-void triangulate(char beaconA, char beaconB, int headingA, int headingB, int* X, int* Y);
+int triangulate(char beaconA, char beaconB, int headingA, int headingB, int* X, int* Y);
 void initBeacons();
 
 
-
-#define NUM_BEACONS 2

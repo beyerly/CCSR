@@ -35,7 +35,7 @@
 #include "gpio.h"
 #include "visual.h"
 #include "facial.h"
-#include "mapping.h:
+#include "mapping.h"
 
 FILE *logFile;
 int i2cbus, devRandom;
@@ -503,7 +503,7 @@ void ccsrTerminate() {
       write(pipeLCDMsg[IN], &lcdEvent, sizeof(lcdEvent));
       // Set servo's in neutral position
       setPanTilt(0, 0, 50);
-      printf("Time run: %d brain cycles\n", ccsrState.timer);
+      printf("Time run: %d brain cycles\n", (int) ccsrState.timer);
       usleep(5000000);
       exit(0); 
 }

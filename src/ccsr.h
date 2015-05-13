@@ -56,6 +56,7 @@
 #define TIME_BETWEEN_PINGS 5   // seconds
 
 #define NUM_AUDIO_SAMPLES 3
+#define NUM_BEACONS 2
 
 void ccsrTerminate();
 void stateChange(char state);

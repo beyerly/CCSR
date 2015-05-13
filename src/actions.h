@@ -36,6 +36,7 @@ void giveObjectAndFoldArm();
 
 void initColors();
 char isTargetColor(int H, int S, int V);
+char* lookupColor(int H, int S, int V);
 void extendArm();
 void dropAndFoldArm();
 void grabObjectFromFixedGroundLocation();

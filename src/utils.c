@@ -14,7 +14,7 @@
 #include "sound.h"
 #include "actions.h"
 #include "powerMonitor.h"
-
+#include "mapping.h"
 
 extern FILE *logFile;
 extern ccsrStateType ccsrState;

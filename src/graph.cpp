@@ -21,15 +21,20 @@
 #include "opencv2/highgui/highgui.hpp"
 #include "opencv2/imgproc/imgproc.hpp"
 
+using namespace cv;
+using namespace std;
 
 extern ccsrStateType ccsrState;
+
+extern "C" {
 
 // Draw a graph of the the currently stored sonar profile, write file to disk for display in the CCSR web interface
 void drawSonarProfileGraph(){
    char x_label[10];
    int fontFace = FONT_HERSHEY_SCRIPT_SIMPLEX;
-   double fontScale = 2;
-   int thickness = 3;
+   double fontScale = 0.2;
+   int thickness = 1;
+   int i, x;
 
    // Create white background image
    Mat imgSonarProfile(Size(GRAPH_WIDTH,GRAPH_HEIGHT),CV_8UC3);  
@@ -39,23 +44,23 @@ void drawSonarProfileGraph(){
    line(imgSonarProfile,
         Point( 0, 0 ),
         Point( 0, GRAPH_HEIGHT ),
-        Scalar( 0, 0, 255 ),
+        Scalar( 0, 0, 0 ),
         GRAPH_AXIS_THICKNESS,
         GRAPH_AXIS_LINETYPE);
    // Draw X axis on bottom
    line(imgSonarProfile,
-        Point( 0, GRAPH_HEIGHT ),
-        Point( GRAPH_WIDTH, GRAPH_HEIGHT ),
-        Scalar( 0, 0, 255 ),
+        Point( 0, GRAPH_EFF_HEIGHT),
+        Point( GRAPH_WIDTH, GRAPH_EFF_HEIGHT ),
+        Scalar( 0, 0, 0 ),
         GRAPH_AXIS_THICKNESS,
         GRAPH_AXIS_LINETYPE);
 
    // Draw Y axis grid
    for(i=0;i<GRAPH_YGRID_SIZE;i++){
       line(imgSonarProfile,
-        Point(0 , i*GRAPH_HEIGHT/GRAPH_YGRID_SIZE  ),
-        Point(10 , i*GRAPH_HEIGHT/GRAPH_YGRID_SIZE  ),
-        Scalar( 0, 0, 255 ),
+        Point(0 , i*GRAPH_EFF_HEIGHT/GRAPH_YGRID_SIZE  ),
+        Point(GRAPH_GRID_NOTCH_SIZE , i*GRAPH_EFF_HEIGHT/GRAPH_YGRID_SIZE  ),
+        Scalar( 0, 0, 0 ),
         GRAPH_AXIS_THICKNESS,
         GRAPH_AXIS_LINETYPE);
    }
@@ -63,13 +68,13 @@ void drawSonarProfileGraph(){
    for(i=0;i<GRAPH_XGRID_SIZE;i++){
       sprintf(x_label,"%d", i*360/GRAPH_YGRID_SIZE);
       line(imgSonarProfile,
-        Point(i*GRAPH_WIDTH/GRAPH_XGRID_SIZE , GRAPH_HEIGHT),
-        Point(i*GRAPH_WIDTH/GRAPH_XGRID_SIZE , GRAPH_HEIGHT-10),
-        Scalar( 0, 0, 255 ),
+        Point(i*GRAPH_WIDTH/GRAPH_XGRID_SIZE , GRAPH_EFF_HEIGHT),
+        Point(i*GRAPH_WIDTH/GRAPH_XGRID_SIZE , GRAPH_EFF_HEIGHT-GRAPH_GRID_NOTCH_SIZE),
+        Scalar( 0, 0, 0 ),
         GRAPH_AXIS_THICKNESS,
         GRAPH_AXIS_LINETYPE);
-        putText(imgThresholded, x_label, Point(i*GRAPH_WIDTH/GRAPH_XGRID_SIZE , GRAPH_HEIGHT-10), fontFace, fontScale,
-                     Scalar::all(255), thickness, 8);
+        putText(imgSonarProfile, x_label, Point(i*GRAPH_WIDTH/GRAPH_XGRID_SIZE , GRAPH_HEIGHT-3), fontFace, fontScale,
+                     Scalar::all(0), thickness, 8);
    }
 
    // Draw vertical line representing sonar depth for each valid profile entry
@@ -84,11 +89,10 @@ void drawSonarProfileGraph(){
       }
    }
    // Write image to disk
-]  imwrite(GRAPH_SONARPROFILE, imgSonarProfile);
-
+  imwrite(GRAPH_SONARPROFILE, imgSonarProfile);
 }      
 
 
-
+}  // extern 'C'
 
 

@@ -15,14 +15,14 @@ OPENCV_LINK_FLAGS = -lopencv_core -lopencv_imgproc -lopencv_highgui -lopencv_ml 
 COMPILE_FLAGS = -I/home/robert/minnowBuild3/setup-scripts/build/tmp-angstrom_v2013_12-eglibc/sysroots/x86_64-linux/usr/include/libxml2 
 
 ccsr_obj = ccsr.o utils.o motor.o irSensors.o sound.o mood.o vocal.o powerMonitor.o navigation.o lcdDisp.o \
-          actions.o  telemetry.o servoCtrl.o  gpio.o visual.o  facial.o mapping.o
+          actions.o  telemetry.o servoCtrl.o  gpio.o visual.o  facial.o mapping.o graph.o
 	  
 	  
 telccsr_obj = telccsr.o
 headers = src/ccsr.h src/utils.h src/motor.h src/irSensors.h \
           src/sound.h src/mood.h src/vocal.h src/powerMonitor.h src/navigation.h \
 	  src/lcdDisp.h src/actions.h  src/telemetry.h src/telccsr.h src/servoCtrl.h \
-	  src/gpio.h src/visual.h src/facial.h
+	  src/gpio.h src/visual.h src/facial.h src/mapping.h src/graph.h
 
 all: ccsr telccsr 
 

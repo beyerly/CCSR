@@ -79,7 +79,7 @@ char* lookupColor(int H, int S, int V){
 }
 
 // Set target color to 'name', return 1 if successful, 0 if not found.
-void setTargetColorRangeByName(char* name) {
+int setTargetColorRangeByName(char* name) {
   int i;
   
   for (i=0;i<NUM_COLORS;i++) {
@@ -1121,7 +1121,7 @@ int triangulatePosition(){
    // Turn on compass 
    ccsrState.navigationOn = 1;
    // track by recognizing shapes: beacons are colored triangles
-   ccsrState.objectRecognitionMode = OBJREC_SHAPEDETECTION
+   ccsrState.objectRecognitionMode = OBJREC_SHAPEDETECTION;
    // Turn on tracking
    ccsrState.trackTargetColorOn = 1;
 
@@ -1129,10 +1129,12 @@ int triangulatePosition(){
    success=0;
 
    // Go through list of known beacons (provided by SVG map). If we find 2, triangulate position.
-   for(i=0;i<NUM_BEACONS){
+   for(i=0;i<NUM_BEACONS;i++){
 
       // Set target color to color of currently searched beacon     
-      setTargetColorRangeByName(ccsrState.beaconListName[i]);
+      if(!setTargetColorRangeByName(ccsrState.beaconListName[i])){
+         printf("triangulatePosition: error: unknown beacon %s in SVG map\n", ccsrState.beaconListName[i]);          exit(0);
+      }
       // Handshake with visual process, make sure he's seen new color.
       ccsrState.visual_req = 1;
       while(!ccsrState.visual_ack){

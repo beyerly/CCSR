@@ -42,8 +42,6 @@ extern "C" {
 void *visual ();
 void setTargetColorRange(int iLowH, int iHighH, int iLowS, int iHighS, int iLowV, int iHighV);
 void setTargetColorVolume(int vol);
-int objRecogColorThreshold(Mat imgHSV, Mat imgThresholded);
-int objRecogShapeDetection(Mat src, Mat imgHSV, Mat bw);
 
 #ifdef __cplusplus
 }

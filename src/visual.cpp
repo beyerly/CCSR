@@ -19,6 +19,9 @@ extern ccsrStateType ccsrState;
 
 extern "C" {
 
+   char isTargetColor(int H, int S, int V);
+   char* lookupColor(int H, int S, int V);
+   
    // Set CCSR's active target color range in HSV values. CCSR will track this color if enabled 
    void setTargetColorRange(int iLowH, int iHighH, int iLowS, int iHighS, int iLowV, int iHighV) {
       ccsrState.targetColor_iLowH  =  iLowH;
@@ -134,6 +137,7 @@ extern "C" {
       int roiY;
       char label[10];
       int tgtVolume;
+      char* colorName;
 
       // todo: determine volume of shape
       tgtVolume = 0;
@@ -164,9 +168,9 @@ extern "C" {
          if (approx.size() == 3)
          {
             // We have a triangle, now probe color.
-            Rect r = boundingRect(contour[i]);
+            Rect r = boundingRect(contours[i]);
 
-            Point center(r.x + r.width/2, r.y r.height/2);
+            Point center(r.x + r.width/2, r.y + r.height/2);
             roiX = center.x - ROI_WIDTH/2;
             roiY = center.y - ROI_HEIGHT/2;
             // extract small roi of image, inside the triangle
@@ -174,7 +178,7 @@ extern "C" {
             // calculate mean HSV color value of roi
             Scalar meanRoi = mean(roi);                          
             // Check if triangle color is in range of target color
-            if (isTargetColor(meanRoi.val[0], meanRoi.val[1], meanRoi.val[2]){
+            if (isTargetColor(meanRoi.val[0], meanRoi.val[1], meanRoi.val[2])){
                // Get color name string
                colorName = lookupColor(meanRoi.val[0], meanRoi.val[1], meanRoi.val[2]);
                if(colorName!=0){
@@ -224,7 +228,7 @@ extern "C" {
 
       // Allocate memory for in-display telemetry
       for(i=0;i<NUM_DISPLAY_STRINGS;i++) {
-         textList[i] = malloc(MAX_DISP_STRING_LEN*sizeof(char));
+         textList[i] = (char*) malloc(MAX_DISP_STRING_LEN*sizeof(char));
       }
 
       // Define region of interest: predefined spot in between CCSR's grabber.
@@ -316,9 +320,9 @@ extern "C" {
             // Draw text list as column on left side of picture
             sprintf(textList[0], "hdng %d",ccsrState.heading);
             sprintf(textList[1], "batt %d",ccsrState.batteryPercent);
-            sprintf(textList[2], "tgtX %d",ccsrState.ccsrState.targetVisualObject_X);
-            sprintf(textList[3], "tgtY %d",ccsrState.ccsrState.targetVisualObject_Y);
-            sprintf(textList[4], "tgtV %d",ccsrState.ccsrState.targetVisualObject_Vol);
+            sprintf(textList[2], "tgtX %d",ccsrState.targetVisualObject_X);
+            sprintf(textList[3], "tgtY %d",ccsrState.targetVisualObject_Y);
+            sprintf(textList[4], "tgtV %d",ccsrState.targetVisualObject_Vol);
             sprintf(textList[5], "trck %d",ccsrState.trackTargetColorOn);
             Point textOrg(10, 10);
             for(i=0;i<NUM_DISPLAY_STRINGS;i++) {

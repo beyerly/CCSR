@@ -616,11 +616,11 @@ void ccsrExecuteCmd(char **splitLine, int n, int wfd) {
                     break;
                     case 1 :
                        ccsrState.trackTargetColorOn = 1;
-                       ccsrState.objectRecognitionMode = OBJREC_COLORTHRESHOLD
+                       ccsrState.objectRecognitionMode = OBJREC_COLORTHRESHOLD;
                     break;
                     case 2 :
                        ccsrState.trackTargetColorOn = 1;
-                       ccsrState.objectRecognitionMode = OBJREC_SHAPEDETECTION
+                       ccsrState.objectRecognitionMode = OBJREC_SHAPEDETECTION;
                     break;
                  }
                  sprintf(string, "Command succesful\n");
