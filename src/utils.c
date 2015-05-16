@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <math.h>
+#include <float.h>
 #include <poll.h>
 #include "ccsr.h"
 #include "irSensors.h"
@@ -679,4 +680,46 @@ int triangulate(char beaconA, char beaconB, int headingA, int headingB, int* X, 
 }
 
 
+// Set the ccsrState.targetHeading to the location (X, Y) and return 1. If current location is unknown, triangulate. If unsuccesfull,
+// don't touch ccsrState.targetHeading and return 0.
+int setTargetHeadingForLocation(int X, int Y){
 
+   double xNorm, yNorm;
+   double ratio, angleRad;
+   int angleDeg;
+
+   double pi;
+   char success;
+
+   pi = 3.14159265;
+
+   if(!ccsrState.locationAccurate){
+      triangulatePosition();
+   }
+   if(!ccsrState.locationAccurate){
+      printf("setHeadingForLocation:error:can't get accurate position\n");
+      return 0;
+   }
+   else{
+      // Location is known.
+      // Normalize line between location and target into vector in cartesian space.
+      yNorm = (double) Y - 1;
+      xNorm = (double) X - 1;
+      // Calculate angle with X-axis
+      if(xNorm==0){
+         // Vertical line, prevent div-by-zero
+         xNorm = DBL_MIN;
+      }
+      ratio =  yNorm/xNorm;
+      angleRad = atan(ratio);
+      angleDeg = (int) 360*angleRad/(2*pi);  // Degrees
+      // Translate into [0..360] heading
+      if(xNorm>=0){
+         ccsrState.targetHeading = 90 - angleDeg;
+      }
+      else{
+         ccsrState.targetHeading = 270 - angleDeg;
+      }
+      return 1;
+   }
+}

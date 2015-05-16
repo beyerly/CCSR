@@ -58,6 +58,24 @@ void initColors(){
    colors[1].iHighV = 255;
    strcpy(colors[1].name, "green");
 
+   // Blue triangle beacon in SVG map
+   colors[2].iLowH  = 75;
+   colors[2].iHighH = 99;
+   colors[2].iLowS  = 100;
+   colors[2].iHighS = 200;
+   colors[2].iLowV  = 89;
+   colors[2].iHighV = 255;
+   strcpy(colors[2].name, "BCNb0");
+
+   // Green triangle beacon in SVG map
+   colors[3].iLowH  = 75;
+   colors[3].iHighH = 99;
+   colors[3].iLowS  = 100;
+   colors[3].iHighS = 200;
+   colors[3].iLowV  = 89;
+   colors[3].iHighV = 255;
+   strcpy(colors[3].name, "BCNg0");
+
 }
 
 // Return pointer string representing approximate color name of HSV value. Return 0 if no match found
@@ -84,12 +102,12 @@ int setTargetColorRangeByName(char* name) {
   
   for (i=0;i<NUM_COLORS;i++) {
     if(strcmp(name, colors[i].name)){
-       ccsrState.targetColor_iLowH = colors[i].iLowH;
+       ccsrState.targetColor_iLowH  = colors[i].iLowH;
        ccsrState.targetColor_iHighH = colors[i].iHighH;
-       ccsrState.targetColor_iLowS =colors[i].iLowS;
-       ccsrState.targetColor_iHighS =colors[i].iHighS;
-       ccsrState.targetColor_iLowV =colors[i].iLowV;
-       ccsrState.targetColor_iHighV =colors[i].iHighV;
+       ccsrState.targetColor_iLowS  = colors[i].iLowS;
+       ccsrState.targetColor_iHighS = colors[i].iHighS;
+       ccsrState.targetColor_iLowV  = colors[i].iLowV;
+       ccsrState.targetColor_iHighV = colors[i].iHighV;
        return 1;
     }
   }
@@ -1176,3 +1194,4 @@ int triangulatePosition(){
    ccsrState.locationAccurate = success;
    return success;
 }
+

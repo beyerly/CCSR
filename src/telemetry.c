@@ -32,6 +32,7 @@
 #include "mood.h"
 #include "graph.h"
 #include "mapping.h"
+#include "utils.h"
 
 extern FILE *logFile;
 extern ccsrStateType ccsrState;
@@ -95,7 +96,8 @@ char *cmd_lookup[] = {"set",             // followed by set_cmd_lookup[]
 		      "listen",          // listen - start continuous voice recognition
 		                         // listen 0 - stop continuous voice recognition
                       "obj",             // followed by obj_cmd_lookup[] - object manipulation
-                      "triangulate"      // Triangulate position based on visual beacons
+                      "triangulate",     // Triangulate position based on visual beacons
+                      "goto"             // goto <X> <Y> drive to location (X, Y) , stopping if obstacle is encountered
 		      };
 // sub-commands of 'dump'
 char *dump_cmd_lookup[] = {"all",        // dump all - Print selected ccsrState fields to return-fifo
@@ -946,6 +948,17 @@ void ccsrExecuteCmd(char **splitLine, int n, int wfd) {
                   ccsrState.evasiveAction=0;
                   ccsrState.driveToTargetHeading=1;
                }
+               else if(value0 == 5){
+                  if (n>3){ 
+                     value1 = atoi(splitLine[2]);
+                     value2 = atoi(splitLine[3]);
+
+                  }
+                  else{
+                     sprintf(string, "Expecting move 5 X Y\n");
+                     write(wfd, string, strlen(string));
+                  }
+               }
                else{
                   // Drive right/left for specified amount of time (in ms)
                   value1 = atoi(splitLine[2]);
@@ -957,6 +970,28 @@ void ccsrExecuteCmd(char **splitLine, int n, int wfd) {
 	    }
 	    else {
  	       sprintf(string, "Expecting: move <0=stop, 1=fwd, 2=reverse, 3=driveToTargetHeading>  <time> \n", cmd);
+ 	       write(wfd, string, strlen(string));
+ 	       write(wfd, eom, strlen(eom));
+	    }
+	 break;
+	 case CMD_GOTO:
+ 	    if (n>2) {
+	       value0 = atoi(splitLine[1]);
+	       value1 = atoi(splitLine[2]);
+               if(setTargetHeadingForLocation(value0, value1)){
+
+                  ccsrState.evasiveAction=0;
+                  ccsrState.driveToTargetHeading=1;
+               }
+               else{
+                  printf("move 5: Can't determine location\n");
+               }
+               sprintf(string, "Command succesful\n");
+ 	       write(wfd, string, strlen(string));
+ 	       write(wfd, eom, strlen(eom));
+	    }
+	    else {
+ 	       sprintf(string, "Expecting: goto X Y \n", cmd);
  	       write(wfd, string, strlen(string));
  	       write(wfd, eom, strlen(eom));
 	    }
@@ -1032,20 +1067,14 @@ void ccsrExecuteCmd(char **splitLine, int n, int wfd) {
 	    }
 	 break;
 	 case CMD_DUMMY:
-	    if (n>1) {
-	       value0 = atoi(splitLine[1]);
-               ccsrState.randomEyeMovements = value0;
-               ccsrState.showEmotion = value0;
-	       sprintf(string, "Command succesful\n");
+            // print color of roi in cameraview to stdout. Used to determine beacon color.
+            ccsrState.analyzeObject = 1;
+            while(ccsrState.analyzeObject){
+               usleep(1000);
+            }
+            sprintf(string, "Command succesful\n");
  	       write(wfd, string, strlen(string));
  	       write(wfd, eom, strlen(eom));
-	    }
-	    else {
- 	       sprintf(string, "Expecting: dummy <int> \n", cmd);
- 	       write(wfd, string, strlen(string));
- 	       write(wfd, eom, strlen(eom));
-	    }
-
 	 break;
      }
    }
