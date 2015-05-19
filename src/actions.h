@@ -1,7 +1,8 @@
 
 #define NOD_SHAKE_SPEED 95
 #define NOD_SHAKE_DELAY 100
-
+#define LOCATION_HYSTERESIS_X 4
+#define LOCATION_HYSTERESIS_Y 4
 
 enum ccsrActionType {EVASIVE_ACTION,
    ORIENTATION,
@@ -50,6 +51,7 @@ void nodYes();
 void grab0();
 void drop0();
 int  triangulatePosition();
+int gotoLocation(int X, int Y);
 
 #define SONAR_SCAN_DELAY 40000
 #define NUM_COLORS 16

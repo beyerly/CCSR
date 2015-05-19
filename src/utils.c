@@ -602,7 +602,7 @@ void initBeacons(){
 // find position in intersection of 2 lines
 // beaconA/B are indices into a beacon array. headingA and B are heading observations in degrees
 // The function will update X and Y with current location
-int triangulate(char beaconA, char beaconB, int headingA, int headingB, int* X, int* Y){
+int triangulate(char beaconA, char beaconB, int headingA, int headingB, double* X, double* Y){
 
    double pi;
    double hA,hB;
@@ -656,8 +656,8 @@ int triangulate(char beaconA, char beaconB, int headingA, int headingB, int* X, 
    //printf("%f %f %f %f\n", a, b, c, d);
     
    // Solve equation YA=YB
-   *X=(int) x;
-   *Y=(int) y;
+   *X = x;
+   *Y = y;
 
    // Clip coordinates to SVG map-size. If we clip, we're off the map and triangulation is inaccurate and unsuccessful.
    if(*X>MAP_WIDTH){
@@ -680,7 +680,7 @@ int triangulate(char beaconA, char beaconB, int headingA, int headingB, int* X, 
 }
 
 
-// Set the ccsrState.targetHeading to the location (X, Y) and return 1. If current location is unknown, triangulate. If unsuccesfull,
+// Set the ccsrState.targetHeading to the location (X, Y) and return 1. If current location is unknown, 
 // don't touch ccsrState.targetHeading and return 0.
 int setTargetHeadingForLocation(int X, int Y){
 
@@ -693,9 +693,6 @@ int setTargetHeadingForLocation(int X, int Y){
 
    pi = 3.14159265;
 
-   if(!ccsrState.locationAccurate){
-      triangulatePosition();
-   }
    if(!ccsrState.locationAccurate){
       printf("setHeadingForLocation:error:can't get accurate position\n");
       return 0;

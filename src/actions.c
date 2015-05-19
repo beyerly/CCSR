@@ -1183,7 +1183,7 @@ int triangulatePosition(){
    }
    if(numBeaconsFound==2){
       success=triangulate(beacon[0], beacon[1], heading[0], heading[1], &ccsrState.locationX, &ccsrState.locationY);
-      printf("Actions.triangulatePosition: result X:%d Y:%d\n", ccsrState.locationX, ccsrState.locationY); 
+      printf("Actions.triangulatePosition: result X:%f Y:%f\n", ccsrState.locationX, ccsrState.locationY); 
    }
    else{
       // Did not find at least 2 beacons
@@ -1193,5 +1193,75 @@ int triangulatePosition(){
    ccsrState.navigationOn = navigationOnPrev;
    ccsrState.locationAccurate = success;
    return success;
+}
+
+
+// Return 1 if CCSR is at location X, Y. A hysteresis 'box' is placed around the current location, to prevent oscillation.  
+char atLocation(X, Y){
+   return  (((int) round(ccsrState.locationX) <= X + LOCATION_HYSTERESIS_X/2) &&
+            ((int) round(ccsrState.locationX) >= X - LOCATION_HYSTERESIS_X/2) &&
+            ((int) round(ccsrState.locationY) <= Y + LOCATION_HYSTERESIS_Y/2) &&
+            ((int) round(ccsrState.locationY) >= Y - LOCATION_HYSTERESIS_Y/2));
+}
+
+// From rest position, go to location X, Y. Return '1' if successful, '0' otherwise.
+int gotoLocation(int X, int Y){
+
+   int retry;
+   retry = 0;
+
+   while(retry<3){
+      if(!ccsrState.locationAccurate){
+         // Don't know current location, triangulate using visual beacons to determine it
+         triangulatePosition();
+      }
+      if(!ccsrState.locationAccurate){
+         // Triangulation was unsuccesfull, bail out
+         printf("gotoLocation:error:can't get accurate position\n");
+         return 0;
+      }
+      else {
+         // We know where we are. Check if we are at (or close enough to) target location. 
+         if (atLocation(X, Y)){
+            // We're at target location, bail out successfully   
+            ccsrState.driveToTargetHeading=0;
+            return 1;
+         }
+         else{
+            // We're not at target location yet. Head to target
+            if(setTargetHeadingForLocation(X, Y)){
+               // target heading now points to target, start *driveToTargetHeading process
+               ccsrState.evasiveAction=0;
+               ccsrState.driveToTargetHeading=1;
+               while(!ccsrState.driveToTargetHeading_active){
+                  brainCycle();
+               }
+               // Wait untill location becomes inaccurate, or if target reached.
+               while(ccsrState.locationAccurate && !atLocation(X, Y)){
+                  brainCycle();
+               }
+               // Even if target reached, consider location inaccurate due to accumulated errors (will re-triangulate)
+               ccsrState.driveToTargetHeading=0;
+               ccsrState.locationAccurate = 0;
+               while(ccsrState.driveToTargetHeading_active){
+                  brainCycle();
+               }
+            }
+            else{
+               // Calculating target heading was unsuccesfull, bail out
+               printf("gotoLocation:error:can't get accurate target heading\n");
+               return 0;
+            }
+         }
+         retry = retry+1;
+      }
+
+      printf("gotoLocation:retry timeout, could not each location\n";
+   }
+}
+
+
+
+
 }
 

@@ -24,6 +24,7 @@
 #define SAVEADDR 'S' 
 #define NOTSAVEADDR 'N' 
  
+#define MOTOR_POWER_TO_SPEED_CONV 0
 
 #define TARGET_HEADING_HYSTERESIS 10 // If we are driving within 10 degrees of target heading, we consider it on track
                                      // May need to lower hysteresis for accuracy

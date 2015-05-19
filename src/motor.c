@@ -16,8 +16,11 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <fcntl.h>
+#include <math.h>
+#include <time.h>
 #include "ccsr.h"
 #include "motor.h"
+#include "mapping.h"
 #include "utils.h"
 #include "actions.h"
 #include "irSensors.h"
@@ -281,6 +284,116 @@ int speedFiltered(int targetSpeed, int delta) {
 } 
 
 
+// speed in cm/usec
+double motorPWM2Speed(double pwm){
+   double absPwm;
+
+   absPwm = abs(pwm);
+   if(absPwm<MOTOR_POS_THRESHOLD){
+      return 0;
+   }
+   else{
+      if(pwm>=0){
+         pwm=pwm-MOTOR_POS_THRESHOLD;
+      }
+      if(pwm<0){
+         pwm=pwm+MOTOR_POS_THRESHOLD;
+      }
+      return 0.020*pwm/(255-MOTOR_POS_THRESHOLD);
+   }
+}
+
+void *odometer() {
+
+   double pi;
+   double heading;
+   double speedX, speedY;  // in cm/s
+   double X, Y;
+   char measuring;
+
+   struct timespec t, t_prev;
+   unsigned long usecElapsed;
+
+   pi = 3.14159265;
+   measuring = 0;
+
+
+   while(1) {
+      if((ccsrState.speedMotor1 != 0) && (ccsrState.speedMotor2 != 0)){
+         // We are moving
+         if(ccsrState.speedMotor1 == ccsrState.speedMotor2){
+            // We are driving straight, no turning (i.e staying in place)
+            if(ccsrState.navigationOn){
+               // Compass is on, so we can use odometer
+               if(ccsrState.odometryOn){                  
+                  // Odometer is on
+                  if(ccsrState.locationAccurate){
+                     // only update location if current location is accurate
+                     if(measuring){
+                        // We are moving, accurate, have compass and are measuring time
+                        clock_gettime(CLOCK_REALTIME, &t);
+                        usecElapsed = (t.tv_sec*1000 + t.tv_nsec/1000000) - (t_prev.tv_sec*1000 + t_prev.tv_nsec/1000000); 
+                        t_prev = t;
+                        heading = (double) ccsrState.heading;
+                        heading = 2*pi*heading/360;
+                        speedX =   motorPWM2Speed((double) ccsrState.speedMotor1) *  sin(heading);
+                        speedY =   motorPWM2Speed((double) ccsrState.speedMotor1) *  cos(heading);
+                        ccsrState.locationX = ccsrState.locationX + (speedX* (double) usecElapsed)/MAP_WIDTH_SCALE; 
+                        ccsrState.locationY = ccsrState.locationY + (speedY* (double) usecElapsed)/MAP_HEIGHT_SCALE; 
+                        if(ccsrState.locationX<0){
+                           ccsrState.locationAccurate=0;
+                           ccsrState.locationX = 0;
+                        }
+                        else if (ccsrState.locationX>MAP_WIDTH){
+                           ccsrState.locationAccurate=0;
+                           ccsrState.locationX=MAP_WIDTH;
+                        }
+                        if(ccsrState.locationY<0){
+                           ccsrState.locationAccurate=0;
+                           ccsrState.locationY = 0;
+                        }
+                        else if (ccsrState.locationY>MAP_HEIGHT){
+                           ccsrState.locationAccurate=0;
+                           ccsrState.locationY=MAP_HEIGHT;
+                        }
+                        printf("odometer %f %f\n", ccsrState.locationX, ccsrState.locationY);
+                     }
+                     else {
+                        // We are moving and can accurately do odometry, start measuring
+                        clock_gettime(CLOCK_REALTIME, &t_prev);
+                        measuring = 1;
+                     }
+                  }
+                  else {
+                     // We are moving, but location i snot accurate
+                     measuring = 0;
+                  }
+               }
+               else{
+                  // We are moving, but odometry is not on
+                  measuring = 0;
+                  ccsrState.locationAccurate=0;
+               }
+            }
+            else{
+               // We are moving, but compass is not on
+               measuring = 0;
+               ccsrState.locationAccurate=0;
+            }
+         }
+         else {
+            measuring = 0;
+         }
+      }
+      else {
+         measuring = 0;
+      }
+      usleep(ODOMETER_INTERVAL);
+   }
+}
+
+
+
 
 // Pthread process that will continuously attempt to drive towards target heading if ccsrStte.driveToTargetHeading=1. 
 // If ccstState.evasiveAction = 1, it will take evasive actions around objects encountered if necessary. To do this, it will
@@ -299,20 +412,18 @@ void *driveToTargetHeading() {
    char proximitySensorsOnPrev;
    char sonarSensorsOnPrev;
    char trackTargetColorOnPrev;
-   char active;
    int delta;
    int headingQueue[HEADING_QUEUE_DEPTH];
    char hQPtr;
 
-   active = 0;
+   ccsrState.driveToTargetHeading_active = 0;
    hQPtr = 0;
-         // process is active
 
    while(1) {
       if (ccsrState.driveToTargetHeading){
-         if(!active){
+         if(!ccsrState.driveToTargetHeading_active){
             // Was not active before, prepare for driving
-            active = 1;
+            ccsrState.driveToTargetHeading_active = 1;
             navigationOnPrev = ccsrState.navigationOn;
             proximitySensorsOnPrev = ccsrState.proximitySensorsOn;
             // Turn on compass and proximity sensors if necessary
@@ -432,14 +543,14 @@ void *driveToTargetHeading() {
          }
       }
       // Process is not active
-      if(!ccsrState.driveToTargetHeading && active) {
+      if(!ccsrState.driveToTargetHeading && ccsrState.driveToTargetHeading_active) {
          // Driving to target mode was just switched off, stop forward motion and set nav and proximity back to previous states
          while(!speedFiltered(0, 0)) {
             brainCycle();
          }
          ccsrState.navigationOn       = navigationOnPrev;
          ccsrState.proximitySensorsOn = proximitySensorsOnPrev;
-         active = 0;
+         ccsrState.driveToTargetHeading_active = 0;
       }
       // Process is not active, and was not just switched off either (!driveToTargetHeading || !active):
       // Do nothing until driveToTargetHeading is turned on
