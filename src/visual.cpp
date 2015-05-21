@@ -214,9 +214,9 @@ extern "C" {
    void *visual () {
 
       VideoCapture cap(0); //capture the video from webcam
-      int fontFace = FONT_HERSHEY_SCRIPT_SIMPLEX;
-      double fontScale = 2;
-      int thickness = 3;
+      int fontFace = FONT_HERSHEY_PLAIN;
+      double fontScale = 0.4;
+      int thickness = 1;
       char* textList[NUM_DISPLAY_STRINGS];
       int i;
 
@@ -324,11 +324,12 @@ extern "C" {
             sprintf(textList[3], "tgtY %d",ccsrState.targetVisualObject_Y);
             sprintf(textList[4], "tgtV %d",ccsrState.targetVisualObject_Vol);
             sprintf(textList[5], "trck %d",ccsrState.trackTargetColorOn);
-            Point textOrg(10, 10);
+            Point textOrg(10, 30);
+	    Size textSize = getTextSize(textList[0], fontFace, fontScale, thickness, NULL);
             for(i=0;i<NUM_DISPLAY_STRINGS;i++) {
                putText(imgThresholded, textList[i], textOrg, fontFace, fontScale,
                   Scalar::all(255), thickness, 8);
-               textOrg.y += 10;
+               textOrg.y += textSize.height + 3;
             }
             // Write images to disk, will be read by web interface
             imwrite(CAM_CAPTURE_RAW, imgOriginal);
