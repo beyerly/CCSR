@@ -60,6 +60,7 @@ pthread_t   threadSonar,
 	    threadLcdRefresh,
 	    threadLcdmanager,
 	    threadEars,
+	    threadOdometer,
 	    threadTelemetry,
 	    threadNLP,
 	    threadPowerMonitor,
@@ -93,6 +94,9 @@ int main () {
    setTargetColorRange (111, 120, 160, 208, 89, 223);  // Set default object tracking color to blue
    setTargetColorVolume(TEST_OBJECT_2_VOLUME);         // Set default object volume: 
     
+
+   ccsrState.odometryOn = 1;
+
    logFile = fopen(LOG_FILE, "w");
    if (logFile!=NULL) {
       logMsg(logFile, "CCSR start", LOG); 
@@ -162,6 +166,9 @@ int main () {
      logMsg(logFile, "Pthread can't be created", ERROR);
    }
    if(pthread_create( &threadEars, NULL, ears, NULL )) {
+     logMsg(logFile, "Pthread can't be created", ERROR);
+   }
+   if(pthread_create( &threadOdometer, NULL, odometer, NULL )) {
      logMsg(logFile, "Pthread can't be created", ERROR);
    }
    if(pthread_create( &threadTelemetry, NULL, cmdInterface_telemetry, NULL )) {

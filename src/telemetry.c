@@ -200,7 +200,9 @@ char *CCSRStateTemplate[] = {"state,  		      %4d, - \n",   // 0
                              "battery,                %4d, percent\n",	// 25
                              "MaxOperatingCurr,       %4d, ampere\n",	// 26
                              "CurrentLimited,         %4d, - \n",	// 27
-                             "power,                  %4d, milliwatt",	// 28
+                             "power,                  %4d, milliwatt\n",// 28
+                             "locationX,              %4f, - \n",	// 29
+                             "locationY,              %4f, -"	        // 30
                              };
 			     
 
@@ -978,14 +980,7 @@ void ccsrExecuteCmd(char **splitLine, int n, int wfd) {
  	    if (n>2) {
 	       value0 = atoi(splitLine[1]);
 	       value1 = atoi(splitLine[2]);
-               if(setTargetHeadingForLocation(value0, value1)){
-
-                  ccsrState.evasiveAction=0;
-                  ccsrState.driveToTargetHeading=1;
-               }
-               else{
-                  printf("move 5: Can't determine location\n");
-               }
+               gotoLocation(value0, value1);
                sprintf(string, "Command succesful\n");
  	       write(wfd, string, strlen(string));
  	       write(wfd, eom, strlen(eom));

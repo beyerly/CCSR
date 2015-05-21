@@ -56,8 +56,8 @@ void drawLocationInSVGMap()
     strcpy(locator, "");
   
    // Translate cartesian to image X,Y:
-   X = ccsrState.locationX;
-   Y = MAP_HEIGHT - ccsrState.locationY;
+   X = (int) round(ccsrState.locationX);
+   Y = (int) round(MAP_HEIGHT - ccsrState.locationY);
 
    if(ccsrState.locationAccurate){
       strcpy(color, "purple");
@@ -86,7 +86,7 @@ void drawLocationInSVGMap()
    newattr = xmlNewProp (newnode, "stroke-width", "0");
    sprintf(pivot, "rotate(%d %d %d)", ccsrState.heading, X, Y);  
    newattr = xmlNewProp (newnode, "transform", pivot);
-   sprintf(pivot, "h:%d,(%d, %d)", ccsrState.heading, ccsrState.locationX, ccsrState.locationY);  
+   sprintf(pivot, "h:%d,(%d, %d)", ccsrState.heading, (int) round(ccsrState.locationX), (int) round(ccsrState.locationY));  
    newnode = xmlNewTextChild (root_element, NULL, "text", pivot);
    sprintf(point, "%d", X);  
    newattr = xmlNewProp (newnode, "x", point);

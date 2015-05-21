@@ -170,11 +170,13 @@ typedef struct ccsrStateType {
    int   gyroAngMoment_Y;   // Yaw (Turn)
    int   gyroAngMoment_Z;   // Roll
    int	 timeAtRest;
-   int	 locationX;
-   int	 locationY;
-   char  locationAccurate;      // If set, location[X, Y] is accurate.
+   double	 locationX;     // Current CCSR location. double precicion to accumulate incremental movement, should be rounded to int before usage
+   double	 locationY;     // as SVG map coordinates
+   char  locationAccurate;      // If set, location[X, Y] is accurate. CCSR will reset this to '0' if event causes odometry to fail, and re-location  is required
    char  driveToTargetHeading;  // If set, *driveToTargetHeading pthread will be active, and continuously try to drive towards
                                 // ccsrState.targetHeading
+   char driveToTargetHeading_active; // Handshake
+   char odometryOn;             // If set to '1' we are continuously updating location if moving
 
       // List of X,Y coordinates of beacons
    int beaconListX[NUM_BEACONS];
