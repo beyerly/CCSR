@@ -13,6 +13,7 @@
 #include <string.h>
 #include <libxml/parser.h>
 #include <libxml/tree.h>
+#include <math.h>
 #include "ccsr.h"
 #include "mapping.h"
 

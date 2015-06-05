@@ -281,7 +281,7 @@ int getLinAcc() {
   // printf("linAccX %d %d %d\n", result_x,  conv[1],  conv[0]);
   // printf("%d %d\n", (unsigned char) conv[0], (unsigned char) conv[1]);
 
-     sprintf(dfd,"%d, %d, %d, %d\n", ccsrState.timer, result_x, result_z, result_y);
+//     sprintf(dfd,"%d, %d, %d, %d\n", ccsrState.timer, result_x, result_z, result_y);
 
 #endif   
 //   return result_x;

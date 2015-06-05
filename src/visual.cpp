@@ -19,6 +19,8 @@ extern ccsrStateType ccsrState;
 
 extern "C" {
 
+char x;
+
    char isTargetColor(int H, int S, int V);
    char* lookupColor(int H, int S, int V);
    
@@ -41,7 +43,7 @@ extern "C" {
    // Recognize target object in imgHSV based on target color range set in ccsrState.targetColor_*. 
    // If found, set ccsrState.targetVisualObject_[X, Y, Area] to coordinates 
    // in image and volume of object, and set ccsrState.objectTracked = 1. imgThresholded is updated for visualization on webinterface. 
-   int objRecogColorThreshold(Mat imgHSV, Mat imgThresholded){
+   int objRecogColorThreshold(Mat imgHSV, Mat& imgThresholded){
       Moments oMoments;
       int iLowH  = ccsrState.targetColor_iLowH;
       int iHighH = ccsrState.targetColor_iHighH;
@@ -90,6 +92,8 @@ extern "C" {
       else {
          ccsrState.objectTracked = 0;
       }
+            imwrite(CAM_CAPTURE_THRESHOLD, imgThresholded);
+
    }
 
 
@@ -129,7 +133,7 @@ extern "C" {
    // If found, set ccsrState.targetVisualObject_[X, Y, Area] to triangle shape cordinates  
    // in image and volume of object, and set ccsrState.objectTracked = 1. bw is updated for visualization on webinterface. 
    // imgHSV is used for color detection.
-   int objRecogShapeDetection(Mat src, Mat imgHSV, Mat bw) {
+   int objRecogShapeDetection(Mat src, Mat imgHSV, Mat& bw) {
 
       int roiHeight = COLORPROBE_ROI_HEIGHT;
       int roiWidth = COLORPROBE_ROI_WIDTH;
@@ -138,9 +142,13 @@ extern "C" {
       char label[10];
       int tgtVolume;
       char* colorName;
+      char success;
 
+      char vn[30];
+      
       // todo: determine volume of shape
       tgtVolume = 0;
+      success = 0;
 
       // Convert to grayscale
       Mat gray;
@@ -154,12 +162,13 @@ extern "C" {
       findContours(bw.clone(), contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
 
       vector<Point> approx;
-
+//printf("img\n");
       for (int i = 0; i < contours.size(); i++)
       {
          // Approximate contour with accuracy proportional
          // to the contour perimeter
          approxPolyDP(Mat(contours[i]), approx, arcLength(Mat(contours[i]), true)*0.02, true);
+//printf("ctr %d %d\n", i, approx.size());
 
          // Skip small or non-convex objects 
          if (fabs(contourArea(contours[i])) < 100 || !isContourConvex(approx))
@@ -167,7 +176,7 @@ extern "C" {
 
          if (approx.size() == 3)
          {
-            // We have a triangle, now probe color.
+	    // We have a triangle, now probe color.
             Rect r = boundingRect(contours[i]);
 
             Point center(r.x + r.width/2, r.y + r.height/2);
@@ -178,6 +187,7 @@ extern "C" {
             // calculate mean HSV color value of roi
             Scalar meanRoi = mean(roi);                          
             // Check if triangle color is in range of target color
+//	    printf("%d %d %d\n", meanRoi.val[0], meanRoi.val[1], meanRoi.val[2]);
             if (isTargetColor(meanRoi.val[0], meanRoi.val[1], meanRoi.val[2])){
                // Get color name string
                colorName = lookupColor(meanRoi.val[0], meanRoi.val[1], meanRoi.val[2]);
@@ -193,18 +203,27 @@ extern "C" {
                ccsrState.targetVisualObject_Y = center.y;
                ccsrState.targetVisualObject_Vol = tgtVolume;
                // Let system know object is found and tracked!
-               ccsrState.objectTracked = 1;
+               success = 1;
+//	       printf("fnd c\n");
+
                break;   // Jump out of iteration through contours, we're done
             }
             else{
-               ccsrState.objectTracked = 0;
-            }
+            // not right color
+	    }
          }
          else{
             // No triangle
-            ccsrState.objectTracked = 0;
          }
       }
+      printf("t %d\n", success );
+      
+      if(!success){
+      sprintf(vn, "bbh_%d_%d.jpg", x, success);
+      imwrite(vn, src);
+      x++;
+      }
+      ccsrState.objectTracked = success;
    }
 
 
@@ -212,10 +231,10 @@ extern "C" {
 
    // pthread process processing images from USB camera
    void *visual () {
-
+x=0;
       VideoCapture cap(0); //capture the video from webcam
       int fontFace = FONT_HERSHEY_PLAIN;
-      double fontScale = 0.4;
+      double fontScale = 1;
       int thickness = 1;
       char* textList[NUM_DISPLAY_STRINGS];
       int i;
@@ -278,12 +297,13 @@ extern "C" {
          switch(ccsrState.objectRecognitionMode){
          case OBJREC_COLORTHRESHOLD:
             // should we tag object in imgOriginal here too??
-            objRecogColorThreshold(imgHSV, imgThresholded);
+	    objRecogColorThreshold(imgHSV, imgThresholded);
             break;
          case OBJREC_SHAPEDETECTION:
             objRecogShapeDetection(imgOriginal, imgHSV, imgThresholded);
             break;
          }
+
 
          // If asked to analyze an object held up by arm, calculate and capture avarage color values of object.
          // Object is assumed to be held by arm exactly at square region of interrest (roi) in middle of image
@@ -327,8 +347,8 @@ extern "C" {
             Point textOrg(10, 30);
 	    Size textSize = getTextSize(textList[0], fontFace, fontScale, thickness, NULL);
             for(i=0;i<NUM_DISPLAY_STRINGS;i++) {
-               putText(imgThresholded, textList[i], textOrg, fontFace, fontScale,
-                  Scalar::all(255), thickness, 8);
+               putText(imgOriginal, textList[i], textOrg, fontFace, fontScale,
+                  Scalar(0, 0, 255), thickness, 8);
                textOrg.y += textSize.height + 3;
             }
             // Write images to disk, will be read by web interface

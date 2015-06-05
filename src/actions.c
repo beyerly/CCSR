@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <fcntl.h>
+#include <math.h>
 #include "ccsr.h"
 #include "sound.h"
 #include "motor.h"
@@ -75,6 +76,15 @@ void initColors(){
    colors[3].iLowV  = 89;
    colors[3].iHighV = 255;
    strcpy(colors[3].name, "BCNg0");
+
+   // box
+   colors[3].iLowH  = 111;
+   colors[3].iHighH = 120;
+   colors[3].iLowS  = 160;
+   colors[3].iHighS = 208;
+   colors[3].iLowV  = 89;
+   colors[3].iHighV = 223;
+   strcpy(colors[3].name, "box");
 
 }
 
@@ -1256,12 +1266,11 @@ int gotoLocation(int X, int Y){
          retry = retry+1;
       }
 
-      printf("gotoLocation:retry timeout, could not each location\n";
+      printf("gotoLocation:retry timeout, could not each location\n");
    }
 }
 
 
 
 
-}
 

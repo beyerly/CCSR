@@ -95,13 +95,15 @@ void *mood() {
    while(1) {
  //     printf("semot %d\n", ccsrState.showEmotion);
 
-      if(ccsrState.happiness > MIN_HAPPINESS) {
-         ccsrState.happiness  = ccsrState.happiness - 1;
-      }
-      if(ccsrState.arousal > MIN_AROUSAL) {
-         ccsrState.arousal = ccsrState.arousal - 1;
-      }
 
+      if(ccsrState.showEmotion){
+ 	if(ccsrState.happiness > MIN_HAPPINESS) {
+ 	   ccsrState.happiness  = ccsrState.happiness - 1;
+ 	}
+ 	if(ccsrState.arousal > MIN_AROUSAL) {
+ 	   ccsrState.arousal = ccsrState.arousal - 1;
+ 	}
+      }
 
       v = 100*ccsrState.arousal/MAX_AROUSAL;
       h = 280 - ( (280*(ccsrState.happiness + MAX_HAPPINESS))/(2*MAX_HAPPINESS));

@@ -152,7 +152,10 @@ char *set_cmd_lookup[] = {"rc",          // set rc <0,1> - turn off/on Remote co
 			                 // is close to target object. The larger the number, the bigger the portion of the camara image
 					 // the target color must occupy before CCSR considers itself right in front of object.
                           "rgbled",      // set rgbled <R> <G> <B> - Set RGB LED color
-			  "mood"         // set mood <happiness [-255..255]> <arousal [0..255]> - increment emotions
+			  "mood",         // set mood <happiness [-255..255]> <arousal [0..255]> - increment emotions
+			  		 // set mood <0=off, 1=on> Turn emotions on/off 
+
+			  "tgtclr"       
                           };
 
 
@@ -613,23 +616,29 @@ void ccsrExecuteCmd(char **splitLine, int n, int wfd) {
 	         }	        
 	      break;
               case TRACK_COLOR:
-                 subSubCmd = tokenLookup(splitLine[2], onoff_cmd_lookup, NUM_ONOFFSUBCMD, (n>2), wfd);
-                 switch(subSubCmd){
-                    case 0 :
-                       ccsrState.trackTargetColorOn = 0;
-                    break;
-                    case 1 :
-                       ccsrState.trackTargetColorOn = 1;
-                       ccsrState.objectRecognitionMode = OBJREC_COLORTHRESHOLD;
-                    break;
-                    case 2 :
-                       ccsrState.trackTargetColorOn = 1;
-                       ccsrState.objectRecognitionMode = OBJREC_SHAPEDETECTION;
-                    break;
-                 }
-                 sprintf(string, "Command succesful\n");
-                 write(wfd, string, strlen(string));
-                 write(wfd, eom, strlen(eom));
+                 if (n>2) {
+	            value0 = atoi(splitLine[2]);
+ 		    switch(value0){
+
+ 		       case 0 :
+ 		    	  say("Disable tracking");
+ 		    	  ccsrState.trackTargetColorOn = 0;
+ 		       break;
+ 		       case 1 :
+ 		    	  say("Enable tracking, color threshold mode");
+		    	  ccsrState.trackTargetColorOn = 1;
+ 		    	  ccsrState.objectRecognitionMode = OBJREC_COLORTHRESHOLD;
+ 		       break;
+ 		       case 2 :
+ 		    	  say("Enable tracking, shape detection mode");
+ 		    	  ccsrState.trackTargetColorOn = 1;
+ 		    	  ccsrState.objectRecognitionMode = OBJREC_SHAPEDETECTION;
+ 		       break;
+ 		    }
+ 		    sprintf(string, "Command succesful\n");
+ 		    write(wfd, string, strlen(string));
+ 		    write(wfd, eom, strlen(eom));
+		 }
                  break;
               case STATE:
                  if (n>2) {
@@ -815,19 +824,49 @@ void ccsrExecuteCmd(char **splitLine, int n, int wfd) {
                write(wfd, string, strlen(string));
                write(wfd, eom, strlen(eom));
             }
+            else if(n>2){
+               value0 = atoi(splitLine[2]);
+               if(value0==0){
+	          say("Turning off emotions");
+		  ccsrState.showEmotion = 0;
+	       }
+	       else if (value0==1) {
+	          say("Turning on emotions");
+	       	  ccsrState.showEmotion = 1;
+	       }
+               sprintf(string, "Command succesful\n");
+               write(wfd, string, strlen(string));
+               write(wfd, eom, strlen(eom));
+            }
             else {
                sprintf(string, "Expecting: set mood <happiness> <arousal>\n", cmd);
                write(wfd, string, strlen(string));
                write(wfd, eom, strlen(eom));
             }
 	      break;
+         case TGT_COLOR:
+            if (n>2) {
+	       say("target color set to");
+ 	       say(splitLine[2]);
+               setTargetColorRangeByName(splitLine[2]);
+               sprintf(string, "Command succesful\n");
+               write(wfd, string, strlen(string));
+               write(wfd, eom, strlen(eom));
+            }
+            else {
+               sprintf(string, "Expecting: set tgtClr <name>\n", cmd);
+               write(wfd, string, strlen(string));
+               write(wfd, eom, strlen(eom));
+            }
+            break;
             }
 	 break;
 	 case CMD_TURN_TO:
             if (n>1) {
 	       value0 = atoi(splitLine[1]);
 	       ccsrState.targetHeading = value0;
-     	       turnToTargetHeading(NOSCAN);
+               say("turning");
+//     	       turnToTargetHeading(NOSCAN);
  	       sprintf(string, "Command succesful\n");
  	       write(wfd, string, strlen(string));
  	       write(wfd, eom, strlen(eom));

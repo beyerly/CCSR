@@ -41,3 +41,4 @@ void setMotorPrescalerFrequency(int freq);
 void setMotorPWM(int speedA, int speedB);
 int initMotors();
 void *driveToTargetHeading();
+void *odometer();

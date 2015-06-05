@@ -13,7 +13,7 @@ extern "C" {
 #define GRAPH_YGRID_SIZE 16
 #define GRAPH_GRID_NOTCH_SIZE 5
 
-#define GRAPH_SONARPROFILE "scripts/webIFCCSR/sonarProfile.jpg"
+#define GRAPH_SONARPROFILE "data/sonarProfile.jpg"
 
 void drawSonarProfileGraph();
 
