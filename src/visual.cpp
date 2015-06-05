@@ -12,12 +12,6 @@
 #include "opencv2/highgui/highgui.hpp"
 #include "opencv2/imgproc/imgproc.hpp"
 
-using namespace cv;
-using namespace std;
-
-extern ccsrStateType ccsrState;
-
-extern "C" {
 
 char x;
 
@@ -27,6 +21,12 @@ char x;
    // Set CCSR's active target color range in HSV values. CCSR will track this color if enabled 
    void setTargetColorRange(int iLowH, int iHighH, int iLowS, int iHighS, int iLowV, int iHighV) {
       ccsrState.targetColor_iLowH  =  iLowH;
+using namespace cv;
+using namespace std;
+
+extern ccsrStateType ccsrState;
+
+extern "C" {
       ccsrState.targetColor_iHighH =  iHighH;
       ccsrState.targetColor_iLowS  =  iLowS;
       ccsrState.targetColor_iHighS =  iHighS;
