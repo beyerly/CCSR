@@ -39,9 +39,17 @@ extern "C" {
 #define COLORPROBE_ROI_HEIGHT 10
 #define COLORPROBE_ROI_WIDTH 10
 
-void *visual ();
+void visualInit();
+int analyseCameraFrame (int mode, int frames);
 void setTargetColorRange(int iLowH, int iHighH, int iLowS, int iHighS, int iLowV, int iHighV);
 void setTargetColorVolume(int vol);
+
+// Visual commands
+#define VISUAL_CMD_TRACK          1
+#define VISUAL_CMD_ANALYZE_OBJECT 2
+#define VISUAL_CMD_CAPTURE        4
+
+
 
 #ifdef __cplusplus
 }

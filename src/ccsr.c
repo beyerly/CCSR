@@ -43,6 +43,7 @@ int i2cbus, devRandom;
 ccsrStateType ccsrState = {0};
 pthread_mutex_t semI2c;
 pthread_mutex_t semAudio;
+pthread_mutex_t semCamera;
 
 
 pthread_t   threadSonar, 
@@ -55,7 +56,6 @@ pthread_t   threadSonar,
 	    threadSoundGenerator,
 	    threadMood,
 	    threadVocal,
-	    threadVisual,
 	    threadCamTrack,
 	    threadLcdRefresh,
 	    threadLcdmanager,
@@ -71,6 +71,7 @@ pthread_t   threadSonar,
 int  pipeSoundGen[2];
 int  pipeLCDMsg[2];
 int  pipeFacialMsg[2];
+
 char lcdEvent;
 soundType sound[standardSoundsCount];
 
@@ -94,8 +95,7 @@ int main () {
    setTargetColorRangeByName ("box");                  // Set default object tracking color to blue
    setTargetColorVolume(TEST_OBJECT_2_VOLUME);         // Set default object volume: 
     
-
-   ccsrState.odometryOn = 1;
+   ccsrState.odometryOn = 0;
 
    logFile = fopen(LOG_FILE, "w");
    if (logFile!=NULL) {
@@ -114,10 +114,12 @@ int main () {
    if(pipe(pipeFacialMsg) == -1) {
       logMsg(logFile, "Could not open pipeFacialMsg", ERROR);
    }
+   
    devRandom = open("/dev/random", O_RDWR);
 
    pthread_mutex_init(&semI2c, NULL);
    pthread_mutex_init(&semAudio, NULL);
+   pthread_mutex_init(&semCamera, NULL);
    i2cbus = open(I2C_BUS, O_RDWR);
    if (i2cbus<0) {
     strcpy(string, "Could not open ");
@@ -129,8 +131,7 @@ int main () {
    lcdDisplayInit();
    moodInit();
    facialInit();
-
-   // set_playback_volume(0);
+   visualInit();
 
    if(pthread_create( &threadNavigation, NULL, navigation, NULL )) {
       logMsg(logFile, "Pthread can't be created", ERROR);
@@ -151,9 +152,6 @@ int main () {
      logMsg(logFile, "Pthread can't be created", ERROR);
    }
    if(pthread_create( &threadMood, NULL, mood, NULL )) {
-     logMsg(logFile, "Pthread can't be created", ERROR);
-   }
-   if(pthread_create( &threadVisual, NULL, visual, NULL )) {
      logMsg(logFile, "Pthread can't be created", ERROR);
    }
    if(pthread_create( &threadCamTrack, NULL, camtrack, NULL )) {

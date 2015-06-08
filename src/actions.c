@@ -78,13 +78,22 @@ void initColors(){
    strcpy(colors[3].name, "BCNg0");
 
    // box
-   colors[3].iLowH  = 111;
-   colors[3].iHighH = 120;
-   colors[3].iLowS  = 160;
-   colors[3].iHighS = 208;
-   colors[3].iLowV  = 89;
-   colors[3].iHighV = 223;
-   strcpy(colors[3].name, "box");
+   colors[4].iLowH  = 111;
+   colors[4].iHighH = 120;
+   colors[4].iLowS  = 160;
+   colors[4].iHighS = 208;
+   colors[4].iLowV  = 89;
+   colors[4].iHighV = 223;
+   strcpy(colors[4].name, "box");
+
+   // box
+   colors[5].iLowH  = 0;
+   colors[5].iHighH = 0;
+   colors[5].iLowS  = 0;
+   colors[5].iHighS = 0;
+   colors[5].iLowV  = 0;
+   colors[5].iHighV = 0;
+   strcpy(colors[5].name, "none");
 
 }
 
@@ -358,7 +367,7 @@ void turnToTargetHeading(int scan) {
 
 
 
-int sonarScan(int range) {
+int sonarScan(int range, int track) {
 
    int i, start, end;
    char sonarSensorOn_prev;
@@ -367,6 +376,7 @@ int sonarScan(int range) {
    
    sonarSensorOn_prev = ccsrState.sonarSensorsOn;
    navigationOn_prev = ccsrState.navigationOn;
+   
    ccsrState.sonarSensorsOn = 1;
    ccsrState.navigationOn   = 1;
    heading = ccsrState.heading;
@@ -374,23 +384,27 @@ int sonarScan(int range) {
    if(range>180) {
       range = 180;
    }
-
    start = -range/2;
    end   =  range/2;
    
-
    setPanTilt(start, 0, 70);
    usleep(1000000);
+   // Do sweep with head
    for(i=start;i<=end;i++) {
       setPanTilt(i, 0, 100);
       usleep(SONAR_SCAN_DELAY);
+      // Capture sonar distance for each position.
       ccsrState.sonarDistProfile[addAngle(i, heading)] = ccsrState.sonarDistFront;
       ccsrState.profileValid[addAngle(i, heading)] = 1;
-      if(ccsrState.objectTracked) {
-         ccsrState.trackTargetColorOn = 1;
-         ccsrState.sonarSensorsOn = sonarSensorOn_prev;
-         ccsrState.navigationOn = navigationOn_prev;
-	 return 1;
+      if(track){
+         // Tracking was enabled, so at each head position, check camera image for tracked object
+         // If found, we stop scanning and trun tracking back on, so camtrack pthread can take over. 
+         if(analyseCameraFrame (VISUAL_CMD_TRACK, 1)){
+            ccsrState.trackTargetColorOn = 1;
+            ccsrState.sonarSensorsOn = sonarSensorOn_prev;
+            ccsrState.navigationOn = navigationOn_prev;
+            return 1;
+         }
       }
    }
    setPanTilt(0, 0, 70);
@@ -423,11 +437,17 @@ void sonarScanDown() {
 int orientation(int mode) {
 
    int x, heading_orig;
+   char track;
+   
 
    char navigationOn_prev;
 
    navigationOn_prev = ccsrState.navigationOn;
    usleep(100000);
+
+   // Stop tracking if we were, otherwise we get pan/tilt conflicts 
+   track = ccsrState.trackTargetColorOn;
+   ccsrState.trackTargetColorOn = 0;
 
    // Turn on navigation for compass
    ccsrState.navigationOn   = 1;
@@ -446,7 +466,7 @@ int orientation(int mode) {
    write(pipeSoundGen[IN], &sound[orientationSnd], sizeof(sound[orientationSnd]));
    
    // Always do first sweep
-   if(sonarScan(160)) {
+   if(sonarScan(160, track)) {
       return 1;
    }
 //   sonarScanDown();    
@@ -455,12 +475,12 @@ int orientation(int mode) {
       // DO full 360 sweep
       ccsrState.targetHeading = addAngleToHeading(120);
       turnToTargetHeading(NOSCAN);
-      if(sonarScan(160)) {
+      if(sonarScan(160, track)) {
          return 1;
       }
       ccsrState.targetHeading = addAngleToHeading(120);
       turnToTargetHeading(NOSCAN);
-      if(sonarScan(160)) {
+      if(sonarScan(160, track)) {
          return 1;
       }
    }
@@ -1133,7 +1153,7 @@ void nodYes(){
 // ccsrState.location_X/Y are updated if '1' is returned. Otherwise (if less that 2 beacons were found), return '0'
 // Beacon positions are assumed to be read from provided SVG map.
 int triangulatePosition(){
-   
+
    int i;
    char success;
    char numBeaconsFound;
@@ -1142,56 +1162,61 @@ int triangulatePosition(){
    int heading[2];
    int beacon[2];
 
+   // Stop tracking if we were
+   ccsrState.trackTargetColorOn = 0;
    // make sure we're at rest, otherwise stop.
-
+   while(!speedFiltered(0, 0)) {
+      brainCycle();
+   }
    navigationOnPrev = ccsrState.navigationOn;
-   trackTargetColorOnPrev = ccsrState.trackTargetColorOn;
    // Turn on compass 
    ccsrState.navigationOn = 1;
    // track by recognizing shapes: beacons are colored triangles
    ccsrState.objectRecognitionMode = OBJREC_SHAPEDETECTION;
-   // Turn on tracking
-   ccsrState.trackTargetColorOn = 1;
 
    numBeaconsFound = 0;
    success=0;
 
    // Go through list of known beacons (provided by SVG map). If we find 2, triangulate position.
    for(i=0;i<NUM_BEACONS;i++){
-
       // Set target color to color of currently searched beacon     
       if(!setTargetColorRangeByName(ccsrState.beaconListName[i])){
-         printf("triangulatePosition: error: unknown beacon %s in SVG map\n", ccsrState.beaconListName[i]);          exit(0);
+         printf("triangulatePosition: error: unknown beacon %s in SVG map\n", ccsrState.beaconListName[i]);          
+         exit(0);
       }
-      // Handshake with visual process, make sure he's seen new color.
-      ccsrState.visual_req = 1;
-      while(!ccsrState.visual_ack){
-         brainCycle();
-      }
-      ccsrState.visual_req = 0;
-      if(!ccsrState.objectTracked) {
+
+      // Analyse single camera frame to see if beacon is in sight
+      if(!analyseCameraFrame (VISUAL_CMD_TRACK, 1)){
          // We don't see the beacon yet, look around for it
-         orientation(FULL);
-      }
-      if(ccsrState.objectTracked) {
-         // We were already tracking, or orientation found beacon
-         // Wait until cam centers
-         while(!ccsrState.trackedObjectCentered) {
-            brainCycle();
+         ccsrState.trackTargetColorOn = 1;
+         if(!orientation(FULL)){
+            // Can't find this beacon anywhere, skip it
+            ccsrState.trackTargetColorOn = 0;
+            continue;
          }
-         heading[numBeaconsFound] = addAngleToHeading(ccsrState.pan); 
-         beacon[numBeaconsFound]=i;
-         numBeaconsFound = numBeaconsFound+1;
-         if(numBeaconsFound==2){
-            // We have 2 beacons, we can triangulate
-            break;
-         }
+         // Orientation found beacon, and we are tracking it
       }
       else{
-         printf("Actions.triangulatePosition: beacon %d not found\n", i); 
+         // analyseCamera found beacon, start tracking it
+         ccsrState.trackTargetColorOn = 1;
+      }
+      // We must be tracking now, wait until cam centers
+      while(!ccsrState.trackedObjectCentered) {
+         brainCycle();
+      }
+      // Tell camtrack pthread to stop tracking current beacon
+      ccsrState.trackTargetColorOn = 0;
+      // Store heading of current beacon
+      heading[numBeaconsFound] = addAngleToHeading(ccsrState.pan); 
+      beacon[numBeaconsFound]=i;
+      numBeaconsFound = numBeaconsFound+1;
+      if(numBeaconsFound==2){
+         // We have 2 beacons, we can triangulate!
+         break;
       }
    }
    if(numBeaconsFound==2){
+      // We have 2 beacons, we can triangulate!
       success=triangulate(beacon[0], beacon[1], heading[0], heading[1], &ccsrState.locationX, &ccsrState.locationY);
       printf("Actions.triangulatePosition: result X:%f Y:%f\n", ccsrState.locationX, ccsrState.locationY); 
    }
@@ -1199,7 +1224,6 @@ int triangulatePosition(){
       // Did not find at least 2 beacons
       printf("Actions.triangulatePosition: found only %d beacon(s)\n", numBeaconsFound); 
    }
-   ccsrState.trackTargetColorOn = trackTargetColorOnPrev;
    ccsrState.navigationOn = navigationOnPrev;
    ccsrState.locationAccurate = success;
    return success;

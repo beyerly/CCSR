@@ -27,6 +27,7 @@
 #include "lcdDisp.h"
 #include "servoCtrl.h"
 #include "utils.h"
+#include "visual.h"
 
 #ifndef I2C_SLAVE
 #define I2C_SLAVE 0
@@ -42,8 +43,6 @@ extern soundType sound[NUM_SOUNDS];
 extern int pipeSoundGen[2];
 extern int i2cbus;
 extern pthread_mutex_t semI2c;
-
-
 
 
 // Initialization of PCA9685 servo controller, called once at boot
@@ -601,8 +600,10 @@ void extendArm(){
 
 
 // Pthread process that keeps camera (the head using pan/tilt) centered on specific tracked object.
-// Visual.cpp will set ccsrState.objectTracked to 1 if it finds a target object in camera vision
-// If so, and if enabled with ccsrState.trackTargetColorOn (default 0), this process will 
+// Enabled by ccsrState.trackTargetColorOn. Process will set ccsrState.objectTracked if it is actively tracking
+// The tracked object is defined by:
+//    ccsrState.targetColor*
+//    ccsrState.objectRecognitionMode
 void *camtrack() {
 
 
@@ -611,119 +612,126 @@ void *camtrack() {
    int xDeltaAbs, yDeltaAbs;
    int xDeltaSign, yDeltaSign;
    int xDeltaQ, yDeltaQ;
- 
-   int tracking;
-   tracking = 0;
- 
+
+   // We analyse multiple frames, because objects can be missed in individual frames due to movement and lighting
+   int numFrames = 5;
+
    while(1) {
-      usleep(CAMERA_TRACK_INTERVAL);
-      if (ccsrState.objectTracked & ccsrState.trackTargetColorOn)
-      {
-	 // Visual has the target object in view, and tracking is enabled.
-	 if(!tracking) {
- 	    // We weren't previously tracking, so make sound indicating we are starting to track object.
-	    write(pipeSoundGen[IN], &sound[singleA], sizeof(sound[singleA]));
-	    lcdEvent = EVENT_TRACKING_OBJECT;
- 	    write(pipeLCDMsg[IN], &lcdEvent, sizeof(lcdEvent));
- 	 }
-	 tracking = 1;
+      if (ccsrState.trackTargetColorOn) {
 
-	 // Determine how fas off object is from image center
-	 xDelta = (100*(ccsrState.targetVisualObject_X - X_MID_IMAGE))/X_MID_IMAGE;
-   	 yDelta = (100*(ccsrState.targetVisualObject_Y - Y_MID_IMAGE))/Y_MID_IMAGE;
-   	 xDeltaAbs = abs(xDelta);
-   	 yDeltaAbs = abs(yDelta);
-         if(xDelta>0) {
-	    xDeltaSign = 1;
-	 }
-	 else {
-	    xDeltaSign = -1;
-	 }
-         if(yDelta>0) {
-	    yDeltaSign = 1;
-	 }
-	 else {
-	    yDeltaSign = -1;
-	 }
-
-         // Based on distance the camera head has to go, we calculate a step (in degrees) by which we move the 
-	 // pan/tilt servos to move object closer to center. The move we still have to go, the bigger the step.
-         // We have some hysteresis, to prevent the camera from continuously moving based on noise, this
-	 // is currently set to 20 degrees. So if we're less tha 20 deg off, we consider ourselves locked. 
-	 // This may be too inaccurate to picking up objects with the arm, so may need to finetune this.
-         // For >20 deg offset, we define a simple quantization function:
-	 if(xDeltaAbs < 20) {
-	    xDeltaQ = 0;
-	 }
-	 else if ((xDeltaAbs >= 20) && (xDeltaAbs < 40)) {
-	    xDeltaQ = 1 * xDeltaSign;
-	 }
-	 else if ((xDeltaAbs >= 40) && (xDeltaAbs < 70)) {
-	    xDeltaQ = 2 * xDeltaSign;
-	 }
-	 else {
-	    xDeltaQ = 5 * xDeltaSign;
-	 } 
-
-         if(yDeltaAbs < 20) {
-	    yDeltaQ = 0;
-	 }
-	 else if ((yDeltaAbs >= 20) && (yDeltaAbs < 40)) {
-	    yDeltaQ = 1 * yDeltaSign;
-	 }
-	 else if ((yDeltaAbs >= 40) && (yDeltaAbs < 70)) {
-	    yDeltaQ = 2 * yDeltaSign;
-	 }
-	 else {
-	    yDeltaQ = 4 * yDeltaSign;
-	 } 
-
-         if(xDeltaQ == 0){  // only pan for now
-            // We consider ourselves locked on target if camera pan is less than 20 deg off.
-            // We don't consider tilt value (yet), because only pan is important to turn CCSR in the right direction
-            if(ccsrState.trackedObjectCentered == 0) {
-               //If we weren't previously centered before, sound happy alarm that now we do.
-               write(pipeSoundGen[IN], &sound[tracked], sizeof(sound[tracked]));
-               lcdEvent = EVENT_TARGET_LOCKED;
+         if(!analyseCameraFrame (VISUAL_CMD_TRACK, numFrames)){
+            // Did not find target object in any frame
+            ccsrState.objectTracked = 0;
+         }
+         else {
+            // We have identified object, X/Y coordinates in frame are available.
+            if(!ccsrState.objectTracked) {
+               // We weren't previously tracking, so make sound indicating we are starting to track object.
+               write(pipeSoundGen[IN], &sound[singleA], sizeof(sound[singleA]));
+               lcdEvent = EVENT_TRACKING_OBJECT;
                write(pipeLCDMsg[IN], &lcdEvent, sizeof(lcdEvent));
             }
-	    ccsrState.trackedObjectCentered = 1;
-	 }
-	 else {
-	    ccsrState.trackedObjectCentered = 0;
+            ccsrState.objectTracked = 1;
+
+            // Determine how far off object is from image center
+            xDelta = (100*(ccsrState.targetVisualObject_X - X_MID_IMAGE))/X_MID_IMAGE;
+            yDelta = (100*(ccsrState.targetVisualObject_Y - Y_MID_IMAGE))/Y_MID_IMAGE;
+            xDeltaAbs = abs(xDelta);
+            yDeltaAbs = abs(yDelta);
+            if(xDelta>0) {
+               xDeltaSign = 1;
+            }
+            else {
+               xDeltaSign = -1;
+            }
+            if(yDelta>0) {
+               yDeltaSign = 1;
+            }
+            else {
+               yDeltaSign = -1;
+            }
+
+            // Based on distance the camera head has to go, we calculate a step (in degrees) by which we move the 
+            // pan/tilt servos to move object closer to center. The move we still have to go, the bigger the step.
+            // We have some hysteresis, to prevent the camera from continuously moving based on noise, this
+            // is currently set to 20 degrees. So if we're less tha 20 deg off, we consider ourselves locked. 
+            // This may be too inaccurate to picking up objects with the arm, so may need to finetune this.
+            // For >20 deg offset, we define a simple quantization function:
+            if(xDeltaAbs < 20) {
+               xDeltaQ = 0;
+            }
+            else if ((xDeltaAbs >= 20) && (xDeltaAbs < 40)) {
+               xDeltaQ = 1 * xDeltaSign;
+            }
+            else if ((xDeltaAbs >= 40) && (xDeltaAbs < 70)) {
+               xDeltaQ = 2 * xDeltaSign;
+            }
+            else {
+               xDeltaQ = 5 * xDeltaSign;
+            } 
+
+            if(yDeltaAbs < 20) {
+               yDeltaQ = 0;
+            }
+            else if ((yDeltaAbs >= 20) && (yDeltaAbs < 40)) {
+               yDeltaQ = 1 * yDeltaSign;
+            }
+            else if ((yDeltaAbs >= 40) && (yDeltaAbs < 70)) {
+               yDeltaQ = 2 * yDeltaSign;
+            }
+            else {
+               yDeltaQ = 4 * yDeltaSign;
+            } 
+
+            if(xDeltaQ == 0){  // only pan for now
+               // We consider ourselves locked on target if camera pan is less than 20 deg off.
+               // We don't consider tilt value (yet), because only pan is important to turn CCSR in the right direction
+               if(ccsrState.trackedObjectCentered == 0) {
+                  //If we weren't previously centered before, sound happy alarm that now we do.
+                  write(pipeSoundGen[IN], &sound[tracked], sizeof(sound[tracked]));
+                  lcdEvent = EVENT_TARGET_LOCKED;
+                  write(pipeLCDMsg[IN], &lcdEvent, sizeof(lcdEvent));
+               }
+               ccsrState.trackedObjectCentered = 1;
+            }
+            else {
+               ccsrState.trackedObjectCentered = 0;
+            }
+
+            //        printf("%d %d %d %d\n",  xDelta , xDeltaQ, yDelta , yDeltaQ);       
+
+            // Calculate new pan/tilr positions for head:
+            pan = ccsrState.pan + xDeltaQ;
+            if(pan>80) {
+               pan = 80;
+            }
+            if(pan<-80) {
+               pan = -80;
+            }
+            tilt = ccsrState.tilt - yDeltaQ;
+            if(tilt<-40) {
+               tilt = -40;
+            }
+            if(tilt>40) {
+               tilt = 40;
+            }
+
+            // Set head, use 70% of speed.
+            setPanTilt(pan, tilt, 70);
+
+            // Key activity here:
+            // continuously set
+            // target heading to where the camera is pointed. The process *drivetoTarget in motors.c will continuously
+            // adjust heading to target heading if enabled. Note this means that if we manually want to set a target
+            // heading, trackTargetColorOn must be off.
+            ccsrState.targetHeading = addAngleToHeading(ccsrState.pan);
+
          }
-	 
- //        printf("%d %d %d %d\n",  xDelta , xDeltaQ, yDelta , yDeltaQ);       
-
-         // Calculate new pan/tilr positions for head:
- 	 pan = ccsrState.pan + xDeltaQ;
- 	 if(pan>80) {
- 	    pan = 80;
- 	 }
- 	 if(pan<-80) {
- 	    pan = -80;
- 	 }
- 	 tilt = ccsrState.tilt - yDeltaQ;
- 	 if(tilt<-40) {
- 	    tilt = -40;
- 	 }
- 	 if(tilt>40) {
- 	    tilt = 40;
- 	 }
- 
-   	 // Set head, use 70% of speed.
-         setPanTilt(pan, tilt, 70);
-
-         // Key activity here:
-         // continuously set
-         // target heading to where the camera is pointed. The process *drivetoTarget in motors.c will continuously
-         // adjust heading to target heading if enabled. Note this means that if we manually want to set a target
-         // heading, trackTargetColorOn must be off.
-         ccsrState.targetHeading = addAngleToHeading(ccsrState.pan);
-
       }
       else {
-         tracking = 0;
+         // Tracking disabled
+         ccsrState.objectTracked = 0;
+         usleep(CAMERA_TRACK_INTERVAL);
       }	 
    } 
 }

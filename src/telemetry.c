@@ -33,6 +33,7 @@
 #include "graph.h"
 #include "mapping.h"
 #include "utils.h"
+#include "visual.h"
 
 extern FILE *logFile;
 extern ccsrStateType ccsrState;
@@ -438,19 +439,16 @@ void ccsrExecuteCmd(char **splitLine, int n, int wfd) {
  		 write(wfd, eom, strlen(eom));
 	      break;
 	      case DUMPSUBCMD_DISK:
-	         // Tell *visual to save currently captured images to disk
-                 ccsrState.camCapture = 1;
+	         // Capture and analyse single frame and save to disk
+                 if(!analyseCameraFrame (VISUAL_CMD_CAPTURE, 1)){
+                    printf("Error capturing image from camera and writing to disk|n");
+                 }
                  // Save full ccsrState to CSV file on disk
                  stateCSVfd = open(fullstatecsvfile, O_WRONLY | O_CREAT, S_IRWXO);
 		 if(stateCSVfd<0) {
 		    perror("can't open CCSR state csv file\n");
 		 }
 		 dumpCCSRState(stateCSVfd, CCSRStateTemplate);
-	         // Wait until images have been saved to disk
- 		 close(stateCSVfd);
-                 while(ccsrState.camCapture) {
-                    usleep(100);
-                 }
                  // Create sonar profile image
                  drawSonarProfileGraph();
                  // Draw current location on SVG map if known, and save map to disk

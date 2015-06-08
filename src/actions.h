@@ -25,7 +25,7 @@ int orientation(int angle);
 void actionPause();
 void turnToTargetHeading(int scan);
 void turnToTargetHeadingDirect(int scan, int turnDir);
-int  sonarScan(int range);
+int  sonarScan(int range, track);
 void sonarScanDown();
 void getMinimumTurnSpeed();
 void turnAtMinPowerInPlace(int dir, int time);

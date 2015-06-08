@@ -83,6 +83,7 @@ enum ccsrSMType {SM_RESET,
                  SM_SLEEP
 		 };
 
+
 #define NUM_BOTTONS 7 // one big red, 4 numpads, one PID
 
 typedef struct ccsrStateType {
@@ -205,7 +206,6 @@ typedef struct ccsrStateType {
    // Telemetry
    char telemetryConnected;
    
-   
    // Timers and alarms
    unsigned long timer;
    unsigned long timerAlarm[3];
@@ -222,9 +222,6 @@ typedef struct ccsrStateType {
 
    // Opencv visual
    
-   char visual_req;  // Handshake: any process that alters parameters for visual process can req, and will get ack if visual has seen it 
-   char visual_ack;
-
    // Define target object CCSR is tracking in terms of HSV color range and volume (size)
    int targetColor_iLowH;  
    int targetColor_iHighH; 
@@ -252,9 +249,6 @@ typedef struct ccsrStateType {
    int analyzedObjectS;  
    int analyzedObjectV;  
 
-   char camCapture;     // *visual thread will save currently captured images to disk once if set to '1', then resets it (one-shot)
-
-
    // Mood/Emotions
 
    char randomEyeMovements;
@@ -274,6 +268,16 @@ typedef struct ccsrStateType {
 
 
 } ccsrStateType;
+
+
+typedef struct visualMsgType {
+   char src;
+   int cmd;
+} visualMsgType;
+
+enum pthreadIDs {PTHREAD_CAMTRACK,
+                 PTHREAD_VISUAL};
+
 
 /*
 ccsrState.continuousLCDRefresh;
