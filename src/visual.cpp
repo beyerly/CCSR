@@ -19,6 +19,7 @@ extern "C" {
 
    char isTargetColor(int H, int S, int V);
    char* lookupColor(int H, int S, int V);
+   void tagShape(Mat& im, const string label, vector<Point>& contour);
 
    extern ccsrStateType ccsrState;
    extern pthread_mutex_t semCamera; // Camera semafore
@@ -94,7 +95,7 @@ extern "C" {
       else {
          return 0;
       }
-      ///imwrite(CAM_CAPTURE_THRESHOLD, imgThresholded);
+//      imwrite("test.jpg", imgThresholded);
    }
 
 
@@ -150,10 +151,10 @@ extern "C" {
             // calculate mean HSV color value of roi
             Scalar meanRoi = mean(roi);                          
             // Check if triangle color is in range of target color
-//	    printf("%d %d %d\n", meanRoi.val[0], meanRoi.val[1], meanRoi.val[2]);
-            if (isTargetColor(meanRoi.val[0], meanRoi.val[1], meanRoi.val[2])){
+	    printf("triangle color: %d %d %d\n", (int) meanRoi.val[0], (int) meanRoi.val[1], (int) meanRoi.val[2]);
+            if (isTargetColor((int) meanRoi.val[0], (int) meanRoi.val[1], (int) meanRoi.val[2])){
                // Get color name string
-               colorName = lookupColor(meanRoi.val[0], meanRoi.val[1], meanRoi.val[2]);
+               colorName = lookupColor((int) meanRoi.val[0], (int) meanRoi.val[1], (int) meanRoi.val[2]);
                if(colorName!=0){
                   sprintf(label, "BCN_%s", colorName);
                }
@@ -212,7 +213,7 @@ extern "C" {
 
    void visualInit () {
       // Allocate memory for in-display telemetry
-      for(i=0;i<NUM_DISPLAY_STRINGS;i++) {
+      for(int i=0;i<NUM_DISPLAY_STRINGS;i++) {
          textList[i] = (char*) malloc(MAX_DISP_STRING_LEN*sizeof(char));
       }
       double fps = cap.get(CV_CAP_PROP_FPS);
@@ -221,7 +222,7 @@ extern "C" {
 
    void visualCamRelease () {
       cout << "Turning off camera\n";
-      cap.release(0);
+ //     cap.release();
    }
 
 
@@ -237,7 +238,7 @@ extern "C" {
    //        ccsrState.analyzedObjectH
    //        ccsrState.analyzedObjectS
    //        ccsrState.analyzedObjectV
-   int analyseCameraFrame (int mode, frames) {
+   int analyseCameraFrame (int mode, int frames) {
 
       int    fontFace = FONT_HERSHEY_PLAIN;
       double fontScale = 1;
@@ -248,24 +249,37 @@ extern "C" {
       Mat imgHSV;
       Mat imgThresholded;
 
+
       pthread_mutex_lock(&semCamera);  // Lock camera device
+
 
       // We capture 640x480 image by default
       if ( !cap.isOpened() )
       {
-         cap.open(0);
+	 cap.open(0);
       }
+
+
+            // Define region of interest: predefined spot in between CCSR's grabber.
+            // We'll use this to identify what CCSR is holding
+            int roiHeight = ROI_HEIGHT;
+            int roiWidth = ROI_WIDTH;
+            int roiX = IMAGE_WIDTH/2 - ROI_WIDTH/2;
+            int roiY = IMAGE_HEIGHT/2 - ROI_HEIGHT/2;
+            // Adjust ROI from center to spot covering the grabber.
+            roiX = roiX - 65 ;
+            roiY = roiY + 130;
 
       for (frame=0; frame<frames; frame++){
          success = 0;
          bool bSuccess = cap.read(imgOriginal); // read a new frame from video
-         if (!bSuccess) //if not success, break loop
+	 if (!bSuccess) //if not success, break loop
          {
             cout << "Cannot read a frame from video stream" << endl;
             break;
          }
          cvtColor(imgOriginal, imgHSV, COLOR_BGR2HSV); //Convert the captured frame from BGR to HSV
-         if (mode & VISUAL_CMD_TRACK){
+//         if (mode & VISUAL_CMD_TRACK){
             // Find the X/Y location in the image of target object. If the object is found, ccsrState.objectTracked is set to '1'
             // We have 2 modes: find general object of target color or a triangular shape of target color. The triangles are used for
             // visual beacon detection and triangulation.
@@ -278,28 +292,22 @@ extern "C" {
                success = objRecogShapeDetection(imgOriginal, imgHSV, imgThresholded);
                break;
             }
-         }
+//         }
+
+
+
 
          // If asked to analyze an object held up by arm, calculate and capture avarage color values of object.
          // Object is assumed to be held by arm exactly at square region of interrest (roi) in middle of image
          // This is a one-shot operation. analyzeObject in actions.c sets ccsrState.analyzeObject to 1
          // visual handshakes by resetting:
          if(mode & VISUAL_CMD_ANALYZE_OBJECT) {
-            // Define region of interest: predefined spot in between CCSR's grabber.
-            // We'll use this to identify what CCSR is holding
-            int roiHeight = ROI_HEIGHT;
-            int roiWidth = ROI_WIDTH;
-            int roiX = IMAGE_WIDTH/2 - ROI_WIDTH/2;
-            int roiY = IMAGE_HEIGHT/2 - ROI_HEIGHT/2;
-            // Adjust ROI from center to spot covering the grabber.
-            roiX = roiX - 65 ;
-            roiY = roiY + 130;
 
             Mat roi(imgHSV, Rect(roiX,roiY,roiWidth,roiHeight)); // extract small roi of image
             Scalar meanRoi = mean(roi);                          // calculate mean HSV color value of roi
-            ccsrState.analyzedObjectH = meanRoi.val[0];          
-            ccsrState.analyzedObjectS = meanRoi.val[1];
-            ccsrState.analyzedObjectV = meanRoi.val[2];
+            ccsrState.analyzedObjectH = (int) meanRoi.val[0];          
+            ccsrState.analyzedObjectS = (int) meanRoi.val[1];
+            ccsrState.analyzedObjectV = (int) meanRoi.val[2];
             ccsrState.analyzeObject = 0; 
             cout << "analysed HSV:" << ccsrState.analyzedObjectH << " " << ccsrState.analyzedObjectS << " " << ccsrState.analyzedObjectV << endl;
             success = 1;
@@ -332,7 +340,7 @@ extern "C" {
             sprintf(textList[5], "trck %d",ccsrState.trackTargetColorOn);
             Point textOrg(10, 30);
             Size textSize = getTextSize(textList[0], fontFace, fontScale, thickness, NULL);
-            for(i=0;i<NUM_DISPLAY_STRINGS;i++) {
+            for(int i=0;i<NUM_DISPLAY_STRINGS;i++) {
                putText(imgOriginal, textList[i], textOrg, fontFace, fontScale,
                   Scalar(0, 0, 255), thickness, 8);
                textOrg.y += textSize.height + 3;
@@ -340,7 +348,10 @@ extern "C" {
             // Write images to disk, will be read by web interface
             imwrite(CAM_CAPTURE_RAW, imgOriginal);
             imwrite(CAM_CAPTURE_THRESHOLD, imgThresholded);
-            success = 1;
+            // If we do a camera capture, close camera device to make sure we purge frame buffer inside camera
+	    // If not, we keep on reading old frames. 
+	    cap.release();
+	    success = 1;
          }
 
          if(success) {

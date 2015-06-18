@@ -75,6 +75,8 @@ enum telccsrset          {REMOTE,
 			  RGBLED,
 			  MOOD,
 			  TGT_COLOR,
+			  OBJ_RECOG_MODE,
+			  MOTORS,
 			  NUM_SENS_CMD
 		         };
 

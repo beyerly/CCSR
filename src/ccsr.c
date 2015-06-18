@@ -92,7 +92,7 @@ int main () {
    ccsrState.maxOperatingCurrent       = MAX_OPERATING_CURRENT;
    ccsrState.compassCalibrationOffsetX = 744;
    ccsrState.compassCalibrationOffsetY = -313;
-   setTargetColorRangeByName ("box");                  // Set default object tracking color to blue
+   setTargetColorRangeByName ("BCNg0");                  // Set default object tracking color to blue
    setTargetColorVolume(TEST_OBJECT_2_VOLUME);         // Set default object volume: 
     
    ccsrState.odometryOn = 0;

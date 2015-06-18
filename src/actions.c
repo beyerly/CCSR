@@ -43,16 +43,20 @@ colorType colors[NUM_COLORS];
 // Note: Is there a HSV2string function? string s = Color.FromArgb(255, 143, 143, 143).Name seems to be
 // from .NET only.
 void initColors(){
-   colors[0].iLowH  = 100;
-   colors[0].iHighH = 120;
+   colors[0].iLowH  = 0;
+   colors[0].iHighH = 0;
+//   colors[0].iLowH  = 100;
+//   colors[0].iHighH = 120;
    colors[0].iLowS  = 100;
    colors[0].iHighS = 208;
    colors[0].iLowV  = 89;
    colors[0].iHighV = 255;
    strcpy(colors[0].name, "blue");
 
-   colors[1].iLowH  = 75;
-   colors[1].iHighH = 99;
+   colors[1].iLowH  = 0;
+   colors[1].iHighH = 0;
+//   colors[1].iLowH  = 75;
+//   colors[1].iHighH = 99;
    colors[1].iLowS  = 100;
    colors[1].iHighS = 200;
    colors[1].iLowV  = 89;
@@ -60,8 +64,8 @@ void initColors(){
    strcpy(colors[1].name, "green");
 
    // Blue triangle beacon in SVG map
-   colors[2].iLowH  = 75;
-   colors[2].iHighH = 99;
+   colors[2].iLowH  = 100;
+   colors[2].iHighH = 120;
    colors[2].iLowS  = 100;
    colors[2].iHighS = 200;
    colors[2].iLowV  = 89;
@@ -69,11 +73,11 @@ void initColors(){
    strcpy(colors[2].name, "BCNb0");
 
    // Green triangle beacon in SVG map
-   colors[3].iLowH  = 75;
+   colors[3].iLowH  = 70;
    colors[3].iHighH = 99;
    colors[3].iLowS  = 100;
    colors[3].iHighS = 200;
-   colors[3].iLowV  = 89;
+   colors[3].iLowV  = 50;
    colors[3].iHighV = 255;
    strcpy(colors[3].name, "BCNg0");
 
@@ -120,7 +124,8 @@ int setTargetColorRangeByName(char* name) {
   int i;
   
   for (i=0;i<NUM_COLORS;i++) {
-    if(strcmp(name, colors[i].name)){
+    if(!strcmp(name, colors[i].name)){
+       printf("Setting target color to %s\n", name);
        ccsrState.targetColor_iLowH  = colors[i].iLowH;
        ccsrState.targetColor_iHighH = colors[i].iHighH;
        ccsrState.targetColor_iLowS  = colors[i].iLowS;
@@ -135,6 +140,8 @@ int setTargetColorRangeByName(char* name) {
 
 // Return '1' if HSV color is withing the range tof the current (tracked) target color, '0' otherwise.
 char isTargetColor(int H, int S, int V){
+
+printf("tgtclr %d %d %d %d %d %d\n", ccsrState.targetColor_iLowH, ccsrState.targetColor_iHighH, ccsrState.targetColor_iLowS, ccsrState.targetColor_iHighS, ccsrState.targetColor_iLowV, ccsrState.targetColor_iHighV);
 
    if((H>=ccsrState.targetColor_iLowH)  &&
       (H<=ccsrState.targetColor_iHighH) &&
@@ -348,13 +355,15 @@ void turnToTargetHeadingDirect(int scan, int turnDir) {
 } 
 
 // Turn shortest distance to heading.
-void turnToTargetHeading(int scan) {
-   int motorSpeed;
+int turnToTargetHeading(int scan) {
    char turnDir; 
-   int lightSensHeading;
    char navigationOnPrev;  
-   int x;
 
+   if (ccsrState.noMotors) {
+      say("Motors disabled, skipping turn to target heading");
+      return 0;
+   }   
+   
    navigationOnPrev = ccsrState.navigationOn;
 
    ccsrState.navigationOn = 1;
@@ -362,6 +371,7 @@ void turnToTargetHeading(int scan) {
 
    turnToTargetHeadingDirect(scan, turnDir);
    ccsrState.navigationOn = navigationOnPrev;
+   return 1;
 
 } 
 

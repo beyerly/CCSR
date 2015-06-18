@@ -142,7 +142,7 @@ char *set_cmd_lookup[] = {"rc",          // set rc <0,1> - turn off/on Remote co
 			  "maxopcurr",   // set maxopcurr <int> - Set maximum operating current in <int> mA. If CCSR
 			                 // draws more than this value, the 'exceeding current limit' alarm will be 
 					 // triggered  
-			  "arm",         // set arm <arm [0..45]> <elbow [0..180]> <wrist [0..180]> <hand [0..180]> <speed [1..100]> 
+			  "arm",         // set arm <shoulder [0..45]> <elbow [0..180]> <wrist [0..180]> <hand [0..180]> <speed [1..100]> 
 			                 // set arm <0=off, 1=on> Turn arm servo's on/off 
 			                 // set arm in specific position, each joint indicated in degrees. Speed
 					 // indicates how fast arm moves into position. 
@@ -156,8 +156,10 @@ char *set_cmd_lookup[] = {"rc",          // set rc <0,1> - turn off/on Remote co
 			  "mood",         // set mood <happiness [-255..255]> <arousal [0..255]> - increment emotions
 			  		 // set mood <0=off, 1=on> Turn emotions on/off 
 
-			  "tgtclr"       
-                          };
+			  "tgtclr",      // set tgtclr <string> - Set target color by name
+                          "objrecogmode", // set objrecogmode <0=colorThreshold, 1=shapeDetection, 2=facialRecognition> - set object recognition mode 
+			  "motors"       // set motors <0=off, 1=on> enable/disable motors 
+			  };
 
 
 
@@ -174,6 +176,12 @@ char *obj_cmd_lookup[] =  {"pickup",   // Pick up object from fixed location on 
                                        // pick up the object.
 			   };
 
+char *objRecogModesStrings[]   = {"Color threshold",
+				  "Shape detection",
+				  "Facial recognition"
+				  };
+char *enDisableStrings[]   = {"disabling",
+			      "enabling"};
 
 // List of selected fields in ccsrState. This is used by dump commands, to generate CSV file or pass on to telCCSR temeletry.
 char *CCSRStateTemplate[] = {"state,  		      %4d, - \n",   // 0
@@ -449,6 +457,7 @@ void ccsrExecuteCmd(char **splitLine, int n, int wfd) {
 		    perror("can't open CCSR state csv file\n");
 		 }
 		 dumpCCSRState(stateCSVfd, CCSRStateTemplate);
+ 		 close(stateCSVfd);
                  // Create sonar profile image
                  drawSonarProfileGraph();
                  // Draw current location on SVG map if known, and save map to disk
@@ -616,23 +625,9 @@ void ccsrExecuteCmd(char **splitLine, int n, int wfd) {
               case TRACK_COLOR:
                  if (n>2) {
 	            value0 = atoi(splitLine[2]);
- 		    switch(value0){
-
- 		       case 0 :
- 		    	  say("Disable tracking");
- 		    	  ccsrState.trackTargetColorOn = 0;
- 		       break;
- 		       case 1 :
- 		    	  say("Enable tracking, color threshold mode");
-		    	  ccsrState.trackTargetColorOn = 1;
- 		    	  ccsrState.objectRecognitionMode = OBJREC_COLORTHRESHOLD;
- 		       break;
- 		       case 2 :
- 		    	  say("Enable tracking, shape detection mode");
- 		    	  ccsrState.trackTargetColorOn = 1;
- 		    	  ccsrState.objectRecognitionMode = OBJREC_SHAPEDETECTION;
- 		       break;
- 		    }
+		    ccsrState.trackTargetColorOn = value0;
+	            say(enDisableStrings[value0]);
+	            say("tracking");
  		    sprintf(string, "Command succesful\n");
  		    write(wfd, string, strlen(string));
  		    write(wfd, eom, strlen(eom));
@@ -696,6 +691,8 @@ void ccsrExecuteCmd(char **splitLine, int n, int wfd) {
  	         else if (n>2) {
 	            // Turning on/off pantilt servo's
 		    value0 = atoi(splitLine[2]);
+	            say(enDisableStrings[value0]);
+	            say("head servos");
 		    enablePanTilt(value0);
 		    sprintf(string, "Command succesful\n");
  	            write(wfd, string, strlen(string));
@@ -722,6 +719,8 @@ void ccsrExecuteCmd(char **splitLine, int n, int wfd) {
 	         else if (n>2) {
 	            // Turning on/off arm servo's
 		    value0 = atoi(splitLine[2]);
+	            say(enDisableStrings[value0]);
+	            say("robotic arm");
 		    enableArm(value0);
 		    sprintf(string, "Command succesful\n");
  	            write(wfd, string, strlen(string));
@@ -824,14 +823,9 @@ void ccsrExecuteCmd(char **splitLine, int n, int wfd) {
             }
             else if(n>2){
                value0 = atoi(splitLine[2]);
-               if(value0==0){
-	          say("Turning off emotions");
-		  ccsrState.showEmotion = 0;
-	       }
-	       else if (value0==1) {
-	          say("Turning on emotions");
-	       	  ccsrState.showEmotion = 1;
-	       }
+	       say(enDisableStrings[value0]);
+	       say("emotions");
+	       ccsrState.showEmotion = value0;
                sprintf(string, "Command succesful\n");
                write(wfd, string, strlen(string));
                write(wfd, eom, strlen(eom));
@@ -853,6 +847,39 @@ void ccsrExecuteCmd(char **splitLine, int n, int wfd) {
             }
             else {
                sprintf(string, "Expecting: set tgtClr <name>\n", cmd);
+               write(wfd, string, strlen(string));
+               write(wfd, eom, strlen(eom));
+            }
+         case OBJ_RECOG_MODE:
+            if (n>2) {
+ 	       value0 = atoi(splitLine[2]);
+	       ccsrState.objectRecognitionMode = value0;
+	       say("Setting object recognition mode to"); 
+	       say(objRecogModesStrings[value0]);
+               sprintf(string, "Command succesful\n");
+               write(wfd, string, strlen(string));
+               write(wfd, eom, strlen(eom));
+            }
+            else {
+               sprintf(string, "Expecting: set \n", cmd);
+               write(wfd, string, strlen(string));
+               write(wfd, eom, strlen(eom));
+               sprintf(string, "Command succesful\n");
+               write(wfd, string, strlen(string));
+               write(wfd, eom, strlen(eom));
+            }
+            break;
+         case MOTORS:
+            if (n>2) {
+ 	       value0 = atoi(splitLine[2]);
+	       say(enDisableStrings[value0]);
+	       say("motors");
+               sprintf(string, "Command succesful\n");
+               write(wfd, string, strlen(string));
+               write(wfd, eom, strlen(eom));
+            }
+            else {
+               sprintf(string, "Expecting: set motors <name>\n", cmd);
                write(wfd, string, strlen(string));
                write(wfd, eom, strlen(eom));
             }

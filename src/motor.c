@@ -45,6 +45,8 @@ int initMotors() {
    setMotorPrescalerFrequency(0);
    setMotorspeed(0, MOTOR1);
    setMotorspeed(0, MOTOR2);
+   // Disable motors for safety, user or function must explicitely enable before movement is safe.
+   ccsrState.noMotors=1;
 }
 
 // Motor diagnostics
