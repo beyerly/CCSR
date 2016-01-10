@@ -64,7 +64,7 @@ void initColors(){
    strcpy(colors[1].name, "green");
 
    // Blue triangle beacon in SVG map
-   colors[2].iLowH  = 100;
+   colors[2].iLowH  = 81;
    colors[2].iHighH = 120;
    colors[2].iLowS  = 100;
    colors[2].iHighS = 200;
@@ -73,8 +73,8 @@ void initColors(){
    strcpy(colors[2].name, "BCNb0");
 
    // Green triangle beacon in SVG map
-   colors[3].iLowH  = 70;
-   colors[3].iHighH = 99;
+   colors[3].iLowH  = 40;
+   colors[3].iHighH = 80;
    colors[3].iLowS  = 100;
    colors[3].iHighS = 200;
    colors[3].iLowV  = 50;
@@ -383,6 +383,7 @@ int sonarScan(int range, int track) {
    char sonarSensorOn_prev;
    char navigationOn_prev;
    int heading;
+   char step;
    
    sonarSensorOn_prev = ccsrState.sonarSensorsOn;
    navigationOn_prev = ccsrState.navigationOn;
@@ -399,8 +400,15 @@ int sonarScan(int range, int track) {
    
    setPanTilt(start, 0, 70);
    usleep(1000000);
+   
+   if(track) {
+      step = 2;
+   }
+   else {
+      step = 1;
+   }
    // Do sweep with head
-   for(i=start;i<=end;i++) {
+   for(i=start;i<=end;i=i+step) {
       setPanTilt(i, 0, 100);
       usleep(SONAR_SCAN_DELAY);
       // Capture sonar distance for each position.
@@ -1204,7 +1212,8 @@ int triangulatePosition(){
             ccsrState.trackTargetColorOn = 0;
             continue;
          }
-         // Orientation found beacon, and we are tracking it
+         printf("orientation succ %s\n", ccsrState.beaconListName[i]);
+	 // Orientation found beacon, and we are tracking it
       }
       else{
          // analyseCamera found beacon, start tracking it
@@ -1214,10 +1223,12 @@ int triangulatePosition(){
       while(!ccsrState.trackedObjectCentered) {
          brainCycle();
       }
+      printf("centered %s\n", ccsrState.beaconListName[i]);
       // Tell camtrack pthread to stop tracking current beacon
       ccsrState.trackTargetColorOn = 0;
       // Store heading of current beacon
       heading[numBeaconsFound] = addAngleToHeading(ccsrState.pan); 
+      printf("beacon %s %\n", ccsrState.beaconListName[i], heading[numBeaconsFound]);
       beacon[numBeaconsFound]=i;
       numBeaconsFound = numBeaconsFound+1;
       if(numBeaconsFound==2){

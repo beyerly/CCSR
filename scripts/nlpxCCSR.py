@@ -11,12 +11,12 @@ fifo = './text2nlpFifo'
 logfile = './nlpxCCSR.log'
 
 loop = True
-#brain = 'nlpxCCSR'  # By default, use nlpxCCSR python module as NLP brain. We can
+brain = 'nlpxCCSR'  # By default, use nlpxCCSR python module as NLP brain. We can
                     # set this to 'ANNA' to use the remote brain API at
                     # http://droids.homeip.net/RoboticsWeb/
 #debug = True
 debug = False
-brain = 'ANNA'
+#brain = 'ANNA'
 #mode = 'poll'
 mode = 'audioCapture'
 

@@ -890,8 +890,7 @@ void ccsrExecuteCmd(char **splitLine, int n, int wfd) {
             if (n>1) {
 	       value0 = atoi(splitLine[1]);
 	       ccsrState.targetHeading = value0;
-               say("turning");
-//     	       turnToTargetHeading(NOSCAN);
+     	       turnToTargetHeading(NOSCAN);
  	       sprintf(string, "Command succesful\n");
  	       write(wfd, string, strlen(string));
  	       write(wfd, eom, strlen(eom));
