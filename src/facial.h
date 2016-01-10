@@ -27,7 +27,7 @@ enum expressionset       {
    EXPR_ANGRY,              // 10
    EXPR_SCARED,             // 11
    EXPR_CROSSEYED,          // 12
-   EXPR_SCANNER,            // 13 unused, no scannel HW yet
+   EXPR_SCANNER,            // 13 unused, no scanner HW yet
    EXPR_NODYES,             // 14
    EXPR_SHAKENO,            // 15
    EXPR_WHITELIGHT,         // 16
